@@ -32,16 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (pizzaTrigger) {
     pizzaTrigger.addEventListener("click", () => {
       console.log("Pizza clicked");
-      const audio = document.getElementById("joey-audio");
-      if (audio) {
-        audio.currentTime = 0;
-        audio.volume = 0.1; // Joey.mp3 plays at 10%
-        audio.play().catch((err) => {
-          console.error("Audio playback failed:", err);
-        });
-      } else {
-        console.error("Audio element not found.");
-      }
       spawnFoodIcons();
     });
   } else {
@@ -83,25 +73,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to play the pop sound for food items
+// Function to play the pop sound for food items at 30% volume
 function playPopSound() {
   const popAudio = new Audio("./assets/audio/pop.mp3");
-  popAudio.volume = 0.6; // Pop sound at 60%
+  popAudio.volume = 0.3;
   popAudio.play().catch((err) => {
     console.error("Pop sound failed:", err);
   });
 }
 
-// Function to play the oven-ding sound at the end
+// Function to play the oven-ding sound at 30% volume
 function playOvenSound() {
   const ovenAudio = new Audio("./assets/audio/oven-ding.mp3");
-  ovenAudio.volume = 0.6; // Oven sound at 60%
+  ovenAudio.volume = 0.3;
   ovenAudio.play().catch((err) => {
     console.error("Oven sound failed:", err);
   });
 }
 
-// Function to spawn food icons and show a subtle subtitle
+// Function to play Joey's audio at 10% volume
+function playJoeySound() {
+  const joeyAudio = document.getElementById("joey-audio");
+  if (joeyAudio) {
+    joeyAudio.currentTime = 0;
+    joeyAudio.volume = 0.1;
+    joeyAudio.play().catch((err) => {
+      console.error("Joey audio playback failed:", err);
+    });
+  } else {
+    console.error("Joey audio element not found.");
+  }
+}
+
+// Function to spawn food icons and then trigger oven sound and Joey audio with subtitle
 function spawnFoodIcons() {
   const container = document.getElementById("food-animation-container");
   if (!container) {
@@ -109,37 +113,39 @@ function spawnFoodIcons() {
     return;
   }
   const foods = ["🍕", "🌭", "🍔", "🍩", "🍟"];
-  const safeMargin = 150; // Avoid the very corners
+  const safeMargin = 150; // Avoid very corners
 
   // Clear container in case previous animations remain
   container.innerHTML = "";
 
-  // Spawn each food icon one after the other with a 0.3-second gap (faster popping)
+  // Spawn each food icon one after the other with a 300ms gap
   foods.forEach((food, index) => {
     setTimeout(() => {
       const foodEl = document.createElement("div");
       foodEl.classList.add("food-icon");
       foodEl.textContent = food;
-      // Position each food icon at a random location within the viewport (with safe margins)
+      // Position each food icon at a random location within safe margins
       const left = Math.random() * (window.innerWidth - 2 * safeMargin) + safeMargin;
       const top = Math.random() * (window.innerHeight - 2 * safeMargin) + safeMargin;
       foodEl.style.left = left + "px";
       foodEl.style.top = top + "px";
       container.appendChild(foodEl);
       playPopSound();
+      // Remove the food icon when its animation ends
       foodEl.addEventListener("animationend", () => {
         foodEl.remove();
       });
     }, index * 300);
   });
 
-  // After all food icons have popped up, play the oven-ding sound
+  // After all food icons have popped up, play the oven-ding sound at 30% volume
   setTimeout(() => {
     playOvenSound();
   }, foods.length * 300 + 300);
 
-  // Show a subtle subtitle message that fades in and out
+  // Then, after the oven sound, play Joey's audio and show the subtitle
   setTimeout(() => {
+    playJoeySound();
     const message = document.createElement("div");
     message.classList.add("joey-message");
     message.textContent = "Joey doesn't share food";
@@ -147,6 +153,6 @@ function spawnFoodIcons() {
     message.addEventListener("animationend", () => {
       message.remove();
     });
-  }, 300);
+  }, foods.length * 300 + 600);
 }
 
