@@ -268,45 +268,72 @@ body.dark-mode .footer {
   transform: scale(1.2);
 }
 
-/* Food Icons Animation */
+/* Food Icons Animation (Pop Effect) */
 .food-icon {
   position: absolute;
   font-size: 2rem;
-  animation: floatUp 2s ease-out forwards;
+  animation: pop 0.5s ease-out forwards;
 }
-@keyframes floatUp {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-100px) scale(1.5);
-  }
-}
-
-/* Joey's Message Styling */
-.joey-message {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2rem;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  animation: fadeOut 3s ease-out forwards;
-}
-@keyframes fadeOut {
+@keyframes pop {
   0% {
-    opacity: 1;
+    transform: scale(0);
+    opacity: 0;
   }
-  70% {
+  60% {
+    transform: scale(1.2);
     opacity: 1;
   }
   100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Hand Animation for Taking Food */
+.hand-take {
+  position: fixed;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  opacity: 0;
+  z-index: 10000;
+  animation: handTake 1s ease-out forwards;
+}
+@keyframes handTake {
+  0% {
+    bottom: -100px;
     opacity: 0;
   }
+  40% {
+    bottom: 50%;
+    opacity: 1;
+  }
+  100% {
+    bottom: 50%;
+    opacity: 0;
+  }
+}
+
+/* Joey's Message (Subtle Subtitle) */
+.joey-message {
+  position: fixed;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  opacity: 0;
+  z-index: 10000;
+  animation: fadeInOut 3s forwards;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
