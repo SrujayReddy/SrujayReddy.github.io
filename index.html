@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- REQUIRED META TAGS -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO METADATA -->
+    <title>Srujay’s Portfolio</title>
+    <meta
+      name="description"
+      content="Portfolio website of Srujay Reddy Jakkidi, Computer Science & Data Science Student at UW-Madison"
+    />
+    <meta
+      name="keywords"
+      content="Srujay, Portfolio, Computer Science, Data Science, UW-Madison, AI, ML, Projects"
+    />
+    <meta name="author" content="Srujay Reddy Jakkidi" />
+
+    <!-- GOOGLE ANALYTICS (Replace UA-12345678-1 with your real ID) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-12345678-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "UA-12345678-1");
+    </script>
+
+    <!-- AOS CSS (Animate On Scroll) -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+
+    <!-- BOOTSTRAP CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap"
+    />
+  </head>
+  <body>
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar navbar-expand-lg" id="navbar">
+      <div class="container-fluid">
+        <a href="#" class="navbar-brand logo">Srujay</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav ms-auto nav-right">
+            <!-- About -->
+            <li class="nav-item">
+              <a class="nav-link" href="#about">About</a>
+            </li>
+            <!-- Experience -->
+            <li class="nav-item">
+              <a class="nav-link" href="#experience">Experience</a>
+            </li>
+            <!-- Projects -->
+            <li class="nav-item">
+              <a class="nav-link" href="#projects">Projects</a>
+            </li>
+            <!-- Contact -->
+            <li class="nav-item">
+              <a class="nav-link" href="#contact">Contact</a>
+            </li>
+          </ul>
+          <!-- Dark Mode Toggle Button -->
+          <button class="btn toggle-mode" id="toggleModeBtn">Dark Mode</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ===== HERO SECTION ===== -->
+    <header class="hero" id="home" data-aos="fade-in" data-aos-duration="1500">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Hello, I'm <span class="highlight">Srujay</span>
+        </h1>
+        <!-- The element for the Typed.js effect -->
+        <h2 class="hero-subtitle"><span id="typed"></span></h2>
+        <p class="hero-description">
+          I’m a B.S. <em>Honors</em> Computer Science & Data Science student @ UW–Madison, exploring AI, ML, Cloud Computing, and Full-Stack Development.
+        </p>
+        <!-- Pizza Icon for Joey's surprise -->
+        <div
+          id="pizza-trigger"
+          title="Click for Joey's surprise!"
+          style="font-size:2rem; cursor:pointer; margin: 1rem auto;"
+        >
+          🍕
+        </div>
+        <div class="hero-buttons">
+          <a
+            href="https://www.linkedin.com/in/srujay-jakkidi-921544276"
+            target="_blank"
+            class="btn btn-primary"
+            >LinkedIn</a
+          >
+          <a
+            href="https://github.com/SrujayReddy"
+            target="_blank"
+            class="btn btn-outline-danger"
+            >GitHub</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== ABOUT SECTION ===== -->
+    <section class="about" id="about" data-aos="fade-up" data-aos-duration="1000">
+      <div class="section-title">
+        <h2>About Me</h2>
+      </div>
+      <div class="about-content">
+        <img
+          src="assets/images/profile.jpg"
+          alt="Srujay's Photo"
+          class="profile-pic"
+          data-aos="fade-right"
+          data-aos-duration="1500"
+        />
+        <div class="about-text">
+          <p>
+            I'm <strong>Srujay Reddy Jakkidi</strong>, currently pursuing my <strong>B.S. Honors in Computer Science and Data Science</strong>
+            at the University of Wisconsin–Madison (GPA: 3.86/4.0). I’m passionate about building scalable systems,
+            leveraging machine learning, and exploring new technology.
+            Outside of coding, I enjoy reading about AI breakthroughs, working out, and playing sports.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== EXPERIENCE SECTION ===== -->
+    <section class="experience" id="experience" data-aos="fade-up" data-aos-duration="1000">
+      <div class="section-title">
+        <h2>Experience</h2>
+      </div>
+      <div class="exp-cards">
+        <!-- Research Assistant -->
+        <div class="card mb-3">
+          <h3>Research Assistant | UW-Madison</h3>
+          <p><em>Dec 2024 – Present</em></p>
+          <p>
+            At UW-Madison, I conducted meta-analyses of 50+ studies, automated data extraction with Python and Pandas, and optimized cloud storage architectures—improving system performance and scalability through collaborative research.
+          </p>
+        </div>
+
+        <!-- AI/ML Intern - MOURI Tech -->
+        <div class="card mb-3">
+          <h3>AI/ML Intern | MOURI Tech, Hyderabad</h3>
+          <p><em>May 2024 – July 2024</em></p>
+          <p>
+            At MOURI Tech, I developed an LSTM-based stock market prediction model using TensorFlow, enhanced scalability with AWS EC2, and optimized inference with ONNX and parallel processing—delivering improved forecast accuracy and efficiency.
+          </p>
+        </div>
+
+        <!-- Software Engineer Intern - MagnaQuest Technologies -->
+        <div class="card mb-3">
+          <h3>Software Engineer Intern | MagnaQuest Technologies, Hyderabad</h3>
+          <p><em>May 2023 – Aug 2023</em></p>
+          <p>
+            At MagnaQuest Technologies, I engineered scalable Node.js microservices with RESTful APIs and TypeScript, implemented automated testing, and streamlined CI/CD deployments—significantly enhancing system efficiency and code quality.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PROJECTS SECTION ===== -->
+    <section class="projects" id="projects">
+      <div class="section-title" data-aos="fade-up" data-aos-duration="1000">
+        <h2>Projects</h2>
+      </div>
+      <div class="project-gallery">
+        <!-- Gym Tracking Platform -->
+        <div
+          class="project-item"
+          data-aos="zoom-in"
+          data-aos-duration="1000"
+          data-github="https://github.com/SrujayReddy/Gym-Tracking-Platform"
+        >
+          <div class="project-image">
+            <img src="assets/images/Gym-Tracking-App.jpg" alt="Gym Tracking Platform" />
+          </div>
+          <div class="project-content">
+            <h3>Gym Tracking Platform</h3>
+            <p>
+              Developed a full‐stack Gym Tracking Platform with Java, Spring Boot, React, and MySQL featuring a user‐friendly interface, JWT-based security, and optimized SQL queries for real-time analytics.
+            </p>
+            <a
+              href="https://github.com/SrujayReddy/Gym-Tracking-Platform"
+              target="_blank"
+              class="project-link"
+              >View on GitHub</a
+            >
+          </div>
+        </div>
+
+        <!-- Cloud-Based Data Visualization Portal -->
+        <div
+          class="project-item"
+          data-aos="zoom-in"
+          data-aos-duration="1000"
+          data-github="https://github.com/SrujayReddy/Data-Website-Project"
+        >
+          <div class="project-image">
+            <img src="assets/images/Data-Website.jpg" alt="Cloud-Based Data Visualization Portal" />
+          </div>
+          <div class="project-content">
+            <h3>Cloud-Based Data Visualization Portal</h3>
+            <p>
+              Created a data visualization portal using Python, Flask, and AWS that enables researchers to generate custom dashboards efficiently—leveraging AWS S3 and Lambda for secure, high-performance data management.
+            </p>
+            <a
+              href="https://github.com/SrujayReddy/Data-Website-Project"
+              target="_blank"
+              class="project-link"
+              >View on GitHub</a
+            >
+          </div>
+        </div>
+
+        <!-- Unix Shell (wsh) -->
+        <div
+          class="project-item"
+          data-aos="zoom-in"
+          data-aos-duration="1000"
+          data-github="https://github.com/SrujayReddy/Custom-Unix-Shell"
+        >
+          <div class="project-image">
+            <img src="assets/images/wsh.jpg" alt="Custom Unix Shell" />
+          </div>
+          <div class="project-content">
+            <h3>Unix Shell (wsh)</h3>
+            <p>
+              Engineered a custom Unix Shell in C with advanced piping and redirection support, featuring optimized system call batching and integrated job control for efficient process management.
+            </p>
+            <a
+              href="https://github.com/SrujayReddy/Custom-Unix-Shell"
+              target="_blank"
+              class="project-link"
+              >View on GitHub</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT SECTION ===== -->
+    <section class="contact" id="contact" data-aos="fade-up" data-aos-duration="1000">
+      <div class="section-title">
+        <h2>Contact</h2>
+      </div>
+      <div class="contact-content">
+        <p>
+          <strong>Email:</strong>
+          <a href="mailto:jakkidi@wisc.edu">jakkidi@wisc.edu</a>
+        </p>
+        <p>
+          <strong>Phone:</strong> (331) 226-3606
+        </p>
+        <p>
+          Interested in collaborating or just want to chat? Shoot me a message!
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+      <p>© 2025 Srujay Reddy Jakkidi</p>
+    </footer>
+
+    <!-- AOS JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- TYPED.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+
+    <!-- BOOTSTRAP BUNDLE JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CUSTOM JS -->
+    <script src="script.js"></script>
+
+    <!-- Initialize AOS -->
+    <script>
+      AOS.init();
+    </script>
+
+    <!-- Audio element for Joey's voice -->
+    <audio id="joey-audio" src="assets/audio/joey.mp3"></audio>
+    <!-- Container for food animations -->
+    <div id="food-animation-container"></div>
+  </body>
+</html>
+
