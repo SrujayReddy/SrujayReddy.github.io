@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded");
 
-  // Initialize Typed.js (if available)
+  // Initialize Typed.js if available
   if (typeof Typed !== "undefined") {
     new Typed("#typed", {
-      strings: ["a CS and DS Student", "an AI Enthusiast", "a Research Assistant"],
+      strings: ["a CS and DS Student", "an AI Enthusiast", "a Research Assistant", "a Binge Eater"],
       typeSpeed: 60,
       backSpeed: 40,
       loop: true,
@@ -52,13 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-  // Persist saved theme
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark-mode");
-    if (toggleModeBtn) {
-      toggleModeBtn.textContent = "Light Mode";
-    }
+    if (toggleModeBtn) toggleModeBtn.textContent = "Light Mode";
   }
 
   // Smooth scrolling for anchor links
@@ -73,39 +69,42 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to play the pop sound for food items at 30% volume
+// Play the pop sound at 30% volume
 function playPopSound() {
+  console.log("Playing pop sound");
   const popAudio = new Audio("./assets/audio/pop.mp3");
   popAudio.volume = 0.3;
   popAudio.play().catch((err) => {
-    console.error("Pop sound failed:", err);
+    console.error("Pop sound playback failed:", err);
   });
 }
 
-// Function to play the oven-ding sound at 30% volume
+// Play the oven-ding sound at 30% volume
 function playOvenSound() {
+  console.log("Playing oven-ding sound");
   const ovenAudio = new Audio("./assets/audio/oven-ding.mp3");
   ovenAudio.volume = 0.3;
   ovenAudio.play().catch((err) => {
-    console.error("Oven sound failed:", err);
+    console.error("Oven sound playback failed:", err);
   });
 }
 
-// Function to play Joey's audio at 10% volume
+// Play Joey's audio at 10% volume
 function playJoeySound() {
+  console.log("Playing Joey sound");
   const joeyAudio = document.getElementById("joey-audio");
   if (joeyAudio) {
     joeyAudio.currentTime = 0;
     joeyAudio.volume = 0.1;
     joeyAudio.play().catch((err) => {
-      console.error("Joey audio playback failed:", err);
+      console.error("Joey sound playback failed:", err);
     });
   } else {
     console.error("Joey audio element not found.");
   }
 }
 
-// Function to spawn food icons and then trigger oven sound and Joey audio with subtitle
+// Spawn food icons, then play oven sound, then play Joey's audio and show subtitle
 function spawnFoodIcons() {
   const container = document.getElementById("food-animation-container");
   if (!container) {
@@ -113,7 +112,7 @@ function spawnFoodIcons() {
     return;
   }
   const foods = ["🍕", "🌭", "🍔", "🍩", "🍟"];
-  const safeMargin = 150; // Avoid very corners
+  const safeMargin = 150; // Avoid the very corners
 
   // Clear container in case previous animations remain
   container.innerHTML = "";
@@ -124,9 +123,11 @@ function spawnFoodIcons() {
       const foodEl = document.createElement("div");
       foodEl.classList.add("food-icon");
       foodEl.textContent = food;
-      // Position each food icon at a random location within safe margins
-      const left = Math.random() * (window.innerWidth - 2 * safeMargin) + safeMargin;
-      const top = Math.random() * (window.innerHeight - 2 * safeMargin) + safeMargin;
+      // Random position within safe margins
+      const left =
+        Math.random() * (window.innerWidth - 2 * safeMargin) + safeMargin;
+      const top =
+        Math.random() * (window.innerHeight - 2 * safeMargin) + safeMargin;
       foodEl.style.left = left + "px";
       foodEl.style.top = top + "px";
       container.appendChild(foodEl);
@@ -138,12 +139,12 @@ function spawnFoodIcons() {
     }, index * 300);
   });
 
-  // After all food icons have popped up, play the oven-ding sound at 30% volume
+  // After all food icons have popped up, wait 300ms then play oven-ding sound
   setTimeout(() => {
     playOvenSound();
   }, foods.length * 300 + 300);
 
-  // Then, after the oven sound, play Joey's audio and show the subtitle
+  // Then, after another 300ms, play Joey's audio and show the subtitle
   setTimeout(() => {
     playJoeySound();
     const message = document.createElement("div");
