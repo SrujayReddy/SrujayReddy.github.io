@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const audio = document.getElementById("joey-audio");
       if (audio) {
         audio.currentTime = 0;
-        audio.volume = 0.6; // 60% volume
+        audio.volume = 0.05; // Set Joey.mp3 volume to 5%
         audio.play().catch((err) => {
           console.error("Audio playback failed:", err);
         });
@@ -85,14 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Function to play the pop sound for food items
 function playPopSound() {
-  const popAudio = new Audio("assets/audio/pop.mp3");
-  popAudio.volume = 0.6;
+  // Use a relative path (adjust if needed) and set volume to 20%
+  const popAudio = new Audio("./assets/audio/pop.mp3");
+  popAudio.volume = 0.2;
   popAudio.play().catch((err) => {
     console.error("Pop sound failed:", err);
   });
 }
 
-// Function to spawn food icons, show the subtitle, and animate the hand
+// Function to spawn food icons and show a subtle subtitle
 function spawnFoodIcons() {
   const container = document.getElementById("food-animation-container");
   if (!container) {
@@ -100,42 +101,32 @@ function spawnFoodIcons() {
     return;
   }
   const foods = ["🍕", "🌭", "🍔", "🍩", "🍟"];
-  const safeMargin = 100; // avoid edges
+  const safeMargin = 150; // Avoid very corners
 
-  // Spawn each food icon one after the other with a 0.4s gap
+  // Clear container (in case previous animations remain)
+  container.innerHTML = "";
+
+  // Spawn each food icon one after the other with a 0.4-second gap
   foods.forEach((food, index) => {
     setTimeout(() => {
       const foodEl = document.createElement("div");
       foodEl.classList.add("food-icon");
       foodEl.textContent = food;
-      // Random position within the viewport (with margins)
+      // Random position within the viewport (respecting safe margins)
       const left = Math.random() * (window.innerWidth - 2 * safeMargin) + safeMargin;
       const top = Math.random() * (window.innerHeight - 2 * safeMargin) + safeMargin;
       foodEl.style.left = left + "px";
       foodEl.style.top = top + "px";
       container.appendChild(foodEl);
       playPopSound();
-      // Remove the food element after its animation finishes
+      // Optionally, remove the food icon after its animation ends:
       foodEl.addEventListener("animationend", () => {
         foodEl.remove();
       });
     }, index * 400);
   });
 
-  // Spawn the hand to "take" the food after the food icons have appeared
-  setTimeout(() => {
-    const hand = document.createElement("img");
-    hand.src = "assets/images/hand.png"; // ensure this image exists
-    hand.classList.add("hand-take");
-    container.appendChild(hand);
-    hand.addEventListener("animationend", () => {
-      hand.remove();
-      // Remove any remaining food icons
-      container.querySelectorAll(".food-icon").forEach((icon) => icon.remove());
-    });
-  }, foods.length * 400 + 400);
-
-  // Show a subtle subtitle message as a small fading line
+  // Show a subtle subtitle message that fades in and out
   setTimeout(() => {
     const message = document.createElement("div");
     message.classList.add("joey-message");
@@ -144,6 +135,6 @@ function spawnFoodIcons() {
     message.addEventListener("animationend", () => {
       message.remove();
     });
-  }, 200);
+  }, 300);
 }
 
