@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize Typed.js if available
   if (typeof Typed !== "undefined") {
     new Typed("#typed", {
-      strings: ["a CS and DS Student", "an AI Enthusiast", "a Research Assistant", "a Binge Eater"],
+      strings: ["a CS and DS Student", "an AI Enthusiast", "a Research Assistant", "a Binge-Eater"],
       typeSpeed: 60,
       backSpeed: 40,
       loop: true,
