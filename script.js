@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const audio = document.getElementById("joey-audio");
       if (audio) {
         audio.currentTime = 0;
-        audio.volume = 0.05; // Set Joey.mp3 volume to 5%
+        audio.volume = 0.1; // Joey.mp3 plays at 10%
         audio.play().catch((err) => {
           console.error("Audio playback failed:", err);
         });
@@ -85,11 +85,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Function to play the pop sound for food items
 function playPopSound() {
-  // Use a relative path (adjust if needed) and set volume to 20%
   const popAudio = new Audio("./assets/audio/pop.mp3");
-  popAudio.volume = 0.2;
+  popAudio.volume = 0.6; // Pop sound at 60%
   popAudio.play().catch((err) => {
     console.error("Pop sound failed:", err);
+  });
+}
+
+// Function to play the oven-ding sound at the end
+function playOvenSound() {
+  const ovenAudio = new Audio("./assets/audio/oven-ding.mp3");
+  ovenAudio.volume = 0.6; // Oven sound at 60%
+  ovenAudio.play().catch((err) => {
+    console.error("Oven sound failed:", err);
   });
 }
 
@@ -101,30 +109,34 @@ function spawnFoodIcons() {
     return;
   }
   const foods = ["🍕", "🌭", "🍔", "🍩", "🍟"];
-  const safeMargin = 150; // Avoid very corners
+  const safeMargin = 150; // Avoid the very corners
 
-  // Clear container (in case previous animations remain)
+  // Clear container in case previous animations remain
   container.innerHTML = "";
 
-  // Spawn each food icon one after the other with a 0.4-second gap
+  // Spawn each food icon one after the other with a 0.3-second gap (faster popping)
   foods.forEach((food, index) => {
     setTimeout(() => {
       const foodEl = document.createElement("div");
       foodEl.classList.add("food-icon");
       foodEl.textContent = food;
-      // Random position within the viewport (respecting safe margins)
+      // Position each food icon at a random location within the viewport (with safe margins)
       const left = Math.random() * (window.innerWidth - 2 * safeMargin) + safeMargin;
       const top = Math.random() * (window.innerHeight - 2 * safeMargin) + safeMargin;
       foodEl.style.left = left + "px";
       foodEl.style.top = top + "px";
       container.appendChild(foodEl);
       playPopSound();
-      // Optionally, remove the food icon after its animation ends:
       foodEl.addEventListener("animationend", () => {
         foodEl.remove();
       });
-    }, index * 400);
+    }, index * 300);
   });
+
+  // After all food icons have popped up, play the oven-ding sound
+  setTimeout(() => {
+    playOvenSound();
+  }, foods.length * 300 + 300);
 
   // Show a subtle subtitle message that fades in and out
   setTimeout(() => {
