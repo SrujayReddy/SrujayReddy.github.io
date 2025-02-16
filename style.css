@@ -114,7 +114,7 @@ body.dark-mode .hero {
   border-radius: 4px;
 }
 
-/* Pizza Icon - updated to include pulsating effect and caption */
+/* Pizza Icon - updated to include pulsating effect and caption in brackets */
 #pizza-trigger {
   font-size: 2rem;
   cursor: pointer;
@@ -125,7 +125,7 @@ body.dark-mode .hero {
 }
 
 #pizza-trigger::after {
-  content: "Don't eat me";
+  content: "(Don't eat me)";
   position: absolute;
   top: 110%;
   left: 50%;
