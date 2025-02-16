@@ -114,6 +114,43 @@ body.dark-mode .hero {
   border-radius: 4px;
 }
 
+/* Pizza Icon - updated to include pulsating effect and caption */
+#pizza-trigger {
+  font-size: 2rem;
+  cursor: pointer;
+  margin: 1rem auto;
+  position: relative;
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+#pizza-trigger::after {
+  content: "Don't eat me";
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: #e53935;
+  white-space: nowrap;
+}
+
+/* Pulsating Animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(229,57,53, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(229,57,53, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(229,57,53, 0);
+  }
+}
+
 /* SECTIONS */
 section {
   padding: 4rem 2rem;
@@ -260,18 +297,10 @@ body.dark-mode .footer {
   }
 }
 
-/* Pizza Icon Hover Effect */
-#pizza-trigger {
-  transition: transform 0.2s ease;
-}
-#pizza-trigger:hover {
-  transform: scale(1.2);
-}
-
 /* Food Icons Animation (Pop Effect) */
 .food-icon {
   position: absolute;
-  font-size: 3rem;  /* Increased emoji size */
+  font-size: 3rem;
   animation: pop 0.5s ease-out forwards;
 }
 @keyframes pop {

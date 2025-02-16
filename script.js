@@ -144,7 +144,7 @@ function spawnFoodIcons() {
     playOvenSound();
   }, foods.length * 300 + 300);
 
-  // Then, after another 300ms, play Joey's audio and show the subtitle
+  // Then, after an additional delay, play Joey's audio and show the subtitle
   setTimeout(() => {
     playJoeySound();
     const message = document.createElement("div");
@@ -154,6 +154,6 @@ function spawnFoodIcons() {
     message.addEventListener("animationend", () => {
       message.remove();
     });
-  }, foods.length * 300 + 600);
+  }, foods.length * 300 + 900); // Increased delay for Joey's audio
 }
 
