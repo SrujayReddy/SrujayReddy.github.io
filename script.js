@@ -139,12 +139,12 @@ function spawnFoodIcons() {
     }, index * 300);
   });
 
-  // After all food icons have popped up, wait 300ms then play oven-ding sound
+  // Oven ding: play right after the last food item's pop animation (assumed 500ms duration)
   setTimeout(() => {
     playOvenSound();
-  }, foods.length * 300 + 300);
+  }, (foods.length - 1) * 300 + 500);
 
-  // Then, after an additional delay, play Joey's audio and show the subtitle
+  // Joey's audio and message: add an extra 400ms gap after the oven ding
   setTimeout(() => {
     playJoeySound();
     const message = document.createElement("div");
@@ -154,6 +154,6 @@ function spawnFoodIcons() {
     message.addEventListener("animationend", () => {
       message.remove();
     });
-  }, foods.length * 300 + 900); // Increased delay for Joey's audio
+  }, (foods.length - 1) * 300 + 500 + 400);
 }
 
