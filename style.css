@@ -114,36 +114,27 @@ body.dark-mode .hero {
   border-radius: 4px;
 }
 
-/* Pizza Container & Elements */
-#pizza-container {
-  /* Initially static; JS will set position to absolute when movement starts */
-}
-.pizza-eyes {
-  position: absolute;
-  left: 50%;
-  top: 30%;
-  transform: translate(-50%, -50%);
-  font-size: 0.8em;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-.caption-animate {
-  animation: captionTrail 1s infinite;
+/* Pizza Icon - now using a shake animation */
+#pizza-trigger {
+  font-size: 2rem;
+  cursor: pointer;
+  margin: 1rem auto;
+  text-align: center;
+  position: relative;
+  display: inline-block;
+  animation: shake 1s infinite;
 }
 
-/* Keyframes for caption trailing (jitter effect) */
-@keyframes captionTrail {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(2px, -2px); }
-  50% { transform: translate(-2px, 2px); }
-  75% { transform: translate(2px, 2px); }
-  100% { transform: translate(0, 0); }
-}
+/* Removed the ::after pseudo-element to eliminate the extra red caption */
 
-/* Blinking eyes keyframes */
-@keyframes blink {
-  0%, 20%, 40%, 60%, 80%, 100% { opacity: 1; }
-  10%, 30%, 50%, 70%, 90% { opacity: 0; }
+/* Shake Animation */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
 }
 
 /* SECTIONS */
