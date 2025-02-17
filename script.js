@@ -4,7 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize Typed.js if available
   if (typeof Typed !== "undefined") {
     new Typed("#typed", {
-      strings: ["a CS and DS Student", "an AI Enthusiast", "a Research Assistant", "a Binge-Eater"],
+      strings: [
+        "a CS and DS Student",
+        "an AI Enthusiast",
+        "a Research Assistant",
+        "a Binge-Eater"
+      ],
       typeSpeed: 60,
       backSpeed: 40,
       loop: true,
@@ -67,6 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // Start the "runaway" animation 1 second after load
+  setTimeout(() => {
+    startPizzaRunaway();
+    startPizzaEyes();
+    startCaptionTrail();
+  }, 1000);
 });
 
 // Play the pop sound at 30% volume
@@ -155,5 +167,46 @@ function spawnFoodIcons() {
       message.remove();
     });
   }, (foods.length - 1) * 300 + 500 + 400);
+}
+
+// Makes the pizza container move to random positions every second
+function startPizzaRunaway() {
+  const container = document.getElementById("pizza-container");
+  if (!container) return;
+  // Change to absolute positioning so we can move it freely
+  container.style.position = "absolute";
+  // Initialize current position if not already set
+  const rect = container.getBoundingClientRect();
+  container.style.left = rect.left + "px";
+  container.style.top = rect.top + "px";
+
+  setInterval(() => {
+    const maxX = window.innerWidth - container.offsetWidth;
+    const maxY = window.innerHeight - container.offsetHeight;
+    const newX = Math.random() * maxX;
+    const newY = Math.random() * maxY;
+    container.style.transition = "all 0.5s ease-out";
+    container.style.left = newX + "px";
+    container.style.top = newY + "px";
+  }, 1000);
+}
+
+// Adds scared eyes to the pizza and starts a blinking animation
+function startPizzaEyes() {
+  const eyes = document.querySelector(".pizza-eyes");
+  if (!eyes) return;
+  // Set the scared eyes emoji
+  eyes.textContent = "😨";
+  // Fade in the eyes
+  eyes.style.opacity = 1;
+  // Add blinking animation via CSS
+  eyes.style.animation = "blink 3s infinite";
+}
+
+// Adds a jittery "trail" animation to the caption so it appears to follow the pizza
+function startCaptionTrail() {
+  const caption = document.getElementById("pizza-caption");
+  if (!caption) return;
+  caption.classList.add("caption-animate");
 }
 

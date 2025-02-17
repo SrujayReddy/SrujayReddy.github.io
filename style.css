@@ -114,41 +114,36 @@ body.dark-mode .hero {
   border-radius: 4px;
 }
 
-/* Pizza Icon - updated to include pulsating effect and caption in brackets */
-#pizza-trigger {
-  font-size: 2rem;
-  cursor: pointer;
-  margin: 1rem auto;
-  position: relative;
-  display: inline-block;
-  animation: pulse 2s infinite;
+/* Pizza Container & Elements */
+#pizza-container {
+  /* Initially static; JS will set position to absolute when movement starts */
 }
-
-#pizza-trigger::after {
-  content: "(Don't eat me)";
+.pizza-eyes {
   position: absolute;
-  top: 110%;
   left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.8rem;
-  color: #e53935;
-  white-space: nowrap;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8em;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.caption-animate {
+  animation: captionTrail 1s infinite;
 }
 
-/* Pulsating Animation */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(229,57,53, 0.7);
-  }
-  70% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(229,57,53, 0);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(229,57,53, 0);
-  }
+/* Keyframes for caption trailing (jitter effect) */
+@keyframes captionTrail {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -2px); }
+  50% { transform: translate(-2px, 2px); }
+  75% { transform: translate(2px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Blinking eyes keyframes */
+@keyframes blink {
+  0%, 20%, 40%, 60%, 80%, 100% { opacity: 1; }
+  10%, 30%, 50%, 70%, 90% { opacity: 0; }
 }
 
 /* SECTIONS */
