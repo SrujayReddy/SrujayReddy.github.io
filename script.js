@@ -88,7 +88,7 @@ function playPopSound() {
 function playOvenSound() {
   console.log("Playing oven-ding sound");
   const ovenAudio = new Audio("./assets/audio/oven-ding.mp3");
-  ovenAudio.volume = 0.3;
+  ovenAudio.volume = 0.2;
   ovenAudio.play().catch((err) => {
     console.error("Oven sound playback failed:", err);
   });
@@ -100,7 +100,7 @@ function playJoeySound() {
   const joeyAudio = document.getElementById("joey-audio");
   if (joeyAudio) {
     joeyAudio.currentTime = 0;
-    joeyAudio.volume = 0.1;
+    joeyAudio.volume = 0.3;
     joeyAudio.play().catch((err) => {
       console.error("Joey sound playback failed:", err);
     });
