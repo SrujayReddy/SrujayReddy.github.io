@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
       strings: [
         "a CS and DS Student",
         "an AI Enthusiast",
-        "a Research Assistant",
+        "a Computer Science Researcher",
         "a Binge-Eater"
       ],
       typeSpeed: 60,
