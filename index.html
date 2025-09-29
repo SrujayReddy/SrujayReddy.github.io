@@ -9,11 +9,11 @@
     <title>Srujay’s Portfolio</title>
     <meta
       name="description"
-      content="Portfolio website of Srujay Reddy Jakkidi, Computer Science & Data Science Student at UW-Madison"
+      content="Portfolio website of Srujay Reddy Jakkidi, Computer Science & Data Science Student at UW–Madison"
     />
     <meta
       name="keywords"
-      content="Srujay, Portfolio, Computer Science, Data Science, UW-Madison, AI, ML, Projects"
+      content="Srujay, Portfolio, Computer Science, Data Science, UW–Madison, Backend, Distributed Systems, AI, ML"
     />
     <meta name="author" content="Srujay Reddy Jakkidi" />
 
@@ -21,9 +21,7 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-12345678-1"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
+      function gtag() { dataLayer.push(arguments); }
       gtag("js", new Date());
       gtag("config", "UA-12345678-1");
     </script>
@@ -66,22 +64,10 @@
 
         <div class="collapse navbar-collapse" id="navMenu">
           <ul class="navbar-nav ms-auto nav-right">
-            <!-- About -->
-            <li class="nav-item">
-              <a class="nav-link" href="#about">About</a>
-            </li>
-            <!-- Experience -->
-            <li class="nav-item">
-              <a class="nav-link" href="#experience">Experience</a>
-            </li>
-            <!-- Projects -->
-            <li class="nav-item">
-              <a class="nav-link" href="#projects">Projects</a>
-            </li>
-            <!-- Contact -->
-            <li class="nav-item">
-              <a class="nav-link" href="#contact">Contact</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="#experience">Experience</a></li>
+            <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
+            <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
           </ul>
           <!-- Dark Mode Toggle Button -->
           <button class="btn toggle-mode" id="toggleModeBtn">Dark Mode</button>
@@ -95,20 +81,17 @@
         <h1 class="hero-title">
           Hello, I'm <span class="highlight">Srujay</span>
         </h1>
-        <!-- The element for the Typed.js effect -->
         <h2 class="hero-subtitle"><span id="typed"></span></h2>
         <p class="hero-description">
           I’m a B.S. <em>Honors</em> Computer Science & Data Science student @ UW–Madison, exploring AI, ML, Cloud Computing, and Full-Stack Development.
         </p>
-        <!-- Pizza Icon for Joey's surprise with a small subcaption underneath -->
+        <!-- Pizza Icon for Joey's surprise -->
         <div
           id="pizza-trigger"
           title="Click for Joey's surprise!"
-          style="font-size:2rem; cursor:pointer; margin: 1rem auto; text-align: center;"
+          style="font-size:2rem; cursor:pointer; margin: 1rem auto;"
         >
           🍕
-          <br>
-          <small style="font-size:0.7rem;">(Don't eat me)</small>
         </div>
         <div class="hero-buttons">
           <a
@@ -143,44 +126,68 @@
         <div class="about-text">
           <p>
             I'm <strong>Srujay Reddy Jakkidi</strong>, currently pursuing my <strong>B.S. Honors in Computer Science and Data Science</strong>
-            at the University of Wisconsin–Madison (GPA: 3.86/4.0). I’m passionate about building scalable systems,
-            leveraging machine learning, and exploring new technology.
-            Outside of coding, I enjoy reading about AI breakthroughs, working out, and playing sports.
+            at the University of Wisconsin–Madison (GPA: 3.9/4.0). I’m passionate about building scalable systems,
+            leveraging machine learning, and exploring new technology. Outside of coding, I enjoy reading about AI breakthroughs,
+            working out, and playing sports.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- ===== EXPERIENCE SECTION ===== -->
+    <!-- ===== EXPERIENCE SECTION (SIMPLE LANGUAGE) ===== -->
     <section class="experience" id="experience" data-aos="fade-up" data-aos-duration="1000">
       <div class="section-title">
         <h2>Experience</h2>
       </div>
+
       <div class="exp-cards">
-        <!-- Research Assistant -->
+        <!-- GE HealthCare Capstone -->
         <div class="card mb-3">
-          <h3>Research Assistant | UW-Madison</h3>
-          <p><em>Dec 2024 – Present</em></p>
+          <h3>Software Engineer — Capstone (UW–Madison × GE HealthCare)</h3>
+          <p><em>Sep 2025 – Present · Madison, WI · Hybrid</em></p>
           <p>
-            At UW-Madison, I conducted meta-analyses of 50+ studies, automated data extraction with Python and Pandas, and optimized cloud storage architectures—improving system performance and scalability through collaborative research.
+            Built a provisioning service to set up GEHC hospital devices(Portrait Mobile). Built a QR-based start flow for Android/iOS,
+            so most installs finish in 15 minutes or less. Wrote a Kubernetes service that retries safely and traces logs,
+            making issues easier to find and fix.
           </p>
         </div>
 
-        <!-- AI/ML Intern - MOURI Tech -->
+        <!-- SAIL (OpenAI × CDIS) -->
+        <div class="card mb-3">
+          <h3>Software Developer — SAIL (OpenAI × CDIS) | UW–Madison CDIS</h3>
+          <p><em>Jun 2025 – Aug 2025 · Madison, WI · Hybrid</em></p>
+          <p>
+            Worked on a real-time match-engine for a Quiz Bowl web app (React/Node/Postgres/WebSockets). Made games faster by cutting wait times by over half. Dockerized the app and set up CI/CD so we could ship updates every day.
+          </p>
+        </div>
+
+        <!-- Research -->
+        <div class="card mb-3">
+          <h3>Computer Science Researcher | UW–Madison</h3>
+          <p><em>Dec 2024 – May 2025 · Madison, WI · On-site</em></p>
+          <p>
+            Studied 500+ cloud-storage papers and automated data pulling with Python. Shared clear takeaways that help teams choose faster,
+            more reliable storage settings. Built a small Go tool for hot-to-cold data moves and saw ~20% lower simulated costs.
+          </p>
+        </div>
+
+        <!-- MOURI Tech -->
         <div class="card mb-3">
           <h3>AI/ML Intern | MOURI Tech, Hyderabad</h3>
-          <p><em>May 2024 – July 2024</em></p>
+          <p><em>May 2024 – Jul 2024 · On-site</em></p>
           <p>
-            At MOURI Tech, I developed an LSTM-based stock market prediction model using TensorFlow, enhanced scalability with AWS EC2, and optimized inference with ONNX and parallel processing—delivering improved forecast accuracy and efficiency.
+            Built a TensorFlow model on AWS for stock forecasts. Improved accuracy by ~15% and cut training from hours to under an hour
+            with distributed training and ONNX optimizations.
           </p>
         </div>
 
-        <!-- Software Engineer Intern - MagnaQuest Technologies -->
+        <!-- MagnaQuest -->
         <div class="card mb-3">
           <h3>Software Engineer Intern | MagnaQuest Technologies, Hyderabad</h3>
-          <p><em>May 2023 – Aug 2023</em></p>
+          <p><em>May 2023 – Aug 2023 · On-site</em></p>
           <p>
-            At MagnaQuest Technologies, I engineered scalable Node.js microservices with RESTful APIs and TypeScript, implemented automated testing, and streamlined CI/CD deployments—significantly enhancing system efficiency and code quality.
+            Built Node.js auth services and added Redis caching, making logins ~25% faster. Wrote tests and CI/CD so releases were quicker
+            and more reliable.
           </p>
         </div>
       </div>
@@ -191,8 +198,9 @@
       <div class="section-title" data-aos="fade-up" data-aos-duration="1000">
         <h2>Projects</h2>
       </div>
+
       <div class="project-gallery">
-        <!-- Gym Tracking Platform -->
+        <!-- Gym Tracking App -->
         <div
           class="project-item"
           data-aos="zoom-in"
@@ -200,12 +208,13 @@
           data-github="https://github.com/SrujayReddy/Gym-Tracking-Platform"
         >
           <div class="project-image">
-            <img src="assets/images/Gym-Tracking-App.jpg" alt="Gym Tracking Platform" />
+            <img src="assets/images/Gym-Tracking-App.jpg" alt="Gym Tracking App" />
           </div>
           <div class="project-content">
-            <h3>Gym Tracking Platform</h3>
+            <h3>Gym Tracking App</h3>
             <p>
-              Developed a full‐stack Gym Tracking Platform with Java, Spring Boot, React, and MySQL featuring a user‐friendly interface, JWT-based security, and optimized SQL queries for real-time analytics.
+              Developed a full-stack Gym Tracking App with Java, Spring Boot, React, and MySQL. Added JWT security and optimized queries
+              for smooth, real-time analytics.
             </p>
             <a
               href="https://github.com/SrujayReddy/Gym-Tracking-Platform"
@@ -216,7 +225,7 @@
           </div>
         </div>
 
-        <!-- Cloud-Based Data Visualization Portal -->
+        <!-- Data Visualization Portal -->
         <div
           class="project-item"
           data-aos="zoom-in"
@@ -224,12 +233,13 @@
           data-github="https://github.com/SrujayReddy/Data-Website-Project"
         >
           <div class="project-image">
-            <img src="assets/images/Data-Website.jpg" alt="Cloud-Based Data Visualization Portal" />
+            <img src="assets/images/Data-Website.jpg" alt="Data Visualization Portal" />
           </div>
           <div class="project-content">
-            <h3>Cloud-Based Data Visualization Portal</h3>
+            <h3>Data Visualization Portal</h3>
             <p>
-              Created a data visualization portal using Python, Flask, and AWS that enables researchers to generate custom dashboards efficiently—leveraging AWS S3 and Lambda for secure, high-performance data management.
+              Built a simple portal with Python/Flask and AWS that lets researchers create dashboards quickly, using S3 and Lambda for
+              secure storage and fast loads.
             </p>
             <a
               href="https://github.com/SrujayReddy/Data-Website-Project"
@@ -253,7 +263,7 @@
           <div class="project-content">
             <h3>Unix Shell (wsh)</h3>
             <p>
-              Engineered a custom Unix Shell in C with advanced piping and redirection support, featuring optimized system call batching and integrated job control for efficient process management.
+              Engineered a custom Unix shell in C with piping and redirection, plus basic job control for managing background processes.
             </p>
             <a
               href="https://github.com/SrujayReddy/Custom-Unix-Shell"
@@ -274,14 +284,10 @@
       <div class="contact-content">
         <p>
           <strong>Email:</strong>
-          <a href="mailto:jakkidi@wisc.edu">jakkidi@wisc.edu</a>
+          <a href="mailto:srujayreddy15@gmail.com">srujayreddy15@gmail.com</a>
         </p>
-        <p>
-          <strong>Phone:</strong> (331) 226-3606
-        </p>
-        <p>
-          Interested in collaborating or just want to chat? Shoot me a message!
-        </p>
+        <p><strong>Phone:</strong> (331) 226-3606</p>
+        <p>Interested in collaborating or just want to chat? Shoot me a message!</p>
       </div>
     </section>
 
