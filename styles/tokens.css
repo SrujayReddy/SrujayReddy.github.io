@@ -30,7 +30,7 @@
     "Fira Code", Menlo, Consolas, monospace;
 
   /* Fluid scale (clamp: min, vw, max) */
-  --fs-display: clamp(2.6rem, 8vw, 7rem);
+  --fs-display: clamp(2.3rem, 6vw, 5.25rem);
   --fs-h1: clamp(2rem, 5.5vw, 4.25rem);
   --fs-h2: clamp(1.6rem, 3.6vw, 2.8rem);
   --fs-h3: clamp(1.15rem, 1.8vw, 1.5rem);

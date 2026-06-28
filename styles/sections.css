@@ -119,6 +119,9 @@ html.reduced-motion [data-reveal] {
 }
 .hero__title .line > span {
   display: block;
+}
+/* Only hide for the entrance animation when JS is present. */
+html.js .hero__title .line > span {
   transform: translateY(110%);
 }
 .hero__name {

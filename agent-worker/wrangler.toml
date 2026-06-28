@@ -1,0 +1,24 @@
+# wrangler.toml — config for the ⌘K agent Worker.
+# Deploy guide: see README.md in this folder.
+
+name = "srujay-agent"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Public, non-secret config. Override per your setup.
+[vars]
+ALLOWED_ORIGIN = "https://srujayreddy.github.io"
+MODEL = "claude-haiku-4-5"   # or "claude-sonnet-4-6" for a sharper, pricier agent
+RATE_PER_MIN = "8"
+RATE_PER_DAY = "800"
+
+# KV namespace for rate-limit counters.
+# Create with:  wrangler kv namespace create RATE_KV
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "RATE_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# Secrets are NOT stored here. Set them with:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put TURNSTILE_SECRET   # optional

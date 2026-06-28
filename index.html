@@ -1,334 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- REQUIRED META TAGS -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#06070A" />
 
-    <!-- SEO METADATA -->
-    <title>Srujay’s Portfolio</title>
+    <title>Srujay Reddy Jakkidi — Forward Deployed Engineer</title>
     <meta
       name="description"
-      content="Portfolio website of Srujay Reddy Jakkidi, Computer Science & Data Science Student at UW–Madison"
-    />
-    <meta
-      name="keywords"
-      content="Srujay, Portfolio, Computer Science, Data Science, UW–Madison, Backend, Distributed Systems, AI, ML"
+      content="Srujay Reddy Jakkidi — Forward Deployed Engineer at Strada (YC S23). I design, build, and deploy LLM-powered AI agents, and I measure systems until they're fast. UW–Madison B.S. Honors (CS & Data Science)."
     />
     <meta name="author" content="Srujay Reddy Jakkidi" />
+    <link rel="canonical" href="https://srujayreddy.github.io/" />
 
-    <!-- GOOGLE ANALYTICS (Replace UA-12345678-1 with your real ID) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-12345678-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
-      gtag("js", new Date());
-      gtag("config", "UA-12345678-1");
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Srujay Reddy Jakkidi — Forward Deployed Engineer @ Strada" />
+    <meta
+      property="og:description"
+      content="I build LLM-powered AI agents that are intelligent and measurably reliable. Featuring an Honors thesis on Kubernetes pod-startup latency, rendered as scroll-driven data-viz."
+    />
+    <meta property="og:url" content="https://srujayreddy.github.io/" />
+    <meta property="og:image" content="https://srujayreddy.github.io/assets/images/profile.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Srujay Reddy Jakkidi — Forward Deployed Engineer @ Strada" />
+    <meta
+      name="twitter:description"
+      content="LLM-powered AI agents, measured until they're fast. Honors thesis as scroll-driven data-viz."
+    />
+    <meta name="twitter:image" content="https://srujayreddy.github.io/assets/images/profile.jpg" />
+
+    <!-- Favicon: inline plasma dot -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='.5' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%2306070a'/%3E%3Ccircle cx='16' cy='16' r='7' fill='url(%23g)'/%3E%3C/svg%3E"
+    />
+
+    <!-- Fonts: Geist + Geist Mono (system fallback in tokens.css) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+    />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/sections.css" />
+    <link rel="stylesheet" href="styles/command.css" />
+
+    <!-- Pinned ES module dependencies (fetched by the browser, no build step) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://esm.sh/three@0.169.0",
+          "gsap": "https://esm.sh/gsap@3.12.5",
+          "gsap/ScrollTrigger": "https://esm.sh/gsap@3.12.5/ScrollTrigger",
+          "lenis": "https://esm.sh/lenis@1.1.14"
+        }
+      }
     </script>
 
-    <!-- AOS CSS (Animate On Scroll) -->
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
-
-    <!-- BOOTSTRAP CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-
-    <!-- CUSTOM CSS -->
-    <link rel="stylesheet" href="style.css" />
-
-    <!-- GOOGLE FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap"
-    />
+    <!-- JSON-LD: Person -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Srujay Reddy Jakkidi",
+        "jobTitle": "Forward Deployed Engineer",
+        "worksFor": { "@type": "Organization", "name": "Strada" },
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "University of Wisconsin–Madison"
+        },
+        "address": { "@type": "PostalAddress", "addressRegion": "San Francisco Bay Area" },
+        "email": "mailto:srujayreddy15@gmail.com",
+        "url": "https://srujayreddy.github.io/",
+        "sameAs": [
+          "https://www.linkedin.com/in/srujay-jakkidi",
+          "https://github.com/SrujayReddy"
+        ]
+      }
+    </script>
   </head>
-  <body>
-    <!-- ===== NAVBAR ===== -->
-    <nav class="navbar navbar-expand-lg" id="navbar">
-      <div class="container-fluid">
-        <a href="#" class="navbar-brand logo">Srujay</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navMenu"
-          aria-controls="navMenu"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
 
-        <div class="collapse navbar-collapse" id="navMenu">
-          <ul class="navbar-nav ms-auto nav-right">
-            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
-            <li class="nav-item"><a class="nav-link" href="#experience">Experience</a></li>
-            <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
-            <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-          </ul>
-          <!-- Dark Mode Toggle Button -->
-          <button class="btn toggle-mode" id="toggleModeBtn">Dark Mode</button>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- Ambient WebGL field (behind everything) -->
+    <canvas id="webgl-canvas" aria-hidden="true"></canvas>
+
+    <!-- Nav -->
+    <nav class="nav" aria-label="Primary">
+      <a class="nav__brand" href="#home"><span class="dot"></span> Srujay</a>
+      <div class="nav__right">
+        <div class="nav__links">
+          <a href="#thesis">Thesis</a>
+          <a href="#now">Now</a>
+          <a href="#experience">Experience</a>
+          <a href="#work">Work</a>
+          <a href="#contact">Contact</a>
         </div>
+        <button class="kbd-hint" type="button" data-open-palette aria-label="Open command palette">
+          <kbd>⌘</kbd><kbd>K</kbd> Ask anything
+        </button>
       </div>
     </nav>
 
-    <!-- ===== HERO SECTION ===== -->
-    <header class="hero" id="home" data-aos="fade-in" data-aos-duration="1500">
-      <div class="hero-content">
-        <h1 class="hero-title">
-          Hello, I'm <span class="highlight">Srujay</span>
-        </h1>
-        <h2 class="hero-subtitle"><span id="typed"></span></h2>
-        <p class="hero-description">
-          I’m a B.S. <em>Honors</em> Computer Science & Data Science student @ UW–Madison, specializing in designing and delivering reliable, real-time, data-intensive systems across web, cloud, and mobile.
+    <main id="main">
+      <header class="hero section" id="home"><div class="wrap" data-mount="hero"></div></header>
+      <section class="positioning section" id="positioning" aria-label="Positioning">
+        <div class="wrap" data-mount="positioning"></div>
+      </section>
+      <section class="thesis" id="thesis" aria-label="Honors thesis">
+        <div class="thesis__pin" data-mount="thesis"></div>
+      </section>
+      <section class="now section" id="now" aria-label="Current role">
+        <div class="wrap" data-mount="now"></div>
+      </section>
+      <section class="section" id="experience" aria-label="Experience">
+        <div class="wrap" data-mount="experience"></div>
+      </section>
+      <section class="section" id="work" aria-label="Selected work">
+        <div class="wrap" data-mount="work"></div>
+      </section>
+      <section class="section" id="beyond" aria-label="Beyond the code">
+        <div class="wrap" data-mount="beyond"></div>
+      </section>
+      <section class="contact" id="contact" aria-label="Contact">
+        <div class="wrap wrap--narrow" data-mount="contact"></div>
+      </section>
+    </main>
 
-        </p>
-        <!-- Pizza Icon for Joey's surprise -->
-        <div
-          id="pizza-trigger"
-          title="Click for Joey's surprise!"
-          style="font-size:2rem; cursor:pointer; margin: 1rem auto;"
-        >
-          🍕
-        </div>
-        <div class="hero-buttons">
-          <a
-            href="https://www.linkedin.com/in/srujay-jakkidi-921544276"
-            target="_blank"
-            class="btn btn-primary"
-            >LinkedIn</a
-          >
-          <a
-            href="https://github.com/SrujayReddy"
-            target="_blank"
-            class="btn btn-outline-danger"
-            >GitHub</a
-          >
-        </div>
-      </div>
-    </header>
+    <footer class="footer" data-mount="footer"></footer>
 
-    <!-- ===== ABOUT SECTION ===== -->
-    <section class="about" id="about" data-aos="fade-up" data-aos-duration="1000">
-      <div class="section-title">
-        <h2>About Me</h2>
-      </div>
-      <div class="about-content">
-        <img
-          src="assets/images/profile.jpg"
-          alt="Srujay's Photo"
-          class="profile-pic"
-          data-aos="fade-right"
-          data-aos-duration="1500"
-        />
-        <div class="about-text">
-          <p>
-            I'm <strong>Srujay Reddy Jakkidi</strong>, currently pursuing my <strong>B.S. Honors in Computer Science and Data Science</strong>
-            at the University of Wisconsin–Madison (GPA: 3.9/4.0). I’m passionate about building scalable systems,
-            leveraging machine learning, and exploring new technology. Outside of coding, I enjoy reading about AI breakthroughs,
-            working out, and playing sports.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== EXPERIENCE SECTION (SIMPLE LANGUAGE) ===== -->
-    <section class="experience" id="experience" data-aos="fade-up" data-aos-duration="1000">
-      <div class="section-title">
-        <h2>Experience</h2>
-      </div>
-
-      <div class="exp-cards">
-        <!-- GE HealthCare Capstone -->
-        <div class="card mb-3">
-          <h3>Software Engineer (Capstone) | GE HealthCare</h3>
-          <p><em>Sep 2025 – Present · Madison, WI · Hybrid</em></p>
-          <p>
-            Built a provisioning service to set up GEHC hospital devices(Portrait Mobile). Built a QR-based start flow for Android/iOS,
-            so most installs finish in 15 minutes or less. Wrote a Kubernetes service that retries safely and traces logs,
-            making issues easier to find and fix.
-          </p>
-        </div>
-
-        <!-- SAIL (OpenAI × CDIS) -->
-        <div class="card mb-3">
-          <h3>Software Engineering Intern | OpenAI × CDIS</h3>
-          <p><em>Jun 2025 – Aug 2025 · Madison, WI · Hybrid</em></p>
-          <p>
-            Worked on a real-time match-engine for a Quiz Bowl web app (React/Node/Postgres/WebSockets). Made games faster by cutting wait times by over half. Dockerized the app and set up CI/CD so we could ship updates every day.
-          </p>
-        </div>
-
-        <!-- Research -->
-        <div class="card mb-3">
-          <h3>Computer Science Researcher | UW–Madison</h3>
-          <p><em>Dec 2024 – May 2025 · Madison, WI · On-site</em></p>
-          <p>
-            Studied 500+ cloud-storage papers and automated data pulling with Python. Shared clear takeaways that help teams choose faster,
-            more reliable storage settings. Built a small Go tool for hot-to-cold data moves and saw ~20% lower simulated costs.
-          </p>
-        </div>
-
-        <!-- MOURI Tech -->
-        <div class="card mb-3">
-          <h3>AI/ML Intern | MOURI Tech, Hyderabad</h3>
-          <p><em>May 2024 – Jul 2024 · On-site</em></p>
-          <p>
-            Built a TensorFlow model on AWS for stock forecasts. Improved accuracy by ~15% and cut training from hours to under an hour
-            with distributed training and ONNX optimizations.
-          </p>
-        </div>
-
-        <!-- MagnaQuest -->
-        <div class="card mb-3">
-          <h3>Software Engineer Intern | MagnaQuest Technologies, Hyderabad</h3>
-          <p><em>May 2023 – Aug 2023 · On-site</em></p>
-          <p>
-            Built Node.js auth services and added Redis caching, making logins ~25% faster. Wrote tests and CI/CD so releases were quicker
-            and more reliable.
-          </p>
-        </div>
-
-        <!-- Math Learning Center Tutor -->
-        <div class="card mb-3">
-            <h3>Math Learning Center Tutor | UW–Madison</h3>
-            <p><em>Aug 2024 – Sep 2024 · Madison, WI · On-campus</em></p>
-            <p>
-            Tutored Calculus and Advanced Calculus. Helped students one-on-one and in small groups
-            with problem sets, proofs, and exam prep focusing on limits, derivatives, integrals, and clear step-by-step reasoning.
-            </p>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ===== PROJECTS SECTION ===== -->
-    <section class="projects" id="projects">
-      <div class="section-title" data-aos="fade-up" data-aos-duration="1000">
-        <h2>Projects</h2>
-      </div>
-
-      <div class="project-gallery">
-        <!-- Gym Tracking App -->
-        <div
-          class="project-item"
-          data-aos="zoom-in"
-          data-aos-duration="1000"
-          data-github="https://github.com/SrujayReddy/Gym-Tracking-Platform"
-        >
-          <div class="project-image">
-            <img src="assets/images/Gym-Tracking-App.jpg" alt="Gym Tracking App" />
-          </div>
-          <div class="project-content">
-            <h3>Gym Tracking App</h3>
-            <p>
-              Developed a full-stack Gym Tracking App with Java, Spring Boot, React, and MySQL. Added JWT security and optimized queries
-              for smooth, real-time analytics.
-            </p>
-            <a
-              href="https://github.com/SrujayReddy/Gym-Tracking-Platform"
-              target="_blank"
-              class="project-link"
-              >View on GitHub</a
-            >
-          </div>
-        </div>
-
-        <!-- Data Visualization Portal -->
-        <div
-          class="project-item"
-          data-aos="zoom-in"
-          data-aos-duration="1000"
-          data-github="https://github.com/SrujayReddy/Data-Website-Project"
-        >
-          <div class="project-image">
-            <img src="assets/images/Data-Website.jpg" alt="Data Visualization Portal" />
-          </div>
-          <div class="project-content">
-            <h3>Data Visualization Portal</h3>
-            <p>
-              Built a simple portal with Python/Flask and AWS that lets researchers create dashboards quickly, using S3 and Lambda for
-              secure storage and fast loads.
-            </p>
-            <a
-              href="https://github.com/SrujayReddy/Data-Website-Project"
-              target="_blank"
-              class="project-link"
-              >View on GitHub</a
-            >
-          </div>
-        </div>
-
-        <!-- Unix Shell (wsh) -->
-        <div
-          class="project-item"
-          data-aos="zoom-in"
-          data-aos-duration="1000"
-          data-github="https://github.com/SrujayReddy/Custom-Unix-Shell"
-        >
-          <div class="project-image">
-            <img src="assets/images/wsh.jpg" alt="Custom Unix Shell" />
-          </div>
-          <div class="project-content">
-            <h3>Unix Shell (wsh)</h3>
-            <p>
-              Engineered a custom Unix shell in C with piping and redirection, plus basic job control for managing background processes.
-            </p>
-            <a
-              href="https://github.com/SrujayReddy/Custom-Unix-Shell"
-              target="_blank"
-              class="project-link"
-              >View on GitHub</a
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== CONTACT SECTION ===== -->
-    <section class="contact" id="contact" data-aos="fade-up" data-aos-duration="1000">
-      <div class="section-title">
-        <h2>Contact</h2>
-      </div>
-      <div class="contact-content">
+    <!-- No-JS fallback -->
+    <noscript>
+      <div style="max-width:640px;margin:6rem auto;padding:0 1.5rem;color:#aab0bd">
+        <h1 style="color:#eceef2">Srujay Reddy Jakkidi</h1>
         <p>
-          <strong>Email:</strong>
-          <a href="mailto:srujayreddy15@gmail.com">srujayreddy15@gmail.com</a>
+          Forward Deployed Engineer at Strada (YC S23) in the San Francisco Bay Area. I design, build,
+          and deploy LLM-powered AI agents, and I measure systems until they're fast. UW–Madison B.S.
+          Honors in Computer Science &amp; Data Science.
         </p>
-        <p><strong>Phone:</strong> (331) 226-3606</p>
-        <p>Interested in collaborating or just want to chat? Shoot me a message!</p>
+        <p>
+          Email <a style="color:#22d3ee" href="mailto:srujayreddy15@gmail.com">srujayreddy15@gmail.com</a>
+          · <a style="color:#22d3ee" href="https://www.linkedin.com/in/srujay-jakkidi">LinkedIn</a>
+          · <a style="color:#22d3ee" href="https://github.com/SrujayReddy">GitHub</a>
+        </p>
       </div>
-    </section>
+    </noscript>
 
-    <!-- ===== FOOTER ===== -->
-    <footer class="footer">
-      <p>© 2025 Srujay Reddy Jakkidi</p>
-    </footer>
+    <!-- ⌘K command palette -->
+    <div id="palette" class="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+      <div class="palette__panel" role="document">
+        <div class="palette__input-row">
+          <span class="palette__glyph" aria-hidden="true">⌘K</span>
+          <input
+            class="palette__input"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-label="Command or question"
+            placeholder="Type a command, or “?” to ask anything…"
+          />
+          <span class="palette__mode" aria-hidden="true">commands</span>
+        </div>
+        <ul class="palette__list" role="listbox" aria-label="Commands"></ul>
+        <div class="palette__suggestions" hidden></div>
+        <div class="palette__answer" hidden></div>
+        <div class="palette__foot">
+          <span class="keys"><kbd>↑↓</kbd> navigate · <kbd>↵</kbd> select · <kbd>esc</kbd> close</span>
+          <span data-model-label>Agent: dormant · Claude Haiku 4.5</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- AOS JS -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Easter-egg overlay -->
+    <div id="egg-layer" aria-hidden="true"></div>
 
-    <!-- TYPED.JS -->
-    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
-
-    <!-- BOOTSTRAP BUNDLE JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- CUSTOM JS -->
-    <script src="script.js"></script>
-
-    <!-- Initialize AOS -->
-    <script>
-      AOS.init();
-    </script>
-
-    <!-- Audio element for Joey's voice -->
-    <audio id="joey-audio" src="assets/audio/joey.mp3"></audio>
-    <!-- Container for food animations -->
-    <div id="food-animation-container"></div>
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>
-

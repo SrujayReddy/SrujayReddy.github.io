@@ -146,6 +146,12 @@
   gap: 0.5rem;
   padding: 0.4rem 0.9rem 0.9rem;
 }
+/* class display:flex would otherwise override the [hidden] attribute */
+.palette__suggestions[hidden],
+.palette__answer[hidden],
+.palette__list[hidden] {
+  display: none;
+}
 .palette__suggestion {
   font-size: var(--fs-xs);
   color: var(--ink-dim);
