@@ -1,0 +1,215 @@
+/* command.css — ⌘K command palette + easter-egg overlay. */
+
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-palette);
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+  background: rgba(4, 5, 8, 0.6);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.palette.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.palette[hidden] { display: none; }
+
+.palette__panel {
+  width: min(640px, calc(100vw - 2rem));
+  background: rgba(17, 20, 27, 0.92);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 40px 120px -30px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  overflow: hidden;
+  transform: translateY(-10px) scale(0.985);
+  transition: transform var(--dur) var(--ease-out);
+}
+.palette.is-open .palette__panel { transform: none; }
+
+.palette__input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+.palette__glyph {
+  color: var(--violet);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+.palette__input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+}
+.palette__input::placeholder { color: var(--ink-mute); }
+.palette__mode {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-mute);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+}
+
+.palette__list {
+  list-style: none;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+.palette__item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--ink-dim);
+}
+.palette__item .icon {
+  width: 1.5rem;
+  text-align: center;
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+}
+.palette__item .label { flex: 1; color: var(--ink); font-size: var(--fs-sm); }
+.palette__item .hint { font-size: var(--fs-xs); color: var(--ink-mute); font-family: var(--font-mono); }
+.palette__item.is-active,
+.palette__item:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+.palette__item.is-active .icon { color: var(--cyan); }
+
+.palette__section-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 0.8rem 0.9rem 0.4rem;
+}
+
+/* Ask-mode answer area */
+.palette__answer {
+  padding: 1.1rem 1.3rem 1.4rem;
+  border-top: 1px solid var(--line);
+  max-height: 44vh;
+  overflow-y: auto;
+}
+.palette__answer p { color: var(--ink-dim); font-size: var(--fs-sm); margin-bottom: 0.8rem; }
+.palette__answer p:last-child { margin-bottom: 0; }
+.palette__answer .answer-text { color: var(--ink); white-space: pre-wrap; line-height: 1.55; }
+.palette__cursor {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1.05em;
+  background: var(--cyan);
+  vertical-align: text-bottom;
+  margin-left: 1px;
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.palette__state {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--ink-dim);
+}
+.palette__state .dot-rest {
+  margin-top: 0.45em;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ink-mute);
+  flex: none;
+}
+.palette__state.is-error .dot-rest { background: var(--ember); }
+.palette__state.is-live .dot-rest { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+
+.palette__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem 0.9rem;
+}
+/* class display:flex would otherwise override the [hidden] attribute */
+.palette__suggestions[hidden],
+.palette__answer[hidden],
+.palette__list[hidden] {
+  display: none;
+}
+.palette__suggestion {
+  font-size: var(--fs-xs);
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast);
+}
+.palette__suggestion:hover { border-color: rgba(139, 92, 246, 0.5); color: var(--ink); }
+
+.palette__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.1rem;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+}
+.palette__foot kbd {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 5px;
+  padding: 0.1em 0.45em;
+}
+.palette__foot .keys { display: flex; gap: 0.8rem; }
+
+/* ── Easter egg overlay ───────────────────────────────────────── */
+#egg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-egg);
+  pointer-events: none;
+  overflow: hidden;
+}
+.egg-food {
+  position: absolute;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  will-change: transform, opacity;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+.egg-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 9%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(17, 20, 27, 0.95);
+  border: 1px solid rgba(255, 92, 57, 0.5);
+  color: var(--ink);
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  box-shadow: 0 10px 40px rgba(255, 92, 57, 0.25);
+}
+.egg-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+.egg-toast .em { color: var(--ember); font-weight: 600; }

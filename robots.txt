@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://srujayreddy.github.io/sitemap.xml
