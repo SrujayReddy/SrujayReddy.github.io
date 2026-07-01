@@ -1,29 +1,80 @@
-/* tokens.css — design tokens. Color, type scale, spacing, motion. */
+/* tokens.css — design tokens. Light-first, with a dark override.
+ *
+ * Brand hues (indigo/violet/cyan) are CONSTANT across themes. Everything else
+ * is a SEMANTIC token that swaps between light (default, in :root) and dark
+ * (:root[data-theme="dark"]). Components must reference semantic tokens only —
+ * never a raw hue or a hardcoded white/black — so both themes stay coherent.
+ *
+ * The active theme is set on <html data-theme="…"> by the no-flash inline
+ * script in index.html before first paint (see js/theme.js for the toggle).
+ */
 
 :root {
-  /* ── Canvas & ink ─────────────────────────────────────────── */
-  --bg: #06070a;
-  --bg-raise: #0b0d12;
-  --bg-raise-2: #11141b;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
-
-  --ink: #eceef2;
-  --ink-dim: #aab0bd;
-  --ink-mute: #6b7280;
-
-  /* ── Accent plasma: indigo → violet → cyan ────────────────── */
+  /* ── Brand hues (theme-independent) ───────────────────────────── */
   --indigo: #6366f1;
   --violet: #8b5cf6;
   --cyan: #22d3ee;
-  --accent: var(--violet);
-  --plasma: linear-gradient(110deg, var(--indigo), var(--violet) 45%, var(--cyan));
-  --glow: 0 0 40px rgba(124, 92, 246, 0.35);
+  /* Accessible accent for TEXT on light surfaces (AA on near-white). */
+  --indigo-ink: #4f46e5;
+  --violet-ink: #7c3aed;
+  --cyan-ink: #0e7490;
 
   /* Warm ember — reserved for the easter egg only. */
   --ember: #ff5c39;
 
-  /* ── Type ─────────────────────────────────────────────────── */
+  /* ── LIGHT THEME (default) ────────────────────────────────────── */
+  color-scheme: light;
+
+  /* Canvas & surfaces — bright, airy, premium paper. */
+  --bg: #fbfbfd;            /* page background */
+  --bg-tint: #f4f5f8;       /* faint recessed wash */
+  --surface: #ffffff;       /* raised cards */
+  --surface-2: #f6f7fa;     /* secondary raised */
+  --surface-sunken: #eef0f5;
+  --on-accent: #ffffff;     /* text/icon on a plasma fill */
+
+  --line: rgba(13, 15, 22, 0.10);
+  --line-strong: rgba(13, 15, 22, 0.16);
+
+  /* Ink */
+  --ink: #0d0f14;           /* primary text */
+  --ink-dim: #475063;       /* secondary text */
+  --ink-mute: #6b7280;      /* tertiary / labels */
+
+  /* Accent semantic aliases (use the accessible inks for text on light). */
+  --accent: var(--violet-ink);
+  --accent-2: var(--indigo-ink);
+  --accent-3: var(--cyan-ink);
+
+  /* Plasma: slightly deepened stops so it reads on near-white. */
+  --plasma: linear-gradient(110deg, var(--indigo-ink), var(--violet-ink) 45%, var(--cyan-ink));
+  --plasma-bright: linear-gradient(110deg, var(--indigo), var(--violet) 45%, var(--cyan));
+  --glow: 0 0 40px rgba(124, 92, 246, 0.20);
+
+  /* Subtle tints / elevation (theme-aware so both modes stay coherent). */
+  --surface-faint: rgba(13, 15, 22, 0.035);
+  --surface-faint-2: rgba(13, 15, 22, 0.06);
+  --hover-tint: rgba(13, 15, 22, 0.03);
+  --surface-pop: rgba(255, 255, 255, 0.96);   /* popovers / palette panel */
+  --scrim: rgba(20, 22, 30, 0.30);            /* modal backdrop */
+  --shadow-pop: 0 30px 80px -28px rgba(20, 22, 50, 0.30),
+    0 0 0 1px rgba(13, 15, 22, 0.05) inset;
+  --nav-bg: linear-gradient(to bottom, rgba(251, 251, 253, 0.82), transparent);
+  --nav-bg-scrolled: rgba(251, 251, 253, 0.80);
+
+  /* Selection */
+  --select-bg: rgba(139, 92, 246, 0.22);
+  --select-fg: #0d0f14;
+
+  /* Faint plasma washes layered on the body (kept subtle on light). */
+  --wash-1: radial-gradient(120% 80% at 80% -10%, rgba(99, 102, 241, 0.10), transparent 60%);
+  --wash-2: radial-gradient(90% 60% at -10% 110%, rgba(34, 211, 238, 0.08), transparent 55%);
+
+  /* WebGL: how the particle substrate should render in this theme.
+   * Light = dark ink particles, normal blending, lower opacity. */
+  --canvas-opacity: 0.85;
+
+  /* ── Type ─────────────────────────────────────────────────────── */
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono",
@@ -45,7 +96,7 @@
 
   --tracking-eyebrow: 0.22em;
 
-  /* ── Space & layout ───────────────────────────────────────── */
+  /* ── Space & layout ───────────────────────────────────────────── */
   --maxw: 1180px;
   --maxw-narrow: 760px;
   --gutter: clamp(1.25rem, 5vw, 4rem);
@@ -54,16 +105,63 @@
   --radius: 14px;
   --radius-lg: 22px;
 
-  /* ── Motion ───────────────────────────────────────────────── */
+  /* ── Motion ───────────────────────────────────────────────────── */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 0.25s;
   --dur: 0.6s;
   --dur-slow: 1.1s;
+  --dur-theme: 0.5s; /* cross-theme color transition */
 
   --z-canvas: 0;
   --z-content: 1;
   --z-nav: 50;
   --z-palette: 100;
   --z-egg: 120;
+}
+
+/* ── DARK THEME (override) ──────────────────────────────────────── */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #06070a;
+  --bg-tint: #0b0d12;
+  --surface: #0f1218;
+  --surface-2: #11141b;
+  --surface-sunken: #0a0c11;
+  --on-accent: #08090d;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  --ink: #eceef2;
+  --ink-dim: #aab0bd;
+  --ink-mute: #6b7280;
+
+  /* On dark, the bright hues read best directly. */
+  --accent: var(--violet);
+  --accent-2: var(--indigo);
+  --accent-3: var(--cyan);
+
+  --plasma: linear-gradient(110deg, var(--indigo), var(--violet) 45%, var(--cyan));
+  --plasma-bright: var(--plasma);
+  --glow: 0 0 40px rgba(124, 92, 246, 0.35);
+
+  --surface-faint: rgba(255, 255, 255, 0.02);
+  --surface-faint-2: rgba(255, 255, 255, 0.06);
+  --hover-tint: rgba(255, 255, 255, 0.015);
+  --surface-pop: rgba(17, 20, 27, 0.92);
+  --scrim: rgba(4, 5, 8, 0.6);
+  --shadow-pop: 0 40px 120px -30px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  --nav-bg: linear-gradient(to bottom, rgba(6, 7, 10, 0.7), transparent);
+  --nav-bg-scrolled: rgba(6, 7, 10, 0.72);
+
+  --select-bg: rgba(139, 92, 246, 0.35);
+  --select-fg: #ffffff;
+
+  --wash-1: radial-gradient(120% 80% at 80% -10%, rgba(99, 102, 241, 0.08), transparent 60%);
+  --wash-2: radial-gradient(90% 60% at -10% 110%, rgba(34, 211, 238, 0.06), transparent 55%);
+
+  --canvas-opacity: 1;
 }
