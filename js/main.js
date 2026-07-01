@@ -47,6 +47,7 @@ function renderHero() {
       <a class="btn" href="${gh}" target="_blank" rel="noopener">GitHub ↗</a>
       <a class="btn" href="#thesis">See the thesis</a>
     </div>
+    <div class="hero__restyle" data-mount="restyle"></div>
     <div class="hero__scrollcue"><span class="bar"></span> Scroll</div>
   `
   );
@@ -106,6 +107,7 @@ function renderThesis() {
       <span class="eyebrow thesis__eyebrow">${esc(t.eyebrow)}</span>
       <h2 class="thesis__title gradient-text">${esc(t.title)}</h2>
       <p class="thesis__subtitle">${esc(t.subtitle)}</p>
+      ${t.context ? `<p class="thesis__context">${esc(t.context)}</p>` : ""}
       <p class="thesis__advisor">Advised by <b>${esc(t.advisor.name)}</b> — ${esc(t.advisor.note)}.</p>
     </div></div>
 
@@ -189,7 +191,6 @@ function renderExperience() {
     `
     <div class="section__head" data-reveal>
       <h2 class="section__title">Experience</h2>
-      <p class="lead" style="max-width:30ch">From hospital floors to real-time systems — measured every step.</p>
     </div>
     <div class="timeline">${rows}</div>
   `
@@ -218,7 +219,7 @@ function renderWork() {
     "work",
     `
     <div class="section__head" data-reveal>
-      <h2 class="section__title">Selected work</h2>
+      <h2 class="section__title">Projects</h2>
       <a class="link-underline" href="${content.contact.links.find((l) => l.label === "GitHub").href}" target="_blank" rel="noopener">All projects on GitHub ↗</a>
     </div>
     <div class="work__grid">${cards}</div>
@@ -313,7 +314,7 @@ function renderContact() {
     "footer",
     `
     <span>© ${new Date().getFullYear()} ${esc(content.identity.name)}</span>
-    <span>Built with WebGL · GSAP · a Cloudflare-hosted Claude agent</span>
+    <button class="egg-btn" type="button" data-egg aria-label="Joey doesn't share food" title="Joey doesn't share food">🍕</button>
   `
   );
 }
@@ -398,7 +399,7 @@ function applyStaticThesis() {
 
 function applyStaticHero() {
   document.querySelectorAll(".hero__title .line > span").forEach((s) => (s.style.transform = "none"));
-  document.querySelectorAll(".hero__name, .hero__eyebrow, .hero__sub, .hero__cta").forEach((e) => {
+  document.querySelectorAll(".hero__name, .hero__eyebrow, .hero__sub, .hero__cta, .hero__restyle").forEach((e) => {
     e.style.opacity = "1";
     e.style.transform = "none";
   });
@@ -464,6 +465,8 @@ function boot() {
   nativeReveal();
   const fireEgg = initEasterEgg();
   initAgent({ onPizza: fireEgg });
+  // Visible pizza affordance (same egg, wherever a [data-egg] control appears).
+  document.querySelectorAll("[data-egg]").forEach((b) => b.addEventListener("click", fireEgg));
   initVibe();
 
   if (reduced) {

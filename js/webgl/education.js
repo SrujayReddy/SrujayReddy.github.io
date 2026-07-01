@@ -52,11 +52,12 @@ export function makeEducationAct() {
   let THREE, group, capPivot, board, skull, button;
   let cordGeo, cordMat, fringeGeo, fringeMat, cordCurvePts, tubePts, renderCurve;
   let nodes, prev, segLen, nodeCount, tubular, radial, eIdx;
-  let gLocal, vTmp, vEdge, vLocal, qInv;
+  let gLocal, vTmp, vEdge, vLocal, qInv, vAnchor;
   let lights;
   let velvetMats, goldMats;
   let cSheenL, cSheenD, cVelEmis, cGoldL, cGoldD, cGoldEmis, cFringeL, cFringeD;
   let themeVal = 0, themeMix = 0, themeTargetV = 0, themePrimed = false;
+  let baseX = 2.05, baseY = 0.28, baseScale = 0.66; // responsive placement (see resize)
   let progress = 0;
   let twirl = -0.5, pitchS = 0.12, rollS = -0.16;
   let accumulator = 0, timeAcc = 0;
@@ -92,9 +93,14 @@ export function makeEducationAct() {
       const envMap = envRT.texture;
 
       group = new THREE.Group();
-      group.position.set(typeof window !== "undefined" && window.__eduCenter ? 0 : 2.05, 0.28, 0);
+      // Responsive placement: desktop = right half beside the copy; narrow = centered
+      // ABOVE the copy (x 2.05 would be off-screen on a phone — the "out of plane" bug).
+      const eduCenter = typeof window !== "undefined" && window.__eduCenter;
+      if (eduCenter) { baseX = 0; baseY = 0.28; baseScale = 0.66; }
+      else if (isMobile) { baseX = 0; baseY = 1.55; baseScale = 0.42; }
+      group.position.set(baseX, baseY, 0);
       group.rotation.x = 0.24; // front 3/4 — low enough that the crown reads below the board
-      group.scale.setScalar(0.66); // a touch larger for presence, still frames the copy
+      group.scale.setScalar(baseScale);
 
       capPivot = new THREE.Group();
       group.add(capPivot);
@@ -189,6 +195,7 @@ export function makeEducationAct() {
       vTmp = new THREE.Vector3();
       vEdge = new THREE.Vector3();
       vLocal = new THREE.Vector3();
+      vAnchor = new THREE.Vector3();
       qInv = new THREE.Quaternion();
 
       velvetMats = [board.material, skull.material];
@@ -241,7 +248,7 @@ export function makeEducationAct() {
       const toss = Math.max(0, (progress - 0.82) / 0.18);
       const tossE = toss * toss * (3 - 2 * toss);
       capPivot.rotation.set(pitchS + tossE * 0.28, twirl, rollS + Math.sin(timeAcc * 0.5) * 0.006);
-      group.position.y = 0.28 + tossE * 0.6;
+      group.position.y = baseY + tossE * 0.6;
       qInv.copy(capPivot.quaternion).invert();
 
       timeAcc += dt;
@@ -273,7 +280,18 @@ export function makeEducationAct() {
     },
 
     cameraRig() {},
-    resize() {},
+    // Keep the cap IN the visible plane across resizes/orientation changes:
+    // desktop = right half beside the copy; narrow = smaller, centered above it.
+    resize(w) {
+      if (!group) return;
+      if (typeof window !== "undefined" && window.__eduCenter) return; // lab stays centered
+      const narrow = w < 760;
+      baseX = narrow ? 0 : 2.05;
+      baseY = narrow ? 1.55 : 0.28;
+      baseScale = narrow ? 0.42 : 0.66;
+      group.position.x = baseX;
+      group.scale.setScalar(baseScale);
+    },
     dispose() {
       if (cordGeo) cordGeo.dispose();
       if (fringeGeo) fringeGeo.dispose();
@@ -363,25 +381,48 @@ export function makeEducationAct() {
   }
 
   function resolveLocal(v, margin) {
-    const hx = BOX_HX + margin, hy = BOX_HY + margin, hz = BOX_HZ + margin;
-    const rx = v.x, ry = v.y - BOX_CY, rz = v.z;
-    if (Math.abs(rx) < hx && Math.abs(ry) < hy && Math.abs(rz) < hz) {
-      // The tassel must NEVER sink under the board: the vertical option is always
-      // "lift to the TOP", never push out the bottom. Side/front faces still let the
-      // cord drape over the front edge. (Fixes "falls through the top, slowly recovers".)
-      const pTop = hy - ry;            // cost to lift this point up to the top surface
-      const px = hx - Math.abs(rx);
-      const pz = hz - Math.abs(rz);
-      if (pTop <= px && pTop <= pz) v.y = BOX_CY + hy;
-      else if (px <= pz) v.x = rx >= 0 ? hx : -hx;
-      else v.z = rz >= 0 ? hz : -hz;
+    // Work relative to the SOLID (cord-expanded) board box.
+    let rx = v.x, ry = v.y - BOX_CY, rz = v.z;
+    const bx = BOX_HX, by = BOX_HY, bz = BOX_HZ;
+
+    if (Math.abs(rx) < bx && Math.abs(ry) < by && Math.abs(rz) < bz) {
+      // INSIDE the board → evict to the least-penetrating face + margin, but NEVER
+      // the bottom (else the tassel sinks under the board and slowly climbs back).
+      let best = by - ry, axis = 0; // 0=top
+      const pxr = bx - rx, pxl = bx + rx, pzr = bz - rz, pzl = bz + rz;
+      if (pxr < best) { best = pxr; axis = 1; }
+      if (pxl < best) { best = pxl; axis = 2; }
+      if (pzr < best) { best = pzr; axis = 3; }
+      if (pzl < best) { best = pzl; axis = 4; }
+      if (axis === 0) ry = by + margin;
+      else if (axis === 1) rx = bx + margin;
+      else if (axis === 2) rx = -(bx + margin);
+      else if (axis === 3) rz = bz + margin;
+      else rz = -(bz + margin);
+    } else if (margin > 0) {
+      // OUTSIDE → rounded-box push-out: keep the point ≥ margin from the NEAREST
+      // point on the box. Unlike an axis-aligned face push, this clears the board's
+      // EDGES and CORNERS too — exactly where the cord wraps as it drapes over the
+      // front edge (the "cuts through the edge while scrolling" clip).
+      const qx = Math.max(-bx, Math.min(bx, rx));
+      const qy = Math.max(-by, Math.min(by, ry));
+      const qz = Math.max(-bz, Math.min(bz, rz));
+      const dx = rx - qx, dy = ry - qy, dz = rz - qz;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < margin * margin && d2 > 1e-12) {
+        const d = Math.sqrt(d2), s = margin / d;
+        rx = qx + dx * s; ry = qy + dy * s; rz = qz + dz * s;
+      }
     }
-    const dx = v.x - SKULL_C.x, dy = v.y - SKULL_C.y, dz = v.z - SKULL_C.z;
-    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    v.x = rx; v.y = ry + BOX_CY; v.z = rz;
+
+    // skullcap sphere (unchanged)
+    const sx = v.x - SKULL_C.x, sy = v.y - SKULL_C.y, sz = v.z - SKULL_C.z;
+    const sd = Math.sqrt(sx * sx + sy * sy + sz * sz);
     const minD = SKULL_R + CORD_R + margin;
-    if (d < minD && d > 1e-4) {
-      const s = minD / d;
-      v.x = SKULL_C.x + dx * s; v.y = SKULL_C.y + dy * s; v.z = SKULL_C.z + dz * s;
+    if (sd < minD && sd > 1e-4) {
+      const s = minD / sd;
+      v.x = SKULL_C.x + sx * s; v.y = SKULL_C.y + sy * s; v.z = SKULL_C.z + sz * s;
     }
   }
 

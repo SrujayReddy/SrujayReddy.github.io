@@ -39,7 +39,7 @@ operations in TypeScript/Node.js. Works hands-on with enterprise customers. Focu
 orchestration, tool-calling, Temporal, real-world performance. Stack: TypeScript, Node, React, Temporal.
 
 THESIS — "Where Does the Time Go? Decomposing Kubernetes Pod Startup Latency Under Bandwidth
-Constraints" (published in MINDS@UW, Jun 2026), advised by Prof. Remzi Arpaci-Dusseau (co-author of
+Constraints" (published in MINDS@UW, Jun 2026), advised by Prof. Remzi Arpaci-Dusseau (author of
 OSTEP). Built a high-precision measurement system showing container image pull accounts for 93–99%
 of Kubernetes cold-start latency under bandwidth constraints. Presented at the 2026 L&S Senior Honors
 Thesis Symposium. He also authored and presented (onstage) the 2026 L&S Excellence in Honors Thesis
@@ -57,7 +57,7 @@ EXPERIENCE:
 - MOURI Tech, AI/ML Intern (May–Jul 2024): TensorFlow stock-prediction on AWS, ONNX + distributed
   EC2 training, +15% accuracy.
 
-SELECTED WORK: Gym Tracking App (React/Java/MySQL, JWT, <200ms), Path Finder (Java, Dijkstra),
+PROJECTS: Gym Tracking App (React/Java/MySQL, JWT, <200ms), Path Finder (Java, Dijkstra),
 Custom Unix Shell wsh (C), Data Visualization Portal (Flask/AWS).
 
 BEYOND THE CODE: GUTS tutoring (Math & CS), Badger Volunteers, Cybersecurity UW, Dean's List x2.

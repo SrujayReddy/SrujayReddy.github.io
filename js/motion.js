@@ -45,13 +45,13 @@ export function initMotion({ director, field } = {}) {
   // translateY(110%) to avoid FOUC, but that lands in the px translate channel
   // which gsap's yPercent tween can't clear — so seed yPercent explicitly.
   gsap.set(heroSpans, { yPercent: 110 });
-  gsap.set(".hero__name, .hero__eyebrow, .hero__sub, .hero__cta", { opacity: 0, y: 12 });
+  gsap.set(".hero__name, .hero__eyebrow, .hero__sub, .hero__cta, .hero__restyle", { opacity: 0, y: 12 });
   gsap
     .timeline({ delay: 0.15 })
     .to(".hero__name", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" })
     .to(heroSpans, { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.08 }, "-=0.5")
     .to(
-      ".hero__eyebrow, .hero__sub, .hero__cta",
+      ".hero__eyebrow, .hero__sub, .hero__cta, .hero__restyle",
       { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.08 },
       "-=0.7"
     );

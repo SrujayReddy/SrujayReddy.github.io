@@ -202,6 +202,58 @@ looked artificial, wanted a CLASSY diagonal twirl and a real high-quality look.
       in the final ~18% of the scroll the cap floats up and tips like the toss. Verified light, dark,
       and **mobile (375px, 18-node tassel)**. cap-physics still 0.00000; full suite green.
 
+## Round 9 (this session — owner content pass · cap scroll-clip fix · demo onto the hero)
+
+Owner batch, ALL verified live (light + mobile) with zero console errors:
+- [x] **Copy/content**: positioning statement replaced with the owner's new "observable, measurable,
+      resilient" paragraph (resized from display-h1 to a 42ch statement; new emphasis words);
+      thesis eyebrow "Honors Thesis" (MINDS@UW dropped); a plain-language `thesis.context` paragraph
+      (renders under the subtitle) so the data-viz isn't opaque; REAL MINDS@UW paper permalink;
+      advisor = "author of OSTEP" (not co-author); ALL "approx." badges removed (toConfirm flags
+      dropped from breakdown + fix); education "Dean's List" fact → "Thesis … published in MINDS@UW";
+      Experience lead line removed; "Selected work" → "Projects" everywhere (heading, nav, ⌘K command,
+      knowledgeBase + worker SYSTEM_PROMPT).
+- [x] **Cap scroll-clipping ROOT-CAUSED + fixed** (`education.js`): during scroll transients the cord
+      cut through the board's front EDGE — the old collision pushed points off the nearest FACE
+      (axis-aligned), which does nothing at a convex edge/corner where the tube wraps. Rewrote
+      `resolveLocal` as inside→least-pen face eviction (never the bottom) + OUTSIDE **rounded-box
+      (SDF) push-out** to the nearest point on the box. `tests/cap-physics.mjs` upgraded to a
+      rounded-box distance check against the REAL board extents with the REAL max cord radius
+      (0.058) — it now catches edge/corner pokes; all penetrations 0.00000. Verified visually in the
+      lab mid-scroll (1 physics frame per progress step) at p≈0.55 and p≈0.95.
+- [x] **Live-restyle demo moved onto the HERO as a page feature** (owner: drop the "Vibe" branding,
+      no standalone section): `#bench` section + "Studio" nav link removed; a compact widget under
+      the hero CTAs — mono label "Live demo — restyle this whole page:", 6 preset swatches + 🎲 +
+      an "or describe a look…" input, mood pill + Reset. All `data-vibe-*` logic/machinery unchanged
+      (presets, keyword routing, worker {mode:"vibe"}, contrast gating). New `styles/vibe.css` compact
+      styles; included in the hero GSAP entrance + `applyStaticHero` fallback. Verified: one click →
+      whole page restyles (sunset brutalist), Reset restores, mobile wraps cleanly at 560px.
+- [x] **Pizza egg has a visible home again**: a discreet 🍕 button in the footer (`.egg-btn`,
+      grayscale until hover) wired to the SAME `fire()` — burst + "Joey doesn't share food." toast
+      (role=status) verified. ⌘K command + Konami still work. Footer "Built with WebGL·GSAP·Claude
+      agent" line removed.
+- [x] **Path Finder thumbnail** (`assets/images/path-finder.svg`): procedural campus-map SVG —
+      faint street grid, lake nod, dashed explored edges, plasma-gradient shortest path, start/dest
+      pins, mono caption. Wired into the project card; sits well beside the photo cards.
+- [x] **Experience polish**: editorial chapter indices (01–04 via CSS counters) above each org +
+      an accent inset-bar hover. Quiet credibility, no layout shift.
+
+## Round 10 (final polish — resume removed · mobile plane fix · demo re-marketed)
+
+- [x] **"Download résumé" removed entirely** (owner request): command gone from `content.commands`,
+      probe + action stripped from `agent.js`, `RESUME_PATH` dropped from `config.js`. ⌘K verified: 10
+      commands, no resume.
+- [x] **Mobile "out of plane" cap FIXED**: the cap's desktop placement (world x=2.05, right half) is
+      off-screen on a phone frustum (~±1.2 world units). Now responsive — narrow viewports center it
+      in the top third (x=0, y=1.55, scale 0.42) with the copy pushed below (30svh padding, only when
+      the 3D cap is live), and `resize(w)` repositions on orientation change. Verified at 375×812:
+      cap fully in-frame above the heading. Physics still 0.00000.
+- [x] **Demo re-marketed** (owner: "Live demo" was weak): the hero line is now
+      "**Good software adapts to its users. This page does — pick a look:**" — ties the widget to the
+      FDE positioning instead of demo-speak. aria-labels + placeholder updated ("or describe your own…").
+- [x] Final sweep: all 3 tests PASS, all JS syntax-checked, zero console errors, desktop + mobile
+      screenshots verified. Committed + pushed to `feat/cinematic-portfolio` (PR #2).
+
 ## In progress
 
 - [~] Thesis "Latency Clock": the field now has a `clock` formation (ring split by

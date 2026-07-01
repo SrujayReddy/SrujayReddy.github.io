@@ -19,9 +19,6 @@ export const config = {
   // Optional Cloudflare Turnstile site key (bot-proofing). Empty = disabled.
   TURNSTILE_SITE_KEY: "",
 
-  // If you drop a résumé at this path, the "Download résumé" command appears.
-  RESUME_PATH: "assets/resume.pdf",
-
   // Cosmetic: model label shown in the palette footer. The real model is
   // chosen in the Worker (default: Claude Haiku 4.5).
   MODEL_LABEL: "Claude Haiku 4.5",

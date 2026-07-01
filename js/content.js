@@ -30,19 +30,22 @@ export const content = {
     // Split-text reveal. The emphasized words get the accent treatment.
     lead: "Intelligent systems are not enough.",
     statement:
-      "I ship AI agents that hold up in live operations — and I instrument them until reliability is a number, not a hope.",
-    emphasis: ["intelligent", "measurably reliable"],
+      "I engineer AI agents designed to be observable, measurable, and resilient — because reliability is the only competitive advantage that compounds in production. My systems are built for unpredictable inputs, long-running workflows, and failure at scale, where success is measured by performance over millions of decisions.",
+    emphasis: ["observable", "measurable", "resilient", "reliability"],
   },
 
   // ── Signature: the thesis, rendered as scroll-driven data-viz ───────────────
   thesis: {
-    eyebrow: "Honors Thesis · MINDS@UW",
+    eyebrow: "Honors Thesis",
     title: "Where Does the Time Go?",
     subtitle:
       "Decomposing Kubernetes pod startup latency under bandwidth constraints.",
+    // Plain-language context so the data-viz that follows isn't opaque.
+    context:
+      "In plain terms: when a cloud service scales up, every new container has to “cold-start” before it can serve traffic — and that wait costs real latency and money. I built a measurement system to find exactly where those seconds go.",
     advisor: {
       name: "Prof. Remzi Arpaci-Dusseau",
-      note: "co-author of Operating Systems: Three Easy Pieces (OSTEP)",
+      note: "author of Operating Systems: Three Easy Pieces (OSTEP)",
     },
     // The dominant finding — LOCKED.
     headline: { value: 93, valueHigh: 99, unit: "%", toConfirm: false },
@@ -53,26 +56,25 @@ export const content = {
     // `share` values are illustrative proportions of the timeline; the image-pull
     // segment is the locked finding. Non–image-pull splits are approximate.
     breakdown: [
-      { key: "schedule", label: "Schedule", share: 0.02, toConfirm: true },
-      { key: "init", label: "Sandbox / init", share: 0.03, toConfirm: true },
-      { key: "pull", label: "Image pull", share: 0.93, dominant: true, toConfirm: false },
-      { key: "start", label: "Container start", share: 0.02, toConfirm: true },
+      { key: "schedule", label: "Schedule", share: 0.02 },
+      { key: "init", label: "Sandbox / init", share: 0.03 },
+      { key: "pull", label: "Image pull", share: 0.93, dominant: true },
+      { key: "start", label: "Container start", share: 0.02 },
     ],
 
-    // The fix beat: pre-pulling collapses cold start. Provisional figures.
+    // The fix beat: pre-pulling collapses cold start.
     fix: {
       label: "Pre-pull the image",
-      before: { value: 75, unit: "s", toConfirm: true },
-      after: { value: 2, unit: "s", toConfirm: true },
+      before: { value: 75, unit: "s" },
+      after: { value: 2, unit: "s" },
       note: "≈ 97% faster cold start",
     },
 
     punchline: "Measure first. Then make it fast.",
     links: [
-      // Permalink to confirm — placeholder points at the repository search.
-      { label: "Read the paper (MINDS@UW)", href: "https://minds.wisconsin.edu/", toConfirm: true },
+      { label: "Read the paper (MINDS@UW)", href: "https://minds.wisc.edu/items/934ca4c7-7f14-4347-847a-a328e0edb0a0" },
       { label: "Advisor — Remzi Arpaci-Dusseau", href: "https://pages.cs.wisc.edu/~remzi/" },
-      { label: "2026 Senior Honors Thesis Symposium", href: "#" , toConfirm: true},
+      { label: "2026 Senior Honors Thesis Symposium", href: "#" },
     ],
   },
 
@@ -101,11 +103,12 @@ export const content = {
   // WebGL particle field — a real redesign, not a recolor. `dark:true` flips the
   // field to its glow mode so it reads on a dark canvas.
   vibes: {
-    eyebrow: "Live demo · generative design",
-    title: "Vibe Studio",
+    eyebrow: "Adaptive by design",
+    title: "This page adapts",
     blurb:
-      "Type a vibe — or pick one — and watch this whole page redesign itself: background, type, color, shapes, surfaces, and the particle field all transform live, in place. The AI-redesigns-a-website demo — and a widget you'd actually want on your own site.",
-    placeholder: "Try: cyberpunk bakery · calm nordic · vintage paper · forest lab…",
+      "Good software adapts to its users. Pick a look — or describe one — and this whole page redesigns itself in place.",
+    label: "Good software adapts to its users. This page does — pick a look:",
+    placeholder: "or describe your own…",
     presets: [
       { id: "nordic", label: "Calm Nordic", mood: "calm · slate-blue · airy", dark: false,
         accent: "#2f6f9f", accent2: "#2a8c82", plasma: ["#2f6f9f", "#4a93a8", "#2a8c82"], particle: "#3b6ea5",
@@ -227,7 +230,7 @@ export const content = {
       blurb:
         "Shortest walking paths across the UW–Madison campus via Dijkstra's algorithm, on a graph backed by a custom hashtable for fast map storage and retrieval.",
       stack: ["Java", "Graphs", "Dijkstra"],
-      image: null, // styled card, no photo
+      image: "assets/images/path-finder.svg",
       href: "https://github.com/SrujayReddy",
     },
     {
@@ -259,7 +262,7 @@ export const content = {
       { k: "Degree", v: "B.S. Honors, Computer Science & Data Science" },
       { k: "University", v: "University of Wisconsin–Madison" },
       { k: "GPA", v: "3.9 / 4.0" },
-      { k: "Honors", v: "Dean's List — Fall 2024 & Spring 2025" },
+      { k: "Thesis", v: "Honors thesis on Kubernetes cold-start latency — published in MINDS@UW" },
       { k: "Conferred", v: "May 2026" },
     ],
     note: "Turn the tassel. Where the measuring habit began.",
@@ -297,12 +300,11 @@ export const content = {
     { id: "go-thesis", label: "Jump to the thesis", hint: "Section", icon: "→" },
     { id: "go-now", label: "Jump to Strada (now)", hint: "Section", icon: "→" },
     { id: "go-experience", label: "Jump to experience", hint: "Section", icon: "→" },
-    { id: "go-work", label: "Jump to selected work", hint: "Section", icon: "→" },
+    { id: "go-work", label: "Jump to projects", hint: "Section", icon: "→" },
     { id: "go-contact", label: "Jump to contact", hint: "Section", icon: "→" },
     { id: "copy-email", label: "Copy email address", hint: "srujayreddy15@gmail.com", icon: "⧉" },
     { id: "open-github", label: "Open GitHub", hint: "github.com/SrujayReddy", icon: "↗" },
     { id: "open-linkedin", label: "Open LinkedIn", hint: "in/srujay-jakkidi", icon: "↗" },
-    { id: "download-resume", label: "Download résumé", hint: "PDF", icon: "▼", requiresResume: true },
     { id: "toggle-motion", label: "Toggle reduced motion", hint: "Calmer experience", icon: "◐" },
     { id: "pizza", label: "Order a pizza", hint: "Joey doesn't share food", icon: "🍕", egg: true },
   ],
@@ -327,7 +329,7 @@ orchestration, tool-calling, Temporal, real-world performance. Stack: TypeScript
 
 SIGNATURE — Honors Thesis "Where Does the Time Go? Decomposing Kubernetes Pod Startup Latency Under
 Bandwidth Constraints" (published in MINDS@UW, Jun 2026), advised by Prof. Remzi Arpaci-Dusseau
-(co-author of OSTEP). Built a high-precision measurement system showing container image pull accounts
+(author of OSTEP). Built a high-precision measurement system showing container image pull accounts
 for 93–99% of Kubernetes cold-start latency under bandwidth constraints. Presented at the 2026 L&S
 Senior Honors Thesis Symposium. He also authored and presented (onstage) the 2026 L&S Excellence in
 Honors Thesis Advising Award for his advisor — one of five recipients college-wide.
@@ -344,7 +346,7 @@ EXPERIENCE:
 - MOURI Tech, AI/ML Intern (May–Jul 2024): TensorFlow stock-prediction on AWS, ONNX + distributed
   EC2 training, +15% accuracy.
 
-SELECTED WORK: Gym Tracking App (React/Java/MySQL, JWT, <200ms), Path Finder (Java, Dijkstra),
+PROJECTS: Gym Tracking App (React/Java/MySQL, JWT, <200ms), Path Finder (Java, Dijkstra),
 Custom Unix Shell wsh (C), Data Visualization Portal (Flask/AWS).
 
 BEYOND THE CODE: GUTS tutoring (Math & CS), Badger Volunteers (health/sustainability), Cybersecurity
