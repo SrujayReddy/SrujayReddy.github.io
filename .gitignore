@@ -1,4 +1,6 @@
 .DS_Store
 *.log
+*.bundle
+.claude/
 agent-worker/node_modules/
 .wrangler/

@@ -73,6 +73,7 @@ export function initEasterEgg() {
     // toast (always — the line is the payoff)
     const toast = document.createElement("div");
     toast.className = "egg-toast";
+    toast.setAttribute("role", "status"); // implicit aria-live="polite" — announced to SR
     toast.innerHTML = `<span class="em">Joey</span> doesn't share food.`;
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add("is-shown"));

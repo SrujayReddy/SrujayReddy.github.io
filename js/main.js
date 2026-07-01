@@ -9,6 +9,8 @@
 import { content } from "./content.js";
 import { initAgent } from "./agent.js";
 import { initEasterEgg } from "./easter-egg.js";
+import { initTheme } from "./theme.js";
+import { initVibe } from "./vibe.js";
 
 // three / gsap / lenis are loaded lazily (dynamic import) so a CDN hiccup
 // degrades to a fully-rendered static page instead of a blank one.
@@ -85,10 +87,14 @@ function renderThesis() {
     .map((s) => `<span>${esc(s.label)} ${(s.share * 100).toFixed(0)}%${tc(s.toConfirm)}</span>`)
     .join("");
   const links = t.links
-    .map(
-      (l) =>
-        `<a href="${l.href}" target="_blank" rel="noopener">${esc(l.label)}${tc(l.toConfirm)}</a>`
-    )
+    .map((l) => {
+      const label = `${esc(l.label)}${tc(l.toConfirm)}`;
+      // A placeholder href ("#") would ship a dead anchor — render it as a
+      // non-interactive pending item until the real URL exists.
+      return !l.href || l.href === "#"
+        ? `<span class="thesis__link-pending">${label}</span>`
+        : `<a href="${l.href}" target="_blank" rel="noopener">${label}</a>`;
+    })
     .join("");
 
   mount(
@@ -216,6 +222,53 @@ function renderWork() {
       <a class="link-underline" href="${content.contact.links.find((l) => l.label === "GitHub").href}" target="_blank" rel="noopener">All projects on GitHub ↗</a>
     </div>
     <div class="work__grid">${cards}</div>
+  `
+  );
+}
+
+// ── Education: "The Turning of the Tassel" ────────────────────
+function capSVG() {
+  // Line-art mortarboard with the tassel resting LEFT (the turn complete).
+  return `
+    <svg class="edu__capsvg" viewBox="0 0 260 210" fill="none" aria-hidden="true">
+      <polygon points="130,38 238,82 130,126 22,82" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M78,104 C78,104 104,124 130,124 C156,124 182,104 182,104 L182,128 C182,128 156,150 130,150 C104,150 78,128 78,128 Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="130" cy="82" r="5.5" fill="currentColor"/>
+      <path d="M130,82 C104,92 60,96 52,128" stroke="var(--violet)" stroke-width="2.4" stroke-linecap="round"/>
+      <g stroke="var(--violet)" stroke-width="2.2" stroke-linecap="round">
+        <line x1="50" y1="130" x2="46" y2="166"/>
+        <line x1="54" y1="131" x2="53" y2="170"/>
+        <line x1="58" y1="130" x2="61" y2="166"/>
+      </g>
+      <circle cx="54" cy="129" r="4" fill="var(--violet)"/>
+      <rect x="44" y="166" width="20" height="9" rx="3" fill="var(--violet)"/>
+    </svg>`;
+}
+
+function renderEducation() {
+  const e = content.education;
+  const facts = e.facts
+    .map(
+      (f, i) =>
+        `<li class="edu__fact" data-edu-fact style="--i:${i}"><span class="k">${esc(f.k)}</span><span class="v">${esc(f.v)}</span></li>`
+    )
+    .join("");
+  mount(
+    "education",
+    `
+    <div class="edu__rail" aria-hidden="true">${e.facts
+      .map((_, i) => `<span class="tick${i === 0 ? " is-active" : ""}"></span>`)
+      .join("")}</div>
+    <div class="wrap edu__layout">
+      <div class="edu__copy">
+        <span class="eyebrow" data-reveal>${esc(e.eyebrow)}</span>
+        <h2 class="edu__school gradient-text">${esc(e.school)}</h2>
+        <p class="edu__degree">${esc(e.degree)}</p>
+        <ul class="edu__facts">${facts}</ul>
+        <p class="edu__note">${esc(e.note)}</p>
+      </div>
+      <div class="edu__cap">${capSVG()}</div>
+    </div>
   `
   );
 }
@@ -355,6 +408,43 @@ function applyStaticHero() {
   });
 }
 
+// Build the thesis "latency clock" formation: particles arranged on a thin ring,
+// split into arcs by each cold-start phase's share. Image pull is the dominant
+// finding, so ~93% of the ring is one glowing arc — the truth, drawn as a clock
+// that is almost entirely one phase.
+function buildClockFormation(count, breakdown) {
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count);
+  const total = breakdown.reduce((s, b) => s + b.share, 0) || 1;
+  const bounds = [];
+  let acc = 0;
+  for (const b of breakdown) {
+    const start = acc / total;
+    acc += b.share;
+    bounds.push({ start, end: acc / total, dominant: !!b.dominant });
+  }
+  const R = 2.2;
+  const thickness = 0.34;
+  for (let i = 0; i < count; i++) {
+    const r = Math.random();
+    let seg = bounds[bounds.length - 1];
+    for (const b of bounds) {
+      if (r >= b.start && r < b.end) { seg = b; break; }
+    }
+    const span = seg.end - seg.start || 1;
+    const t = (r - seg.start) / span;
+    const a0 = seg.start * Math.PI * 2;
+    const a1 = seg.end * Math.PI * 2;
+    const ang = -Math.PI / 2 - (a0 + t * (a1 - a0)); // start at 12 o'clock, sweep clockwise
+    const rad = R + (Math.random() - 0.5) * thickness;
+    positions[i * 3] = Math.cos(ang) * rad;
+    positions[i * 3 + 1] = Math.sin(ang) * rad;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+    colors[i] = seg.dominant ? 0.6 + Math.random() * 0.4 : Math.random() * 0.06;
+  }
+  return { positions, colors };
+}
+
 // ── boot ──────────────────────────────────────────────────────
 function boot() {
   renderHero();
@@ -363,15 +453,18 @@ function boot() {
   renderNow();
   renderExperience();
   renderWork();
+  renderEducation();
   renderBeyond();
   renderContact();
 
   // Baseline that never depends on a CDN.
+  initTheme();
   navState();
   nativeAnchors();
   nativeReveal();
   const fireEgg = initEasterEgg();
   initAgent({ onPizza: fireEgg });
+  initVibe();
 
   if (reduced) {
     document.documentElement.classList.add("no-webgl");
@@ -380,15 +473,31 @@ function boot() {
     return;
   }
 
-  // Progressive enhancement: WebGL + GSAP/Lenis, each optional.
+  // Progressive enhancement: WebGL (SceneDirector) + GSAP/Lenis, each optional.
   (async () => {
-    let scene = null;
+    let director = null;
+    let field = null;
     const canvas = document.getElementById("webgl-canvas");
     if (canvas && hasWebGL()) {
       try {
-        const mod = await import("./webgl/scene.js");
-        scene = mod.createScene(canvas, { onReady: () => canvas.classList.add("is-ready") });
-        document.addEventListener("visibilitychange", () => scene.setRunning(!document.hidden));
+        const [{ createSceneDirector }, { makeFieldAct }, { makeEducationAct }] = await Promise.all([
+          import("./webgl/director.js"),
+          import("./webgl/field.js"),
+          import("./webgl/education.js"),
+        ]);
+        director = createSceneDirector(canvas, {
+          getTheme: () => document.documentElement.getAttribute("data-theme") || "light",
+        });
+        field = director.register(makeFieldAct());
+        director.register(makeEducationAct());
+        const clock = buildClockFormation(field.count, content.thesis.breakdown);
+        field.addFormation("clock", clock.positions, clock.colors);
+        director.setActive("field", true);
+        director.onReady(() => canvas.classList.add("is-ready"));
+        window.addEventListener("themechange", (e) => director.setTheme(e.detail.theme));
+        document.addEventListener("visibilitychange", () => director.setRunning(!document.hidden));
+        // Deterministic verification hook (rAF is throttled in hidden tabs).
+        window.__cinema = { director, field };
       } catch (e) {
         document.documentElement.classList.add("no-webgl");
         console.warn("WebGL deps unavailable; static canvas.", e);
@@ -399,7 +508,7 @@ function boot() {
 
     try {
       const mod = await import("./motion.js");
-      mod.initMotion({ scene });
+      mod.initMotion({ director, field });
     } catch (e) {
       console.warn("Motion deps unavailable; static layout.", e);
       applyStaticHero();

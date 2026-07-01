@@ -31,16 +31,16 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  /* faint plasma wash so the page never reads pure-flat-black */
-  background-image:
-    radial-gradient(120% 80% at 80% -10%, rgba(99, 102, 241, 0.08), transparent 60%),
-    radial-gradient(90% 60% at -10% 110%, rgba(34, 211, 238, 0.06), transparent 55%);
+  /* faint plasma wash so the page never reads pure-flat */
+  background-image: var(--wash-1), var(--wash-2);
   background-attachment: fixed;
+  transition: background-color var(--dur-theme) var(--ease-out),
+    color var(--dur-theme) var(--ease-out);
 }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
-  color: #fff;
+  background: var(--select-bg);
+  color: var(--select-fg);
 }
 
 a {
@@ -67,12 +67,12 @@ img {
   height: 100%;
   z-index: var(--z-canvas);
   pointer-events: none;
-  /* fades in once the scene is ready */
+  /* fades in once the scene is ready (to the theme's target opacity) */
   opacity: 0;
   transition: opacity 1.4s var(--ease-out);
 }
 #webgl-canvas.is-ready {
-  opacity: 1;
+  opacity: var(--canvas-opacity);
 }
 
 main {
@@ -147,7 +147,7 @@ h1, h2, h3 {
   padding: var(--pad-y) 1.25rem;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-faint);
   color: var(--ink);
   font-size: var(--fs-sm);
   font-weight: 500;
@@ -157,18 +157,18 @@ h1, h2, h3 {
   will-change: transform;
 }
 .btn:hover {
-  border-color: rgba(139, 92, 246, 0.6);
-  background: rgba(139, 92, 246, 0.08);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   box-shadow: var(--glow);
 }
 .btn--primary {
   border-color: transparent;
   background: var(--plasma);
-  color: #08090d;
+  color: var(--on-accent);
   font-weight: 600;
 }
 .btn--primary:hover {
-  box-shadow: 0 10px 40px rgba(124, 92, 246, 0.45);
+  box-shadow: 0 10px 40px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .link-underline {
@@ -212,7 +212,7 @@ h1, h2, h3 {
   top: -100px;
   left: 1rem;
   z-index: var(--z-nav);
-  background: var(--bg-raise-2);
+  background: var(--surface-2);
   color: var(--ink);
   padding: 0.7rem 1rem;
   border-radius: 8px;

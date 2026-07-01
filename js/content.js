@@ -93,6 +93,68 @@ export const content = {
     stack: ["TypeScript", "Node.js", "React", "Temporal", "AI Agents"],
   },
 
+  // ── Vibe Studio: 2nd AI feature — type a vibe, the WHOLE page redesigns live ──
+  // The "AI redesigns a website, live" demo. Ships with full-theme presets (zero
+  // backend); a Worker {mode:"vibe"} branch turns any free text into a generated
+  // theme, contrast-validated client-side. Each vibe swaps the background, ink,
+  // surfaces, borders, FONT, corner RADIUS, the whole accent/plasma palette, and the
+  // WebGL particle field — a real redesign, not a recolor. `dark:true` flips the
+  // field to its glow mode so it reads on a dark canvas.
+  vibes: {
+    eyebrow: "Live demo · generative design",
+    title: "Vibe Studio",
+    blurb:
+      "Type a vibe — or pick one — and watch this whole page redesign itself: background, type, color, shapes, surfaces, and the particle field all transform live, in place. The AI-redesigns-a-website demo — and a widget you'd actually want on your own site.",
+    placeholder: "Try: cyberpunk bakery · calm nordic · vintage paper · forest lab…",
+    presets: [
+      { id: "nordic", label: "Calm Nordic", mood: "calm · slate-blue · airy", dark: false,
+        accent: "#2f6f9f", accent2: "#2a8c82", plasma: ["#2f6f9f", "#4a93a8", "#2a8c82"], particle: "#3b6ea5",
+        bg: "#eef3f8", bgTint: "#e3eaf2", surface: "#ffffff", surface2: "#f3f7fb",
+        ink: "#1a2230", inkDim: "#46566b", inkMute: "#7d8ba0",
+        line: "rgba(20,30,50,.10)", lineStrong: "rgba(20,30,50,.18)",
+        font: '"Geist", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif', radius: "16px" },
+      { id: "sunset", label: "Sunset Brutalist", mood: "warm · bold · brutalist", dark: false,
+        accent: "#cf4636", accent2: "#d97a23", plasma: ["#cf4636", "#dd6a2a", "#d9a521"], particle: "#cf4636",
+        bg: "#fbf2e8", bgTint: "#f4e6d4", surface: "#fffaf3", surface2: "#f7ecdc",
+        ink: "#2a1c14", inkDim: "#5e4636", inkMute: "#93755f",
+        line: "rgba(60,40,20,.12)", lineStrong: "rgba(60,40,20,.20)",
+        font: '"Arial Black", "Helvetica Neue", Impact, system-ui, sans-serif', radius: "2px" },
+      { id: "neon", label: "Cyberpunk Neon", mood: "electric · neon · night-city", dark: true,
+        accent: "#ff3df0", accent2: "#21d4fd", plasma: ["#ff3df0", "#9b5cff", "#21d4fd"], particle: "#ff3df0",
+        bg: "#0a0a14", bgTint: "#11121f", surface: "#15172a", surface2: "#1b1d33",
+        ink: "#e9e7fb", inkDim: "#a6a3d6", inkMute: "#6f6ca0",
+        line: "rgba(160,150,255,.16)", lineStrong: "rgba(160,150,255,.28)",
+        font: 'ui-monospace, "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace', radius: "3px" },
+      { id: "forest", label: "Forest Lab", mood: "earthy · green · serif", dark: false,
+        accent: "#2f7d52", accent2: "#6f8c2a", plasma: ["#2f7d52", "#4e8c3a", "#7a9a2e"], particle: "#2f7d52",
+        bg: "#eef3ec", bgTint: "#e2ebde", surface: "#fbfdfa", surface2: "#eef3ea",
+        ink: "#18241a", inkDim: "#44563f", inkMute: "#75876c",
+        line: "rgba(20,40,20,.11)", lineStrong: "rgba(20,40,20,.20)",
+        font: '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif', radius: "20px" },
+      { id: "mono", label: "Mono Editorial", mood: "editorial · monochrome · mono", dark: false,
+        accent: "#1a1a1a", accent2: "#6a6a6a", plasma: ["#222222", "#555555", "#888888"], particle: "#555555",
+        bg: "#f4f4f3", bgTint: "#e9e9e7", surface: "#ffffff", surface2: "#f0f0ee",
+        ink: "#161616", inkDim: "#4a4a4a", inkMute: "#808080",
+        line: "rgba(0,0,0,.12)", lineStrong: "rgba(0,0,0,.22)",
+        font: 'ui-monospace, "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace', radius: "2px" },
+      { id: "vintage", label: "Vintage Paper", mood: "vintage · sepia · serif", dark: false,
+        accent: "#9a5a2c", accent2: "#7a8c4a", plasma: ["#9a5a2c", "#b08a4a", "#7a8c4a"], particle: "#9a6a3c",
+        bg: "#f3e9d6", bgTint: "#ece0c8", surface: "#faf3e3", surface2: "#efe4ce",
+        ink: "#2a2014", inkDim: "#5a4a32", inkMute: "#8a785a",
+        line: "rgba(80,60,30,.14)", lineStrong: "rgba(80,60,30,.24)",
+        font: 'Georgia, "Times New Roman", "Iowan Old Style", serif', radius: "8px" },
+    ],
+    // dormant free-text → nearest preset (keyword scoring; a live Worker upgrades this)
+    keywords: {
+      nordic:  ["nordic", "calm", "minimal", "scandi", "clean", "airy", "blue", "slate", "ocean", "ice", "winter", "cool"],
+      sunset:  ["sunset", "warm", "bold", "brutal", "orange", "fire", "desert", "miami", "peach", "sun", "bakery"],
+      neon:    ["cyber", "neon", "punk", "vapor", "future", "techno", "electric", "night", "arcade", "glow", "magenta", "synth"],
+      forest:  ["forest", "nature", "green", "earth", "organic", "moss", "plant", "jungle", "sage", "eco", "lab", "leaf"],
+      mono:    ["mono", "editorial", "minimal", "black", "white", "classic", "newspaper", "swiss", "grayscale", "print", "type"],
+      vintage: ["vintage", "paper", "old", "sepia", "craft", "kraft", "retro", "antique", "book", "cream", "film"],
+    },
+  },
+
   // ── Experience timeline (newest → oldest) ───────────────────────────────────
   experience: [
     {
@@ -185,6 +247,23 @@ export const content = {
       href: "https://github.com/SrujayReddy/Data-Website-Project",
     },
   ],
+
+  // ── Education: "The Turning of the Tassel" (flagship) ────────────────────────
+  education: {
+    eyebrow: "Education",
+    school: "University of Wisconsin–Madison",
+    degree: "B.S. Honors — Computer Science & Data Science",
+    period: "May 2026",
+    // Each fact "rings" as the tassel swings past it (right → left).
+    facts: [
+      { k: "Degree", v: "B.S. Honors, Computer Science & Data Science" },
+      { k: "University", v: "University of Wisconsin–Madison" },
+      { k: "GPA", v: "3.9 / 4.0" },
+      { k: "Honors", v: "Dean's List — Fall 2024 & Spring 2025" },
+      { k: "Conferred", v: "May 2026" },
+    ],
+    note: "Turn the tassel. Where the measuring habit began.",
+  },
 
   // ── Beyond the code ─────────────────────────────────────────────────────────
   beyond: {

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cap lab</title>
+    <style>
+      :root { --bg: #fbfbfd; }
+      html[data-theme="dark"] { --bg: #06070a; }
+      html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+      #webgl-canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+      #hud {
+        position: fixed; left: 14px; top: 14px; z-index: 10;
+        font: 12px ui-monospace, monospace; color: #555;
+        background: rgba(255,255,255,.6); padding: 6px 10px; border-radius: 8px;
+      }
+      html[data-theme="dark"] #hud { color: #ccc; background: rgba(0,0,0,.4); }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "https://esm.sh/three@0.169.0" } }
+    </script>
+  </head>
+  <body>
+    <canvas id="webgl-canvas"></canvas>
+    <div id="hud">cap lab — drive via window.__lab</div>
+    <script type="module">
+      window.__eduCenter = true;
+      const { createSceneDirector } = await import("./js/webgl/director.js");
+      const { makeEducationAct } = await import("./js/webgl/education.js");
+      const canvas = document.getElementById("webgl-canvas");
+      const director = createSceneDirector(canvas, {
+        getTheme: () => document.documentElement.getAttribute("data-theme") || "light",
+      });
+      const edu = director.register(makeEducationAct());
+      director.setActive("education", true);
+      director.setProgress("education", 0);
+      window.__lab = {
+        director,
+        edu,
+        setProgress: (p) => director.setProgress("education", p),
+        setTheme: (t) => { document.documentElement.setAttribute("data-theme", t); director.setTheme(t); },
+        step: (n = 150, dt = 0.05) => { for (let i = 0; i < n; i++) director.step(dt); },
+        ready: true,
+      };
+      window.__lab.step(150);
+    </script>
+  </body>
+</html>

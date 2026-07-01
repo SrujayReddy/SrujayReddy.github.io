@@ -310,6 +310,17 @@ export function initAgent({ onPizza } = {}) {
     }
   });
 
+  // Focus trap: Tab must cycle within the modal, never escape to the page behind.
+  root.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const list = [...root.querySelectorAll('input, button, [href], [tabindex]:not([tabindex="-1"])')]
+      .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!list.length) return;
+    const first = list[0], last = list[list.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
   // suggestions
   suggestWrap.innerHTML = content.askSuggestions
     .map((s) => `<button class="palette__suggestion" type="button">${s}</button>`)

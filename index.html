@@ -3,8 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#06070A" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfbfd" />
+
+    <!-- No-flash theme: set data-theme BEFORE first paint.
+         Light is the deliberate default (the showcase). Dark is opt-in and is
+         only used when the visitor has explicitly chosen and we stored it. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
 
     <title>Srujay Reddy Jakkidi — Forward Deployed Engineer</title>
     <meta
@@ -50,6 +64,7 @@
     <link rel="stylesheet" href="styles/base.css" />
     <link rel="stylesheet" href="styles/sections.css" />
     <link rel="stylesheet" href="styles/command.css" />
+    <link rel="stylesheet" href="styles/vibe.css" />
 
     <!-- Pinned ES module dependencies (fetched by the browser, no build step) -->
     <script type="importmap">
@@ -99,6 +114,7 @@
         <div class="nav__links">
           <a href="#thesis">Thesis</a>
           <a href="#now">Now</a>
+          <a href="#bench">Studio</a>
           <a href="#experience">Experience</a>
           <a href="#work">Work</a>
           <a href="#contact">Contact</a>
@@ -106,11 +122,39 @@
         <button class="kbd-hint" type="button" data-open-palette aria-label="Open command palette">
           <kbd>⌘</kbd><kbd>K</kbd> Ask anything
         </button>
+        <button
+          class="theme-toggle"
+          type="button"
+          data-theme-toggle
+          aria-label="Toggle dark mode"
+          aria-pressed="false"
+          title="Toggle theme"
+        >
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+            <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+            <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <line x1="12" y1="2.5" x2="12" y2="5" />
+              <line x1="12" y1="19" x2="12" y2="21.5" />
+              <line x1="2.5" y1="12" x2="5" y2="12" />
+              <line x1="19" y1="12" x2="21.5" y2="12" />
+              <line x1="4.9" y1="4.9" x2="6.7" y2="6.7" />
+              <line x1="17.3" y1="17.3" x2="19.1" y2="19.1" />
+              <line x1="19.1" y1="4.9" x2="17.3" y2="6.7" />
+              <line x1="6.7" y1="17.3" x2="4.9" y2="19.1" />
+            </g>
+          </svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+            <path d="M20 14.5A8 8 0 1 1 9.5 4a6.3 6.3 0 0 0 10.5 10.5z" fill="currentColor" />
+          </svg>
+        </button>
       </div>
     </nav>
 
     <main id="main">
       <header class="hero section" id="home"><div class="wrap" data-mount="hero"></div></header>
+      <section class="education" id="education" aria-label="Education">
+        <div class="education__pin" data-mount="education"></div>
+      </section>
       <section class="positioning section" id="positioning" aria-label="Positioning">
         <div class="wrap" data-mount="positioning"></div>
       </section>
@@ -119,6 +163,9 @@
       </section>
       <section class="now section" id="now" aria-label="Current role">
         <div class="wrap" data-mount="now"></div>
+      </section>
+      <section class="section" id="bench" aria-label="The Build Bench — a live, measured agent demo">
+        <div class="wrap" data-mount="bench"></div>
       </section>
       <section class="section" id="experience" aria-label="Experience">
         <div class="wrap" data-mount="experience"></div>
@@ -138,17 +185,17 @@
 
     <!-- No-JS fallback -->
     <noscript>
-      <div style="max-width:640px;margin:6rem auto;padding:0 1.5rem;color:#aab0bd">
-        <h1 style="color:#eceef2">Srujay Reddy Jakkidi</h1>
+      <div style="max-width:640px;margin:6rem auto;padding:0 1.5rem;color:#475063">
+        <h1 style="color:#0d0f14">Srujay Reddy Jakkidi</h1>
         <p>
           Forward Deployed Engineer at Strada (YC S23) in the San Francisco Bay Area. I design, build,
           and deploy LLM-powered AI agents, and I measure systems until they're fast. UW–Madison B.S.
           Honors in Computer Science &amp; Data Science.
         </p>
         <p>
-          Email <a style="color:#22d3ee" href="mailto:srujayreddy15@gmail.com">srujayreddy15@gmail.com</a>
-          · <a style="color:#22d3ee" href="https://www.linkedin.com/in/srujay-jakkidi">LinkedIn</a>
-          · <a style="color:#22d3ee" href="https://github.com/SrujayReddy">GitHub</a>
+          Email <a style="color:#4f46e5" href="mailto:srujayreddy15@gmail.com">srujayreddy15@gmail.com</a>
+          · <a style="color:#4f46e5" href="https://www.linkedin.com/in/srujay-jakkidi">LinkedIn</a>
+          · <a style="color:#4f46e5" href="https://github.com/SrujayReddy">GitHub</a>
         </p>
       </div>
     </noscript>
