@@ -1,68 +1,112 @@
-/* vibe.css — "Vibe Studio" (2nd AI feature). Light-first; semantic tokens.
- * The page restyle eases smoothly because, during the ~0.76s window, we transition
- * the actual color PROPERTIES (which read from the swapped CSS custom props). */
+/* vibe.css — the live "restyle this page" demo, integrated as a compact hero
+ * feature (not a standalone section). Light-first; semantic tokens only.
+ * The restyle eases smoothly because, during the ~0.76s window, we transition the
+ * actual color PROPERTIES (which read from the swapped CSS custom props). */
 
-.vibe {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card, 0 24px 60px -34px rgba(20, 22, 50, 0.22));
-  padding: clamp(1.5rem, 4vw, 3rem);
+.restyle {
+  margin-top: 2.4rem;
+  max-width: 46rem;
+}
+.restyle__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  margin: 0 0 0.8rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+.restyle__spark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-.vibe__head { max-width: 60ch; margin-bottom: clamp(1.4rem, 3vw, 2rem); }
-.vibe__title { font-size: var(--fs-h2); line-height: var(--lh-snug); margin: 0.3rem 0 0.6rem; }
-.vibe__blurb { color: var(--ink-dim); font-size: var(--fs-body); line-height: var(--lh-body); margin: 0; }
+.restyle__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+}
 
-.vibe__panel { display: flex; flex-direction: column; gap: 1rem; }
+.restyle__swatches { display: inline-flex; align-items: center; gap: 0.5rem; }
+.restyle__swatch {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+  display: grid;
+  place-items: center;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.restyle__swatch > span {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 2px 6px -2px rgba(20, 22, 50, 0.35);
+}
+.restyle__swatch:hover,
+.restyle__swatch:focus-visible { transform: translateY(-2px) scale(1.1); }
+.restyle__surprise {
+  font-size: 0.9rem;
+  line-height: 1;
+  filter: grayscale(0.3);
+}
 
-.vibe__form { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-.vibe__input {
-  flex: 1 1 280px; min-width: 0;
-  padding: 0.7rem 1rem;
-  border: 1px solid var(--line-strong); border-radius: 999px;
-  background: var(--surface-2); color: var(--ink);
-  font-family: var(--font-sans); font-size: var(--fs-body);
+.restyle__form { flex: 1 1 210px; min-width: 0; }
+.restyle__input {
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
   transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
-.vibe__input::placeholder { color: var(--ink-mute); }
-.vibe__input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
-.vibe__go { white-space: nowrap; }
-.vibe__form.is-busy .vibe__go { opacity: 0.6; pointer-events: none; }
-
-.vibe__presets { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.vibe__preset {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.42rem 0.8rem 0.42rem 0.5rem;
-  border: 1px solid var(--line-strong); border-radius: 999px;
-  background: var(--surface-2); color: var(--ink-dim);
-  font-size: var(--fs-sm); cursor: pointer;
-  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+.restyle__input::placeholder { color: var(--ink-mute); }
+.restyle__input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-.vibe__preset:hover { color: var(--ink); border-color: var(--accent); }
-.vibe__swatch { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
-.vibe__surprise { padding-left: 0.8rem; color: var(--ink-mute); }
+.restyle__form.is-busy .restyle__input { opacity: 0.6; }
 
-.vibe__pill {
-  display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start;
-  padding: 0.4rem 0.5rem 0.4rem 0.8rem; border-radius: 999px;
+.restyle__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  font-size: var(--fs-sm); color: var(--ink);
+  font-size: var(--fs-xs);
+  color: var(--ink);
 }
-.vibe__pill .vibe__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
-.vibe__pill b { font-weight: 600; }
-.vibe__pill button {
-  margin-left: 0.2rem; padding: 0.18rem 0.6rem; border-radius: 999px;
-  border: 1px solid var(--line-strong); background: var(--surface);
-  color: var(--ink-dim); font-size: var(--fs-xs); cursor: pointer;
+.restyle__pill b { font-weight: 600; }
+.restyle__pill button {
+  padding: 0.16rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-dim);
+  font-size: var(--fs-xs);
+  cursor: pointer;
   transition: color var(--dur-fast), border-color var(--dur-fast);
 }
-.vibe__pill button:hover { color: var(--ink); border-color: var(--accent); }
+.restyle__pill button:hover { color: var(--ink); border-color: var(--accent); }
+.restyle__pill[hidden] { display: none; }
 
-.vibe__note { margin: 0.1rem 0 0; color: var(--ink-mute); font-size: var(--fs-sm); line-height: var(--lh-body); max-width: 64ch; }
+@media (max-width: 560px) {
+  .restyle__form { flex-basis: 100%; order: 3; }
+}
 
 /* The smooth restyle: while the body carries .vibe-restyling, ease the real color
  * properties so the swapped custom-prop values animate instead of snapping. */

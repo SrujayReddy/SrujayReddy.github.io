@@ -28,25 +28,11 @@ export function initAgent({ onPizza } = {}) {
   const answerWrap = root.querySelector(".palette__answer");
   const suggestWrap = root.querySelector(".palette__suggestions");
 
-  // résumé command only if a file is configured AND present
   let commands = content.commands.slice();
   let activeIndex = 0;
   let mode = "command"; // "command" | "ask"
   let lastFocus = null;
   let streamAbort = null;
-
-  // Probe résumé existence so we don't show a dead download.
-  filterResume();
-  async function filterResume() {
-    const cmd = commands.find((c) => c.id === "download-resume");
-    if (!cmd) return;
-    try {
-      const res = await fetch(config.RESUME_PATH, { method: "HEAD" });
-      if (!res.ok) commands = commands.filter((c) => c.id !== "download-resume");
-    } catch {
-      commands = commands.filter((c) => c.id !== "download-resume");
-    }
-  }
 
   // ── open / close ─────────────────────────────────────────────
   function open(prefill = "") {
@@ -159,7 +145,6 @@ export function initAgent({ onPizza } = {}) {
         return;
       case "open-github": window.open(content.contact.links.find(l=>l.label==="GitHub").href, "_blank"); return close();
       case "open-linkedin": window.open(content.contact.links.find(l=>l.label==="LinkedIn").href, "_blank"); return close();
-      case "download-resume": window.open(config.RESUME_PATH, "_blank"); return close();
       case "toggle-motion":
         document.documentElement.classList.toggle("reduced-motion");
         flashInput(

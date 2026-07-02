@@ -41,7 +41,7 @@ function lum(h) {
 function contrast(a, b) { const la = lum(a), lb = lum(b), hi = Math.max(la, lb), lo = Math.min(la, lb); return (hi + 0.05) / (lo + 0.05); }
 
 export function initVibe() {
-  const mount = document.querySelector('[data-mount="bench"]');
+  const mount = document.querySelector('[data-mount="restyle"]');
   if (!mount) return;
   const v = content.vibes;
   if (!v) return;
@@ -50,39 +50,30 @@ export function initVibe() {
 
   let current = null;
 
-  // ── markup ───────────────────────────────────────────────────
-  const chips = v.presets
-    .map((p) => `<button class="vibe__preset" type="button" data-vibe="${p.id}"><span class="vibe__swatch" style="background:linear-gradient(120deg, ${p.plasma[0]}, ${p.plasma[2]})"></span>${esc(p.label)}</button>`)
+  // ── compact hero widget ──────────────────────────────────────
+  const swatches = v.presets
+    .map(
+      (p) =>
+        `<button class="restyle__swatch" type="button" data-vibe="${p.id}" title="${esc(p.label)}" aria-label="Restyle: ${esc(p.label)}"><span style="background:linear-gradient(120deg, ${p.plasma[0]}, ${p.plasma[2]})"></span></button>`
+    )
     .join("");
 
   mount.innerHTML = `
-    <div class="vibe" role="group" aria-label="Vibe Studio — restyle this page live">
-      <div class="vibe__head">
-        <span class="eyebrow">${esc(v.eyebrow)}</span>
-        <h2 class="vibe__title gradient-text">${esc(v.title)}</h2>
-        <p class="vibe__blurb">${esc(v.blurb)}</p>
-      </div>
-
-      <div class="vibe__panel">
-        <form class="vibe__form" data-vibe-form>
-          <input class="vibe__input" type="text" data-vibe-input autocomplete="off" spellcheck="false"
-                 aria-label="Describe a vibe" placeholder="${esc(v.placeholder)}" maxlength="120" />
-          <button class="btn btn--primary vibe__go" type="submit">Restyle ✨</button>
-        </form>
-
-        <div class="vibe__presets">
-          ${chips}
-          <button class="vibe__preset vibe__surprise" type="button" data-vibe-surprise>🎲 Surprise me</button>
+    <div class="restyle" role="group" aria-label="Adaptive design — restyle this page">
+      <p class="restyle__label"><span class="restyle__spark" aria-hidden="true"></span>${esc(v.label || v.blurb)}</p>
+      <div class="restyle__row">
+        <div class="restyle__swatches">
+          ${swatches}
+          <button class="restyle__swatch restyle__surprise" type="button" data-vibe-surprise title="Surprise me" aria-label="Surprise me">🎲</button>
         </div>
-
-        <div class="vibe__pill" data-vibe-pill hidden>
-          <span class="vibe__dot"></span>Viewing as <b data-vibe-mood></b>
+        <form class="restyle__form" data-vibe-form>
+          <input class="restyle__input" type="text" data-vibe-input autocomplete="off" spellcheck="false"
+                 aria-label="Describe a look" placeholder="${esc(v.placeholder)}" maxlength="120" />
+        </form>
+        <div class="restyle__pill" data-vibe-pill hidden>
+          <b data-vibe-mood></b>
           <button type="button" data-vibe-reset>Reset</button>
         </div>
-
-        <p class="vibe__note">${live
-          ? "Redesigns the whole page — background, type, color, shape &amp; particles — live. Free text → a live model generates a theme (contrast-checked before it’s applied)."
-          : "Redesigns the whole page — background, type, color, shape &amp; particles — live. Free text maps to the nearest preset; point the site at the Worker and any words generate a bespoke theme."}</p>
       </div>
     </div>
   `;

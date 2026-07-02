@@ -221,11 +221,11 @@ html.js .hero__title .line > span {
   margin-bottom: 1.5rem;
 }
 .positioning__statement {
-  font-size: var(--fs-h1);
+  font-size: clamp(1.35rem, 2.5vw, 2.05rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  max-width: 22ch;
+  letter-spacing: -0.02em;
+  line-height: 1.32;
+  max-width: 42ch;
 }
 .positioning__statement .word {
   display: inline-block;
@@ -267,6 +267,13 @@ html.reduced-motion .positioning__statement .word {
   color: var(--ink-dim);
   font-size: var(--fs-lead);
   max-width: 40ch;
+}
+.thesis__context {
+  margin-top: 1.2rem;
+  color: var(--ink-dim);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  max-width: 46ch;
 }
 .thesis__advisor {
   margin-top: 1.6rem;
@@ -529,6 +536,7 @@ html.reduced-motion .positioning__statement .word {
   flex-direction: column;
   gap: 1px;
   border-top: 1px solid var(--line);
+  counter-reset: xp;
 }
 .xp {
   display: grid;
@@ -536,10 +544,26 @@ html.reduced-motion .positioning__statement .word {
   gap: clamp(1rem, 4vw, 3rem);
   padding: 2.2rem 0;
   border-bottom: 1px solid var(--line);
-  transition: background var(--dur) var(--ease-out);
+  counter-increment: xp;
+  box-shadow: inset 0 0 0 0 var(--accent);
+  transition: background var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
 }
-.xp:hover { background: var(--hover-tint); }
+.xp:hover {
+  background: var(--hover-tint);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
 .xp__left { }
+/* editorial chapter index — quiet credibility, not decoration */
+.xp__left::before {
+  content: "0" counter(xp);
+  display: block;
+  margin-bottom: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  opacity: 0.75;
+}
 .xp__org {
   font-size: var(--fs-h3);
   font-weight: 600;
@@ -698,13 +722,6 @@ html.reduced-motion .positioning__statement .word {
   padding-top: 0.15rem;
 }
 .edu__fact .v { color: var(--ink); font-size: var(--fs-sm); }
-.edu__note {
-  margin-top: 1.8rem;
-  color: var(--ink-mute);
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
-}
 html.reduced-motion .edu__fact { opacity: 1 !important; transform: none !important; }
 
 /* The static SVG cap is the fallback; the 3D cap renders on the WebGL canvas. */
@@ -734,6 +751,8 @@ html.reduced-motion .edu__cap { display: grid; }
   .edu__layout { grid-template-columns: 1fr; }
   .edu__fact { grid-template-columns: 7rem 1fr; }
   html.no-webgl .edu__cap, html.reduced-motion .edu__cap { order: -1; margin-bottom: 1.5rem; }
+  /* the 3D cap sits centered in the top third on phones — keep the copy below it */
+  html:not(.no-webgl):not(.reduced-motion) .edu__layout { padding-top: 30svh; }
 }
 
 /* ── Beyond the code ──────────────────────────────────────────── */
@@ -818,6 +837,23 @@ html.reduced-motion .edu__cap { display: grid; }
   font-family: var(--font-mono);
 }
 .footer a:hover { color: var(--ink); }
+/* Discreet pizza / "Joey doesn't share food" egg trigger. */
+.egg-btn {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.25rem;
+  border-radius: 8px;
+  filter: grayscale(0.55) opacity(0.6);
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast);
+}
+.egg-btn:hover,
+.egg-btn:focus-visible {
+  filter: none;
+  transform: rotate(-8deg) scale(1.18);
+}
 
 /* ── No-WebGL static fallback flag ────────────────────────────── */
 html.no-webgl body {

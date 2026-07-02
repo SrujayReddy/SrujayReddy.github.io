@@ -158,7 +158,7 @@ act.opacity = 1;
 // cap-local collider constants (mirror education.js) for the assertions
 const BOARD_HALF = 1.3, BOARD_TOP = 0.55, CORD_R = 0.032;
 const BOX_CY = BOARD_TOP - 0.05, BOX_HX = BOARD_HALF + CORD_R, BOX_HY = 0.075 + CORD_R, BOX_HZ = BOARD_HALF + CORD_R;
-const SKULL_C = { x: 0, y: 0.06, z: 0 }, SKULL_R = 0.6, EPS = 6e-3, TUBE_R = 0.04;
+const SKULL_C = { x: 0, y: 0.06, z: 0 }, SKULL_R = 0.6, EPS = 6e-3, TUBE_R = 0.058; // real max cord radius
 
 const nodes = act.nodes;
 const capPivot = act.group.children[0];
@@ -195,19 +195,25 @@ function checkFrame(tag) {
   }
   // the RENDERED tube centerline (not just nodes) must clear the board + skull by
   // the tube radius — this is the check that catches curve-overshoot clipping.
+  // ACTUAL board half-extents (NOT cord-expanded) — the tube surface must clear this.
+  const AB_X = BOARD_HALF, AB_Y = 0.075, AB_Z = BOARD_HALF;
   for (const Pp of act.tubePts) {
     const L = Pp.clone().applyQuaternion(qInv);
     const rx = L.x, ry = L.y - BOX_CY, rz = L.z;
-    const pbx = BOARD_HALF + TUBE_R, pby = 0.075 + TUBE_R, pbz = BOARD_HALF + TUBE_R;
-    if (Math.abs(rx) < pbx - EPS && Math.abs(ry) < pby - EPS && Math.abs(rz) < pbz - EPS) {
-      const pen = Math.min(pbx - Math.abs(rx), pby - Math.abs(ry), pbz - Math.abs(rz));
-      worstTube = Math.max(worstTube, pen);
-      fails.push(`${tag}: TUBE centerline penetrates board (pen=${pen.toFixed(4)})`);
+    // ROUNDED-box distance from the tube centerline to the board — catches EDGE/CORNER
+    // pokes (where the cord wraps the front edge) that an axis-aligned AABB check misses.
+    const ox = Math.max(Math.abs(rx) - AB_X, 0), oy = Math.max(Math.abs(ry) - AB_Y, 0), oz = Math.max(Math.abs(rz) - AB_Z, 0);
+    const dist = (ox === 0 && oy === 0 && oz === 0)
+      ? -Math.min(AB_X - Math.abs(rx), AB_Y - Math.abs(ry), AB_Z - Math.abs(rz)) // inside → negative
+      : Math.sqrt(ox * ox + oy * oy + oz * oz);
+    if (dist < TUBE_R - EPS) {
+      worstTube = Math.max(worstTube, TUBE_R - dist);
+      fails.push(`${tag}: TUBE surface penetrates board (dist=${dist.toFixed(4)}, need ≥ ${TUBE_R})`);
     }
     const dd = Math.hypot(L.x - SKULL_C.x, L.y - SKULL_C.y, L.z - SKULL_C.z);
     if (dd < SKULL_R + TUBE_R - EPS) {
       worstTube = Math.max(worstTube, SKULL_R + TUBE_R - dd);
-      fails.push(`${tag}: TUBE centerline penetrates skullcap (pen=${(SKULL_R + TUBE_R - dd).toFixed(4)})`);
+      fails.push(`${tag}: TUBE surface penetrates skullcap (pen=${(SKULL_R + TUBE_R - dd).toFixed(4)})`);
     }
   }
 }
