@@ -266,7 +266,6 @@ function renderEducation() {
         <h2 class="edu__school gradient-text">${esc(e.school)}</h2>
         <p class="edu__degree">${esc(e.degree)}</p>
         <ul class="edu__facts">${facts}</ul>
-        <p class="edu__note">${esc(e.note)}</p>
       </div>
       <div class="edu__cap">${capSVG()}</div>
     </div>

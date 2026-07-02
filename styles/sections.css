@@ -722,13 +722,6 @@ html.reduced-motion .positioning__statement .word {
   padding-top: 0.15rem;
 }
 .edu__fact .v { color: var(--ink); font-size: var(--fs-sm); }
-.edu__note {
-  margin-top: 1.8rem;
-  color: var(--ink-mute);
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
-}
 html.reduced-motion .edu__fact { opacity: 1 !important; transform: none !important; }
 
 /* The static SVG cap is the fallback; the 3D cap renders on the WebGL canvas. */

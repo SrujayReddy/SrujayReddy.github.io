@@ -42,7 +42,7 @@ export const content = {
       "Decomposing Kubernetes pod startup latency under bandwidth constraints.",
     // Plain-language context so the data-viz that follows isn't opaque.
     context:
-      "In plain terms: when a cloud service scales up, every new container has to “cold-start” before it can serve traffic — and that wait costs real latency and money. I built a measurement system to find exactly where those seconds go.",
+      "When a cloud service scales up, every new container has to “cold-start” before it can serve traffic — and that wait costs real latency and money. I built a measurement system to find exactly where those seconds go.",
     advisor: {
       name: "Prof. Remzi Arpaci-Dusseau",
       note: "author of Operating Systems: Three Easy Pieces (OSTEP)",
@@ -265,7 +265,6 @@ export const content = {
       { k: "Thesis", v: "Honors thesis on Kubernetes cold-start latency — published in MINDS@UW" },
       { k: "Conferred", v: "May 2026" },
     ],
-    note: "Turn the tassel. Where the measuring habit began.",
   },
 
   // ── Beyond the code ─────────────────────────────────────────────────────────
@@ -286,7 +285,7 @@ export const content = {
 
   contact: {
     blurb:
-      "Building something at the intersection of AI, systems, and real-world impact? Let's talk.",
+      "Building AI systems that have to hold up in production? Let's talk.",
     email: "srujayreddy15@gmail.com",
     links: [
       { label: "LinkedIn", href: "https://www.linkedin.com/in/srujay-jakkidi" },
