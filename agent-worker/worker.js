@@ -12,9 +12,12 @@
  *   • optional Cloudflare Turnstile bot-check
  *
  * Bindings (see wrangler.toml + README):
- *   secret  ANTHROPIC_API_KEY        (required)
+ *   secret  ANTHROPIC_API_KEY        (option A — Claude)
+ *   secret  GEMINI_API_KEY           (option B — free key from Google AI Studio;
+ *                                     used when no ANTHROPIC_API_KEY is set)
  *   var     ALLOWED_ORIGIN           e.g. https://srujayreddy.github.io
  *   var     MODEL                    default claude-haiku-4-5
+ *   var     GEMINI_MODEL             default gemini-2.5-flash
  *   var     RATE_PER_MIN             default 8
  *   var     RATE_PER_DAY             default 800
  *   kv      RATE_KV                  (required for rate limiting)
@@ -192,36 +195,61 @@ export default {
       ]);
     }
 
-    if (!env.ANTHROPIC_API_KEY)
+    if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
       return json({ error: "not_configured" }, 503, cors);
 
-    // Call Anthropic Messages API (streaming).
+    // Call the configured provider (streaming). Anthropic wins if both are set;
+    // a free Google AI Studio key (GEMINI_API_KEY) works on its own.
     let upstream;
+    const useAnthropic = !!env.ANTHROPIC_API_KEY;
     try {
-      upstream = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: env.MODEL || "claude-haiku-4-5",
-          max_tokens: 400,
-          stream: true,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: question }],
-        }),
-      });
+      upstream = useAnthropic
+        ? await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": env.ANTHROPIC_API_KEY,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model: env.MODEL || "claude-haiku-4-5",
+              max_tokens: 400,
+              stream: true,
+              system: SYSTEM_PROMPT,
+              messages: [{ role: "user", content: question }],
+            }),
+          })
+        : await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash"}:streamGenerateContent?alt=sse`,
+            {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-goog-api-key": env.GEMINI_API_KEY,
+              },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents: [{ role: "user", parts: [{ text: question }] }],
+                // thinkingBudget 0 → Flash spends its whole budget on the ANSWER,
+                // not hidden reasoning (otherwise short answers can come back empty).
+                generationConfig: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
+              }),
+            }
+          );
     } catch {
       return json({ error: "upstream_unreachable" }, 502, cors);
     }
+    // Pass an upstream rate-limit straight through so the client shows its honest
+    // "rate-limited" message instead of a generic error (Gemini free tier is small).
+    if (upstream.status === 429) return json({ error: "rate_limited" }, 429, cors);
     if (!upstream.ok || !upstream.body) {
       return json({ error: "upstream_error", status: upstream.status }, 502, cors);
     }
 
-    // Transform Anthropic SSE -> simple { text } SSE for the browser.
-    const stream = transformAnthropicSSE(upstream.body);
+    // Transform provider SSE -> simple { text } SSE for the browser.
+    const stream = useAnthropic
+      ? transformAnthropicSSE(upstream.body)
+      : transformGeminiSSE(upstream.body);
     return new Response(stream, {
       headers: {
         ...cors,
@@ -346,34 +374,79 @@ async function handleVibe(body, env, cors, request) {
     ]);
   }
 
-  if (!env.ANTHROPIC_API_KEY) return json({ error: "not_configured" }, 503, cors);
+  if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
+    return json({ error: "not_configured" }, 503, cors);
 
+  // Anthropic path: tool-forced theme JSON.
+  if (env.ANTHROPIC_API_KEY) {
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": env.ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: env.MODEL || "claude-haiku-4-5",
+          max_tokens: 500,
+          system: VIBE_SYSTEM,
+          tools: [VIBE_TOOL],
+          tool_choice: { type: "tool", name: "generate_theme" },
+          messages: [{ role: "user", content: `Vibe: ${prompt}` }],
+        }),
+      });
+    } catch {
+      return json({ error: "upstream_unreachable" }, 502, cors);
+    }
+    if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
+    const data = await r.json();
+    const tu = (data.content || []).find((c) => c.type === "tool_use");
+    if (!tu || !tu.input) return json({ error: "no_theme" }, 502, cors);
+    return json(tu.input, 200, cors);
+  }
+
+  // Gemini path (free Google AI Studio key): JSON response mode. The client
+  // hex-validates + contrast-gates every field before it touches the page, so a
+  // malformed theme can only fall back safely.
   let r;
   try {
-    r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: env.MODEL || "claude-haiku-4-5",
-        max_tokens: 500,
-        system: VIBE_SYSTEM,
-        tools: [VIBE_TOOL],
-        tool_choice: { type: "tool", name: "generate_theme" },
-        messages: [{ role: "user", content: `Vibe: ${prompt}` }],
-      }),
-    });
+    r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash"}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": env.GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, radius, mood.` }],
+          },
+          contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 700,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
+      }
+    );
   } catch {
     return json({ error: "upstream_unreachable" }, 502, cors);
   }
+  if (r.status === 429) return json({ error: "rate_limited" }, 429, cors);
   if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
   const data = await r.json();
-  const tu = (data.content || []).find((c) => c.type === "tool_use");
-  if (!tu || !tu.input) return json({ error: "no_theme" }, 502, cors);
-  return json(tu.input, 200, cors);
+  try {
+    const text = data.candidates[0].content.parts[0].text;
+    const theme = JSON.parse(text);
+    if (!theme || typeof theme !== "object") throw new Error("bad theme");
+    return json(theme, 200, cors);
+  } catch {
+    return json({ error: "no_theme" }, 502, cors);
+  }
 }
 
 function json(obj, status, cors) {
@@ -400,6 +473,48 @@ async function verifyTurnstile(secret, token, request) {
   } catch {
     return false;
   }
+}
+
+// Gemini streamGenerateContent?alt=sse → simple { text } SSE for the browser.
+function transformGeminiSSE(upstreamBody) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  return new ReadableStream({
+    async start(controller) {
+      const reader = upstreamBody.getReader();
+      const send = (obj) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          // SSE frames may be separated by \n\n OR \r\n\r\n — normalise first.
+          const chunks = buffer.replace(/\r\n/g, "\n").split("\n\n");
+          buffer = chunks.pop();
+          for (const chunk of chunks) {
+            const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
+            if (!dataLine) continue;
+            const payload = dataLine.slice(5).trim();
+            if (!payload || payload === "[DONE]") continue;
+            try {
+              const evt = JSON.parse(payload);
+              const parts = evt?.candidates?.[0]?.content?.parts || [];
+              for (const p of parts) if (p.text) send({ text: p.text });
+            } catch {
+              /* ignore keepalive / non-JSON */
+            }
+          }
+        }
+      } catch {
+        send({ error: "stream_interrupted" });
+      } finally {
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      }
+    },
+  });
 }
 
 function transformAnthropicSSE(upstreamBody) {

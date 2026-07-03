@@ -1,13 +1,25 @@
 # ⌘K Agent Worker
 
-This Cloudflare Worker powers the **“Ask anything about Srujay”** mode in the site's
-command palette. It holds your Anthropic API key (as a Worker secret — never in the
-repo), proxies to the **Anthropic Messages API**, streams the answer back as SSE, and
+This Cloudflare Worker powers BOTH AI features on the site: the **“Ask anything”**
+command-palette mode and the **live theme generator** (free-text “describe your own…”
+in the hero restyle demo, `{mode:"vibe"}`). It holds your API key (as a Worker secret —
+never in the repo), proxies to the model provider, streams answers back as SSE, and
 enforces hard cost/abuse caps so the bill cannot run away.
 
+**Two provider options — set ONE secret:**
+
+| | Secret | Model (default) | Cost |
+|---|---|---|---|
+| A | `ANTHROPIC_API_KEY` | `claude-haiku-4-5` | paid key (≈$1/$5 per Mtok) |
+| B | `GEMINI_API_KEY` | `gemini-2.5-flash` | **free** — key from [Google AI Studio](https://aistudio.google.com) → “Get API key” |
+
+If both are set, Anthropic wins. With only `GEMINI_API_KEY`, chat streaming and theme
+generation run on Gemini's free tier (rate-limited by Google per key; the Worker's own
+caps keep usage well inside it).
+
 The site ships with the agent **dormant**. Everything else (jump-to-section, copy email,
-open links, résumé, reduced motion) works with no backend. The AI mode lights up the
-moment you deploy this Worker and paste its URL into `js/config.js`.
+open links, reduced motion, preset themes) works with no backend. The AI modes light up
+the moment you deploy this Worker and paste its URL into `js/config.js`.
 
 ---
 
@@ -41,8 +53,10 @@ wrangler login
 #    into wrangler.toml ([[kv_namespaces]] id = "...").
 wrangler kv namespace create RATE_KV
 
-# 2) Store secrets (never committed)
-wrangler secret put ANTHROPIC_API_KEY
+# 2) Store ONE provider secret (never committed)
+wrangler secret put GEMINI_API_KEY      # free key from aistudio.google.com
+# ...or, if you have an Anthropic key instead:
+# wrangler secret put ANTHROPIC_API_KEY
 # optional bot-proofing:
 # wrangler secret put TURNSTILE_SECRET
 

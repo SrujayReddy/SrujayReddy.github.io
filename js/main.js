@@ -43,7 +43,7 @@ function renderHero() {
     <h1 class="hero__title">${lines}</h1>
     <p class="hero__sub">${esc(id.tagline)} Based in <strong>${esc(id.location)}</strong>.</p>
     <div class="hero__cta">
-      <button class="btn btn--primary" data-open-palette="ask" type="button">⌘K · Ask anything about Srujay</button>
+      <button class="btn btn--primary" data-open-palette="ask" type="button">⌘K · Ask anything about me</button>
       <a class="btn" href="${gh}" target="_blank" rel="noopener">GitHub ↗</a>
       <a class="btn" href="#thesis">See the thesis</a>
     </div>
@@ -76,16 +76,17 @@ function renderPositioning() {
 // ── Thesis (signature) ────────────────────────────────────────
 function renderThesis() {
   const t = content.thesis;
-  const segs = t.breakdown
+  // Horizontal bar-chart rows: every phase named + quantified, aligned in one
+  // grid — the 93–99% image-pull row visually dwarfs the 2–3% slivers.
+  const phases = t.breakdown
     .map(
-      (s) =>
-        `<div class="breakdown__seg ${s.dominant ? "is-dominant is-wide" : ""}" style="flex-grow:${(s.share * 100).toFixed(1)}">
-          <span>${esc(s.label)}${s.dominant ? " · 93–99%" : ""}</span>
-        </div>`
+      (s) => `
+      <div class="phase ${s.dominant ? "is-dominant" : ""}">
+        <span class="phase__label">${esc(s.label)}</span>
+        <span class="phase__track"><i style="width:${Math.max(s.share * 100, 1.6).toFixed(1)}%"></i></span>
+        <span class="phase__val">${s.dominant ? "93–99%" : (s.share * 100).toFixed(0) + "%"}</span>
+      </div>`
     )
-    .join("");
-  const legend = t.breakdown
-    .map((s) => `<span>${esc(s.label)} ${(s.share * 100).toFixed(0)}%${tc(s.toConfirm)}</span>`)
     .join("");
   const links = t.links
     .map((l) => {
@@ -112,11 +113,8 @@ function renderThesis() {
     </div></div>
 
     <div class="thesis__beat"><div class="wrap">
-      <span class="eyebrow">Cold start, decomposed</span>
-      <div class="breakdown">
-        <div class="breakdown__track">${segs}</div>
-        <div class="breakdown__legend">${legend}</div>
-      </div>
+      <span class="eyebrow">Cold-start timeline, decomposed</span>
+      <div class="phases">${phases}</div>
       <p class="bignum__caption">Under bandwidth constraints, one phase swallows the timeline.</p>
     </div></div>
 
@@ -159,6 +157,7 @@ function renderNow() {
       <span class="now__period">${esc(n.period)}</span>
     </div>
     <p class="now__body" data-reveal>${esc(n.body)}</p>
+    <div class="now__pipe" aria-hidden="true"><b></b><b></b><b></b><i></i></div>
     <div class="now__pillars">${pillars}</div>
     <div class="now__stack" data-reveal>${chips(n.stack)}</div>
   `
@@ -283,13 +282,7 @@ function renderBeyond() {
     "beyond",
     `
     <div class="section__head" data-reveal><h2 class="section__title">Beyond the code</h2></div>
-    <div class="beyond__grid">
-      <div class="beyond__feature" data-reveal>
-        <h3>${esc(b.feature.title)}</h3>
-        <p>${esc(b.feature.body)}</p>
-      </div>
-      <div class="beyond__list" data-reveal>${items}</div>
-    </div>
+    <div class="beyond__list beyond__list--solo" data-reveal>${items}</div>
   `
   );
 }

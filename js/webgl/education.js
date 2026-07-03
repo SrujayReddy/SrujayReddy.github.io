@@ -24,7 +24,10 @@ const N_MOBILE = 18;
 
 const BOARD_HALF = 1.3;
 const BOARD_TOP = 0.55;
-const ANCHOR_Y = 0.6;
+// The cord anchor sits ABOVE the cord-expanded board collider (top ≈ 0.607) and
+// outside the skullcap clearance, so the rope's first segment can never start
+// buried inside the board — it emerges from the button, in the open.
+const ANCHOR_Y = 0.74;
 const SKULL_C = { x: 0, y: 0.06, z: 0 };
 const SKULL_R = 0.6;
 const CORD_R = 0.032;
@@ -37,9 +40,10 @@ const BOX_CY = BOARD_TOP - 0.05;
 const BOX_HX = BOARD_HALF + CORD_R;
 const BOX_HY = 0.075 + CORD_R;
 const BOX_HZ = BOARD_HALF + CORD_R;
-// clearance for the RENDERED tube centerline (tube radius + a hair) so the tube,
-// which bows between nodes, never dips into the cap — but rests tight to the surface.
-const TUBE_MARGIN = 0.045;
+// clearance for the RENDERED tube centerline: the MAX tube radius (0.058 at the
+// anchor end) + a hair, so the visible surface — which bows between nodes — can
+// never dip into the cap, yet still rests tight against it.
+const TUBE_MARGIN = 0.063;
 
 function easeInOut(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -103,6 +107,9 @@ export function makeEducationAct() {
       group.scale.setScalar(baseScale);
 
       capPivot = new THREE.Group();
+      // Pose the pivot at its progress-0 orientation BEFORE the rope is built,
+      // so the tassel is born in the same frame it will be simulated in.
+      capPivot.rotation.set(PITCH_0, BASE_TWIRL, ROLL_0);
       group.add(capPivot);
 
       // ── board: beveled / chamfered velvet mortarboard (no raw box) ──────────
@@ -120,12 +127,20 @@ export function makeEducationAct() {
       skull.position.y = 0.18; // top of the crown meets the underside of the board
       capPivot.add(skull);
 
-      // ── button (gold woven metal) ───────────────────────────
-      const btnGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.05, 36);
+      // ── button (gold woven metal) — tall enough to clear the board top ──
+      const btnGeo = new THREE.CylinderGeometry(0.14, 0.155, 0.1, 36);
       btnGeo.computeVertexNormals();
       button = new THREE.Mesh(btnGeo, goldMat(THREE, envMap, 0.0));
-      button.position.set(0, BOARD_TOP + 0.02, 0);
+      button.position.set(0, BOARD_TOP + 0.05, 0);
       capPivot.add(button);
+
+      // ── weld: a gold knot over the anchor so the cord visibly grows out of
+      //    the button (kills the "tassel not attached" gap for good) ─────────
+      const weldGeo = new THREE.SphereGeometry(0.085, 24, 16);
+      weldGeo.computeVertexNormals();
+      const weld = new THREE.Mesh(weldGeo, goldMat(THREE, envMap, 0.0));
+      weld.position.set(0, 0.7, 0);
+      capPivot.add(weld);
 
       // ── 3-point cinematic studio rig ────────────────────────
       const ambient = new THREE.AmbientLight(0x26262e, 0.24);
@@ -137,16 +152,18 @@ export function makeEducationAct() {
       lights = { ambient, key, rim };
       group.add(ambient, key, rim);
 
-      // ── tassel rope (group-local sim) ───────────────────────
+      // ── tassel rope (group-local sim) — born ALREADY DRAPED in the pivot's
+      //    rotated frame: across the top, over the right edge, hanging down ──
       const total = 2.7;
       segLen = total / (nodeCount - 1);
       nodes = [];
       prev = [];
       for (let i = 0; i < nodeCount; i++) {
         const tt = i / (nodeCount - 1);
-        const x = Math.min(BOARD_HALF, tt * 2.4);
-        const y = ANCHOR_Y - Math.max(0, tt * 2.4 - BOARD_HALF);
-        const p = new THREE.Vector3(x, y, 0.02);
+        const run = tt * 2.3;
+        const lx = Math.min(BOARD_HALF * 0.95, run);
+        const ly = ANCHOR_Y - Math.max(0, run - BOARD_HALF * 0.95) - tt * 0.06;
+        const p = new THREE.Vector3(lx, ly, 0.02).applyQuaternion(capPivot.quaternion);
         nodes.push(p);
         prev.push(p.clone());
       }
@@ -198,13 +215,18 @@ export function makeEducationAct() {
       vAnchor = new THREE.Vector3();
       qInv = new THREE.Quaternion();
 
+      // Pre-settle ~2s of fixed-step physics so the FIRST rendered frame already
+      // shows a calm, fully-draped tassel — never buried, never mid-fall.
+      qInv.copy(capPivot.quaternion).invert();
+      for (let k = 0; k < 240; k++) stepRope(1 / 120);
+
       velvetMats = [board.material, skull.material];
-      goldMats = [cordMat, button.material];
+      goldMats = [cordMat, button.material, weld.material];
 
       this.group = group;
       this.nodes = nodes;
       this.tubePts = tubePts;
-      this._materials = [board.material, skull.material, button.material, cordMat, fringeMat];
+      this._materials = [board.material, skull.material, button.material, weld.material, cordMat, fringeMat];
       this._envRT = envRT;
       this.setTheme(themeVal ? "dark" : "light");
     },
@@ -337,8 +359,11 @@ export function makeEducationAct() {
   function stepRope(h) {
     const e = easeInOut(progress);
     const damp = 0.985;
-    nodes[0].set(0, ANCHOR_Y, 0);
-    prev[0].copy(nodes[0]);
+    // The anchor is the BUTTON on the rotating board — pin it in the pivot's
+    // CURRENT frame so the cord stays welded to the cap through the twirl.
+    vAnchor.set(0, ANCHOR_Y, 0).applyQuaternion(capPivot.quaternion);
+    nodes[0].copy(vAnchor);
+    prev[0].copy(vAnchor);
 
     const clampV = segLen * 0.65; // tighter → the cord can't fast-punch through the board
     for (let i = 1; i < nodeCount; i++) {
@@ -364,7 +389,7 @@ export function makeEducationAct() {
     // more relaxation iterations → tighter, heavier drape (less stretch)
     const iters = 24;
     for (let it = 0; it < iters; it++) {
-      nodes[0].set(0, ANCHOR_Y, 0);
+      nodes[0].copy(vAnchor);
       for (let i = 0; i < nodeCount - 1; i++) {
         const a = nodes[i];
         const b = nodes[i + 1];
@@ -381,12 +406,20 @@ export function makeEducationAct() {
   }
 
   function resolveLocal(v, margin) {
+    // Two passes: the skull push can land a point back on the box (and vice
+    // versa), so resolving the pair twice makes the result order-independent.
+    for (let pass = 0; pass < 2; pass++) resolveOnce(v, margin);
+  }
+
+  function resolveOnce(v, margin) {
     // Work relative to the SOLID (cord-expanded) board box.
     let rx = v.x, ry = v.y - BOX_CY, rz = v.z;
     const bx = BOX_HX, by = BOX_HY, bz = BOX_HZ;
 
-    if (Math.abs(rx) < bx && Math.abs(ry) < by && Math.abs(rz) < bz) {
-      // INSIDE the board → evict to the least-penetrating face + margin, but NEVER
+    if (Math.abs(rx) <= bx && Math.abs(ry) <= by && Math.abs(rz) <= bz) {
+      // INSIDE the board (or exactly ON its surface — nodes evicted with margin 0
+      // land there, and the zero-distance case would slip past the rounded-box
+      // push below) → evict to the least-penetrating face + margin, but NEVER
       // the bottom (else the tassel sinks under the board and slowly climbs back).
       let best = by - ry, axis = 0; // 0=top
       const pxr = bx - rx, pxl = bx + rx, pzr = bz - rz, pzl = bz + rz;
@@ -409,7 +442,10 @@ export function makeEducationAct() {
       const qz = Math.max(-bz, Math.min(bz, rz));
       const dx = rx - qx, dy = ry - qy, dz = rz - qz;
       const d2 = dx * dx + dy * dy + dz * dz;
-      if (d2 < margin * margin && d2 > 1e-12) {
+      // d2 > 0 (not an epsilon): points a few float-ulps off the surface still
+      // have a numerically exact push direction, and skipping them leaves the
+      // tube surface resting inside the clearance.
+      if (d2 < margin * margin && d2 > 0) {
         const d = Math.sqrt(d2), s = margin / d;
         rx = qx + dx * s; ry = qy + dy * s; rz = qz + dz * s;
       }
