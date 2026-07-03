@@ -321,6 +321,38 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
 
 ## Open Education refinements (deferred)
 
-- Camera pass-through at end of section ("you scroll through it") via `cameraRig`.
+- ~~Camera pass-through at end of section ("you scroll through it") via `cameraRig`.~~
+  Done as a **dolly-in** (see below) — a full "scroll THROUGH the cap" would need the
+  cap on the rail itself; the dolly gives the flagship its dwell without that risk.
 - troika-three-text for crisp in-scene degree labels.
 - Enlarge toward screen-filling while keeping the left copy readable (scrim).
+
+## Round 10 (AI live + self-host fonts + education fly-through)
+
+- [x] **AI features live.** `js/config.js` `WORKER_URL` → the deployed Cloudflare
+      Worker (`srujay-agent.srujay.workers.dev`). Both ⌘K "ask" and the "describe your
+      own…" theme generator now run against it (Gemini 2.5 Flash, free tier). Verified
+      end-to-end from the real origin: ⌘K streams a grounded answer; vibe returns a
+      contrast-safe theme; prompt-injection refused; CORS correctly locks to the site
+      origin (localhost → 403, the graceful/dormant path). Palette footer now
+      "Live · Gemini 2.5 Flash".
+- [x] **Live-theme fonts actually show now.** The hero headline is on `--font-display`
+      (immune), so the self-heal guard was relaxed to fire only on real horizontal
+      OVERFLOW of display text (not any vertical reflow) — mono/serif/brutalist themes
+      now visibly reskin the body instead of being reverted. `h1,h2,h3` get
+      `overflow-wrap:break-word` so long tokens ("Wisconsin–Madison") wrap under any
+      font. Verified: mono preset keeps its font, 0 overflow.
+- [x] **Self-hosted Geist + Geist Mono.** Dropped the Google Fonts CDN; 6 subsetted
+      latin woff2 in `assets/fonts/` + `styles/fonts.css` (`font-display:swap`), with
+      the two above-the-fold weights preloaded. Verified: 0 requests to
+      googleapis/gstatic, all faces same-origin, body + hero render Geist.
+- [x] **Education fly-through (dolly-in).** The camera used to only glide the rail past
+      the cap while the pin spun it. Added an additive per-act camera accent
+      (`director` applies active acts' `rideRig` on top of the rail) + an education
+      dolly that pushes toward the cap, HOLDS through the tassel-turn + toss climax,
+      then releases on hand-off. Desktop only. Verified via `__cinema.step` +
+      screenshots (small/right → large/centred → tossed & framed tight);
+      cap-physics + camera-rail stay green.
+- [ ] **Needs the owner's eyes (real browser, scrolling):** the fly-through *feel* at
+      true scroll speed, and the live agent/theme behaviour on the deployed site (the
+      forced-render + curl prove correctness, not feel).
