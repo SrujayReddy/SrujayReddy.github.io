@@ -1,21 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Path Finder — shortest campus walking path via Dijkstra's algorithm">
   <defs>
-    <linearGradient id="path" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="path" x1="0" y1="1" x2="1" y2="0">
       <stop offset="0" stop-color="#6366f1"/>
       <stop offset="0.5" stop-color="#8b5cf6"/>
       <stop offset="1" stop-color="#22d3ee"/>
     </linearGradient>
-    <radialGradient id="wash" cx="0.8" cy="0.1" r="1">
-      <stop offset="0" stop-color="#e6e9ff"/>
-      <stop offset="1" stop-color="#eef1f8"/>
+    <radialGradient id="wash" cx="0.85" cy="0.05" r="1.2">
+      <stop offset="0" stop-color="#e3e7fb"/>
+      <stop offset="0.55" stop-color="#edf0f8"/>
+      <stop offset="1" stop-color="#f3f4f9"/>
     </radialGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#7dd7ea" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#a9e4f0" stop-opacity="0.14"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="3" flood-color="#1a2038" flood-opacity="0.28"/>
+    </filter>
   </defs>
 
   <!-- canvas -->
   <rect width="640" height="360" fill="url(#wash)"/>
 
-  <!-- street grid (faint) -->
-  <g stroke="#0b0d12" stroke-opacity="0.07" stroke-width="10" fill="none" stroke-linecap="round">
+  <!-- Lake Mendota, top-right -->
+  <path d="M430 -20 C 440 30, 500 64, 570 70 C 610 73, 636 66, 660 56 L660 -20 Z" fill="url(#lake)"/>
+  <path d="M430 -20 C 440 30, 500 64, 570 70 C 610 73, 636 66, 660 56" fill="none" stroke="#5fc6dd" stroke-opacity="0.45" stroke-width="2"/>
+
+  <!-- campus blocks -->
+  <g fill="#0b0d12" fill-opacity="0.045">
+    <rect x="112" y="100" width="108" height="66" rx="10"/>
+    <rect x="252" y="100" width="124" height="66" rx="10"/>
+    <rect x="112" y="198" width="108" height="72" rx="10"/>
+    <rect x="252" y="198" width="124" height="72" rx="10"/>
+    <rect x="408" y="198" width="116" height="72" rx="10"/>
+    <rect x="408" y="100" width="56" height="66" rx="10"/>
+  </g>
+  <!-- a park block -->
+  <rect x="480" y="112" width="44" height="54" rx="10" fill="#2f7d52" fill-opacity="0.12"/>
+
+  <!-- street grid -->
+  <g stroke="#0b0d12" stroke-opacity="0.10" stroke-width="9" fill="none" stroke-linecap="round">
     <path d="M-20 84 H660"/>
     <path d="M-20 182 H660"/>
     <path d="M-20 286 H660"/>
@@ -24,53 +51,56 @@
     <path d="M392 -20 V380"/>
     <path d="M540 -20 V380"/>
   </g>
-  <!-- lake shore (top-right, a nod to Mendota) -->
-  <path d="M470 -20 C 500 40, 590 60, 660 52 L660 -20 Z" fill="#22d3ee" fill-opacity="0.10"/>
 
-  <!-- explored edges (Dijkstra frontier) -->
-  <g stroke="#0b0d12" stroke-opacity="0.16" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round" fill="none">
+  <!-- explored edges (Dijkstra's frontier) -->
+  <g stroke="#3b4152" stroke-opacity="0.35" stroke-width="2.6" stroke-dasharray="0.5 8" stroke-linecap="round" fill="none">
     <path d="M96 286 L236 286"/>
-    <path d="M96 182 L96 84"/>
-    <path d="M236 182 L236 84 L392 84"/>
-    <path d="M392 182 L540 182 L540 84"/>
+    <path d="M96 182 L96 84 L236 84"/>
+    <path d="M236 182 L236 84"/>
     <path d="M236 286 L392 286 L392 182"/>
+    <path d="M392 182 L540 182"/>
   </g>
 
-  <!-- shortest path -->
-  <path d="M96 286 L96 182 L236 182 L392 182 L392 84 L540 84"
-        fill="none" stroke="url(#path)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the shortest path: glow underlay + crisp gradient stroke -->
+  <path d="M96 286 L96 182 L392 182 L392 84 L540 84"
+        fill="none" stroke="url(#path)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"
+        opacity="0.45" filter="url(#glow)"/>
+  <path d="M96 286 L96 182 L392 182 L392 84 L540 84"
+        fill="none" stroke="url(#path)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- graph nodes -->
-  <g fill="#ffffff" stroke="#3b4152" stroke-width="2.5">
-    <circle cx="236" cy="84" r="7"/>
-    <circle cx="392" cy="286" r="7"/>
-    <circle cx="540" cy="182" r="7"/>
-    <circle cx="236" cy="286" r="7"/>
-    <circle cx="96" cy="84" r="7"/>
+  <!-- graph nodes (unvisited) -->
+  <g fill="#fbfbfd" stroke="#5a6172" stroke-width="2.4">
+    <circle cx="236" cy="84" r="6.5"/>
+    <circle cx="236" cy="286" r="6.5"/>
+    <circle cx="392" cy="286" r="6.5"/>
+    <circle cx="540" cy="182" r="6.5"/>
+    <circle cx="96" cy="84" r="6.5"/>
   </g>
-  <!-- path nodes -->
-  <g fill="#ffffff" stroke="#7c3aed" stroke-width="3">
-    <circle cx="96" cy="182" r="8"/>
-    <circle cx="236" cy="182" r="8"/>
-    <circle cx="392" cy="182" r="8"/>
-    <circle cx="392" cy="84" r="8"/>
+  <!-- path nodes (relaxed) -->
+  <g fill="#fbfbfd" stroke="#7c3aed" stroke-width="3">
+    <circle cx="96" cy="182" r="7.5"/>
+    <circle cx="236" cy="182" r="7.5"/>
+    <circle cx="392" cy="182" r="7.5"/>
+    <circle cx="392" cy="84" r="7.5"/>
   </g>
 
   <!-- start pin -->
-  <g>
-    <circle cx="96" cy="286" r="13" fill="#4f46e5" fill-opacity="0.18"/>
-    <circle cx="96" cy="286" r="8" fill="#4f46e5"/>
-    <circle cx="96" cy="286" r="3" fill="#ffffff"/>
-  </g>
-  <!-- destination pin -->
-  <g>
-    <path d="M540 60 c -13 0 -22 10 -22 22 c 0 15 22 34 22 34 c 0 0 22 -19 22 -34 c 0 -12 -9 -22 -22 -22 z" fill="#0e7490"/>
-    <circle cx="540" cy="82" r="8" fill="#ffffff"/>
-    <circle cx="540" cy="82" r="4" fill="#22d3ee"/>
+  <g filter="url(#soft)">
+    <circle cx="96" cy="286" r="14" fill="#4f46e5" fill-opacity="0.16"/>
+    <circle cx="96" cy="286" r="9" fill="#4f46e5"/>
+    <circle cx="96" cy="286" r="3.4" fill="#ffffff"/>
   </g>
 
-  <!-- caption -->
-  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#5a6172">
-    <text x="34" y="332">dijkstra(campus) → shortest walk</text>
+  <!-- destination pin -->
+  <g filter="url(#soft)">
+    <path d="M540 52 c -14.5 0 -24 10.5 -24 23 c 0 16 24 37 24 37 c 0 0 24 -21 24 -37 c 0 -12.5 -9.5 -23 -24 -23 z" fill="#0e7490"/>
+    <circle cx="540" cy="76" r="8.5" fill="#ffffff"/>
+    <circle cx="540" cy="76" r="4.2" fill="#22d3ee"/>
+  </g>
+
+  <!-- caption chip -->
+  <g filter="url(#soft)">
+    <rect x="26" y="314" width="264" height="28" rx="14" fill="#fbfbfd" fill-opacity="0.94"/>
+    <text x="42" y="332.5" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#3b4152">dijkstra(campus) → shortest walk</text>
   </g>
 </svg>

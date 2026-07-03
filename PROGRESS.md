@@ -254,6 +254,51 @@ Owner batch, ALL verified live (light + mobile) with zero console errors:
 - [x] Final sweep: all 3 tests PASS, all JS syntax-checked, zero console errors, desktop + mobile
       screenshots verified. Committed + pushed to `feat/cinematic-portfolio` (PR #2).
 
+## Round 11 (owner batch: fold, transitions, cap birth+weld, guardrails, Gemini, redesigns)
+
+All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + mobile):
+- [x] **Hero fold**: display clamp 5.25→4.4rem, tightened name/eyebrow/sub/CTA/restyle margins,
+      hero padding, + a `max-height: 840px` compression tier. The restyle demo now sits ABOVE the
+      fold on 900px and 800px viewports (verified 882/900 and 758/800).
+- [x] **Thesis→dots transition**: leaving the pin no longer swaps the formation buffer at high morph
+      (a visible particle teleport) — it now only eases uMorph home along the same targets, so the
+      clock MELTS back into the ambient cluster. Buffer swaps happen exclusively at morph≈0 (enter).
+- [x] **Cap "tassel buried at load" KILLED**: rope is now BORN already-draped in the pivot's rotated
+      frame (pivot posed before rope creation) + ~2s of fixed-step pre-settle in init — the first
+      rendered frame is a calm, fully-visible drape (verified at 2 frames after load).
+- [x] **Cap "tassel not attached" KILLED**: the anchor now rides the ROTATING capPivot (it used to
+      stay fixed while the button rotated away — the visible gap), the button is taller (clears the
+      board top), ANCHOR_Y 0.6→0.74 (above the cord-expanded collider), and a gold WELD knot covers
+      the anchor so the cord visibly grows out of the button. Verified mid-turn at 0.5.
+- [x] **Collision correctness**: TUBE_MARGIN 0.045→0.063 (≥ max cord radius), inclusive inside-branch
+      (points exactly ON the expanded surface were slipping between branches), d2>0 guard (float-ulp
+      offsets kept the push direction), and a TWO-PASS box+sphere resolve (order-independence).
+      cap-physics: ALL penetrations 0.00000 again.
+- [x] **"Cold-start timeline, decomposed"** (owner: repetitive/misaligned): the proportional bar +
+      legend replaced by 4 aligned bar-chart rows (label · bar · value); the image-pull row is bold
+      plasma at 93–99% and visually dwarfs the 2–3% slivers. No more duplicate labels.
+- [x] **Now section immersion**: soft accent band, an animated agent-signal pulse traveling a
+      3-node pipeline into numbered (01–03) pillars with lift-on-hover. Subtle, on-theme (his job IS
+      agent pipelines). Reduced-motion + mobile: pulse hidden, pipe removed.
+- [x] **Vibe GUARDRAILS** (owner: brutalist/mono fonts blew up the hero): two layers —
+      (1) `--font-display` token: the hero headline is IMMUNE to theme font swaps by construction;
+      (2) a runtime self-heal in applyVibe: baseline-vs-after measurement of display lines + hero
+      height; ANY font (preset or model-generated) that grows the hero gets dropped (colors stay).
+      Verified: brutalist + mono keep the composition; guard fired and healed in test.
+      Plus: the mood pill now REPLACES the label line (absolute, .has-vibe) so applying a theme can
+      never push the hero below the fold.
+- [x] **Worker: free-tier Gemini support**: chat streaming (streamGenerateContent?alt=sse) + vibe
+      theme JSON (responseMimeType) via GEMINI_API_KEY from Google AI Studio; Anthropic path wins if
+      both keys set. README rewritten with the two-provider table + free setup.
+- [x] **Path Finder art v2**: campus blocks, lake, dashed explored edges, glow-underlay gradient
+      route, ringed nodes, proper destination pin, caption chip.
+- [x] Copy: label "…This page does that literally:", hero CTA "Ask anything about me", OpenAI
+      backend-focused body/metrics/stack, CDIS "in collaboration with other Big Ten schools",
+      Beyond: award card removed, Dean's Honor List 7 of 8 semesters, English & Telugu. knowledgeBase
+      + worker SYSTEM_PROMPT synced.
+- [~] Multi-agent adversarial verification workflow over the whole round: running; confirmed
+      findings get fixed before ship.
+
 ## In progress
 
 - [~] Thesis "Latency Clock": the field now has a `clock` formation (ring split by

@@ -77,11 +77,16 @@
   /* ── Type ─────────────────────────────────────────────────────── */
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* The hero display keeps ITS OWN font token. Live themes may swap --font-sans
+     freely; they never touch --font-display, so wide/heavy fonts (Arial Black,
+     monospace) can't wrap the headline and blow up the opening composition. */
+  --font-display: "Geist", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono",
     "Fira Code", Menlo, Consolas, monospace;
 
   /* Fluid scale (clamp: min, vw, max) */
-  --fs-display: clamp(2.3rem, 6vw, 5.25rem);
+  --fs-display: clamp(2.2rem, 5vw, 4.4rem);
   --fs-h1: clamp(2rem, 5.5vw, 4.25rem);
   --fs-h2: clamp(1.6rem, 3.6vw, 2.8rem);
   --fs-h3: clamp(1.15rem, 1.8vw, 1.5rem);

@@ -103,9 +103,15 @@ function buildThesisTimeline(field) {
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
       onToggle: (self) => {
         if (!field) return;
-        // morph into the latency clock while the thesis owns the field; restore on leave
-        field.setFormation(self.isActive ? "clock" : "home");
-        if (!self.isActive) field.setMorph(0);
+        if (self.isActive) {
+          // entering with morph≈0 → swapping the target buffer is invisible
+          field.setFormation("clock");
+        } else {
+          // leaving: DON'T swap the buffer (that teleports particles while the
+          // morph is still high) — just ease the morph home along the same
+          // clock targets, so the ring melts back into the ambient cluster.
+          field.setMorph(0);
+        }
       },
       onUpdate: (self) => {
         if (field) field.setMorph(gsap.utils.clamp(0, 1, self.progress / 0.55));

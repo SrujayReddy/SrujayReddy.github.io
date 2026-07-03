@@ -154,7 +154,13 @@ export function initVibe() {
       inkDim: safe ? hx(data.inkDim, fb.inkDim) : fb.inkDim,
       inkMute: safe ? hx(data.inkMute, fb.inkMute) : fb.inkMute,
       line: fb.line, lineStrong: fb.lineStrong,
-      font: typeof data.font === "string" && data.font.length < 120 ? data.font : fb.font,
+      // a CSS-invalid font (stray ';', braces, unbalanced quotes) makes
+      // setProperty silently no-op and leaks the PREVIOUS theme's font — only
+      // accept safe font-family characters.
+      font:
+        typeof data.font === "string" && data.font.length < 120 && /^[\w\s"',.-]+$/.test(data.font)
+          ? data.font
+          : fb.font,
       radius: /^[0-9]{1,2}px$/.test(data.radius || "") ? data.radius : fb.radius,
       dark: lum(sbg) < 0.4,
       mood: (typeof data.mood === "string" ? data.mood : fb.mood).slice(0, 48),
@@ -165,6 +171,20 @@ export function initVibe() {
   function applyVibe(vibe, mood) {
     current = vibe;
     document.body.classList.add("vibe-restyling");
+    // ── layout guardrail baseline ─────────────────────────────
+    // A theme may ship ANY font (hand-written presets today, model-generated
+    // strings tomorrow). Fonts with very different metrics reflow display text
+    // and can blow the composition apart. Measure the key display blocks now,
+    // compare after the theme lands, and self-heal (drop only the font) if the
+    // layout grew — colors always survive, the page never breaks.
+    const probes = [
+      ...document.querySelectorAll(".hero__title .line"),
+      document.querySelector(".positioning__statement"),
+      document.querySelector(".edu__school"),
+    ].filter(Boolean);
+    const baseline = probes.map((el) => el.getBoundingClientRect().height);
+    const heroEl = document.querySelector(".hero");
+    const heroBase = heroEl ? heroEl.scrollHeight : 0;
     const set = (k, val) => { if (val != null) root.style.setProperty(k, val); };
     const grad = `linear-gradient(110deg, ${vibe.plasma[0]}, ${vibe.plasma[1]} 45%, ${vibe.plasma[2]})`;
     // accent + plasma + glow/washes
@@ -187,7 +207,9 @@ export function initVibe() {
     set("--ink-mute", vibe.inkMute);
     set("--line", vibe.line);
     set("--line-strong", vibe.lineStrong);
-    // type + shape language
+    // type + shape language. Clear first so a rejected value falls back to the
+    // DEFAULT font, never the previously-applied vibe's font.
+    root.style.removeProperty("--font-sans");
     set("--font-sans", vibe.font);
     if (vibe.radius) { set("--radius", vibe.radius); set("--radius-lg", (parseFloat(vibe.radius) * 1.5 || 14) + "px"); }
     // browser chrome + the WebGL field (theme by darkness, tint by accent)
@@ -201,6 +223,22 @@ export function initVibe() {
 
     moodEl.textContent = mood || vibe.label || "custom";
     pill.hidden = false;
+    const wrap = mount.querySelector(".restyle");
+    if (wrap) wrap.classList.add("has-vibe");
+
+    // ── layout guardrail check ────────────────────────────────
+    requestAnimationFrame(() => {
+      const grew = probes.some(
+        (el, i) => el.getBoundingClientRect().height > baseline[i] * 1.5 + 2
+      );
+      // the opening composition must SURVIVE any font: if the hero got taller
+      // than it was before the theme (wider glyphs → extra wraps → pushed
+      // below the fold), keep the colors but drop the font. The +48 margin
+      // absorbs the pill/label swap so only real font blowups (100s of px) trip it.
+      const heroGrew = heroEl && heroBase && heroEl.scrollHeight > heroBase + 48;
+      if (grew || heroGrew) root.style.removeProperty("--font-sans");
+    });
+
     setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
   }
 
@@ -216,6 +254,8 @@ export function initVibe() {
       if (cinema.director.setVibe) cinema.director.setVibe(null);
     }
     pill.hidden = true;
+    const wrap = mount.querySelector(".restyle");
+    if (wrap) wrap.classList.remove("has-vibe");
     current = null;
     input.value = "";
     setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);

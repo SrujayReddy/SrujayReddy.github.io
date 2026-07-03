@@ -4,8 +4,13 @@
  * actual color PROPERTIES (which read from the swapped CSS custom props). */
 
 .restyle {
-  margin-top: 2.4rem;
+  position: relative; /* the mood pill floats over the label line — applying a
+                         theme must never grow the hero (fold guarantee) */
+  margin-top: 1.6rem;
   max-width: 46rem;
+}
+@media (max-height: 840px) {
+  .restyle { margin-top: 1.1rem; }
 }
 .restyle__label {
   display: inline-flex;
@@ -79,7 +84,13 @@
 }
 .restyle__form.is-busy .restyle__input { opacity: 0.6; }
 
+/* While a theme is active the pill takes over the label line (same slot →
+   the hero can never grow, and nothing overlaps). */
+.restyle.has-vibe .restyle__label { opacity: 0; pointer-events: none; }
 .restyle__pill {
+  position: absolute;
+  top: -0.45rem;
+  left: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -104,6 +115,12 @@
 .restyle__pill button:hover { color: var(--ink); border-color: var(--accent); }
 .restyle__pill[hidden] { display: none; }
 
+@media (max-width: 900px) {
+  /* narrow screens scroll anyway — let the pill flow in the row, and fully
+     remove (not just hide) the emptied label so no blank row is left behind. */
+  .restyle__pill { position: static; }
+  .restyle.has-vibe .restyle__label { display: none; }
+}
 @media (max-width: 560px) {
   .restyle__form { flex-basis: 100%; order: 3; }
 }

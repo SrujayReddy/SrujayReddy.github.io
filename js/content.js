@@ -107,7 +107,7 @@ export const content = {
     title: "This page adapts",
     blurb:
       "Good software adapts to its users. Pick a look — or describe one — and this whole page redesigns itself in place.",
-    label: "Good software adapts to its users. This page does — pick a look:",
+    label: "Good software adapts to its users. This page does that literally:",
     placeholder: "or describe your own…",
     presets: [
       { id: "nordic", label: "Calm Nordic", mood: "calm · slate-blue · airy", dark: false,
@@ -179,13 +179,13 @@ export const content = {
       period: "Jun — Aug 2025",
       place: "Madison, WI · Hybrid",
       body:
-        "Built a real-time AI QuizBowl platform end-to-end (React/TS, Node/Express, Postgres, WebSockets, OpenAI API) through a selective UW–Madison partnership. Shipped an MVP in 8 weeks with daily deploys.",
+        "Owned the real-time match engine for a live QuizBowl platform through a selective UW–Madison partnership — WebSocket architecture, REST APIs in Node/Express, PostgreSQL schema design, JWT auth, and OpenAI API integration. Cut p95 latency 55% with streaming, prompt batching, and Redis caching (68% hit rate); dropped DB p95 62% with indexing and pooling; Dockerized the services and set up CI/CD for daily deploys. Built a 500-item eval set with moderation checks, lifting answer accuracy from 70% to 82%.",
       metrics: [
         { v: "−55%", k: "p95 latency (2000→900ms)" },
-        { v: "−60%", k: "build/test time (CI/CD)" },
+        { v: "−62%", k: "DB p95 (120→45ms)" },
         { v: "+12 pts", k: "answer accuracy (70→82%)" },
       ],
-      stack: ["React", "TypeScript", "Node", "PostgreSQL", "WebSockets", "AWS ECS"],
+      stack: ["Node.js", "Express", "PostgreSQL", "WebSockets", "Redis", "Docker", "OpenAI API"],
     },
     {
       org: "UW–Madison CDIS",
@@ -193,7 +193,7 @@ export const content = {
       period: "Dec 2024 — May 2025",
       place: "Madison, WI · On-site",
       body:
-        "On Prof. Arpaci-Dusseau's team: a meta-analysis of cloud-storage systems across Big Ten schools. Built Python/Pandas pipelines to clean, merge, and analyze findings from 500+ research studies into practical optimization guidance.",
+        "A meta-analysis of cloud-storage systems in collaboration with other Big Ten schools. Built Python/Pandas pipelines to clean, merge, and analyze findings from 500+ research studies into practical optimization guidance.",
       metrics: [
         { v: "500+", k: "studies analyzed" },
         { v: "Python · Pandas", k: "data pipelines" },
@@ -269,17 +269,12 @@ export const content = {
 
   // ── Beyond the code ─────────────────────────────────────────────────────────
   beyond: {
-    feature: {
-      title: "Onstage for an advisor",
-      body:
-        "I authored the nomination and presented the 2026 L&S Excellence in Honors Thesis Advising Award to Prof. Arpaci-Dusseau onstage — one of five recipients college-wide.",
-    },
     items: [
       { k: "Tutoring", v: "Free Math & CS through GUTS (Greater University Tutoring Service)." },
       { k: "Volunteering", v: "Badger Volunteers — weekly public-health & sustainability work." },
       { k: "Community", v: "Cybersecurity UW, since 2022." },
-      { k: "Honors", v: "Dean's Honor List, Fall 2024 & Spring 2025." },
-      { k: "Languages", v: "English & Hindi (full professional proficiency)." },
+      { k: "Honors", v: "Dean's Honor List — 7 of 8 semesters." },
+      { k: "Languages", v: "English & Telugu." },
     ],
   },
 
@@ -337,11 +332,13 @@ EXPERIENCE:
 - GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): QR-based headless device provisioning,
   Android (Kotlin)/iOS (Swift), offline-first; containerized Kubernetes provisioning service with an
   idempotent retryable state machine, BLE write-back, OpenAPI. Cut on-site setup to ≤15 minutes.
-- OpenAI, SWE Intern (Jun–Aug 2025): real-time AI QuizBowl (React/TS, Node/Express, Postgres,
-  WebSockets, OpenAI API). p95 latency −55% (2000→900ms), CI/CD build/test −60%, answer accuracy
-  +12 points (70→82%) on a 500-item eval set. ~150 concurrent players.
-- UW–Madison CDIS, CS Researcher (Dec 2024–May 2025): meta-analysis of 500+ cloud-storage studies,
-  Python/Pandas pipelines, on Arpaci-Dusseau's team.
+- OpenAI, SWE Intern (Jun–Aug 2025): owned the real-time match engine for a live QuizBowl platform
+  (WebSocket architecture, Node/Express REST APIs, PostgreSQL schema design, JWT auth, OpenAI API).
+  p95 latency −55% (2000→900ms) via streaming, prompt batching, and Redis caching (68% hit rate);
+  DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services + CI/CD (build/test −60%,
+  daily deploys); 500-item eval set with moderation checks → answer accuracy 70→82%. ~150 concurrent players.
+- UW–Madison CDIS, CS Researcher (Dec 2024–May 2025): meta-analysis of 500+ cloud-storage studies in
+  collaboration with other Big Ten schools; Python/Pandas pipelines.
 - MOURI Tech, AI/ML Intern (May–Jul 2024): TensorFlow stock-prediction on AWS, ONNX + distributed
   EC2 training, +15% accuracy.
 
@@ -349,7 +346,7 @@ PROJECTS: Gym Tracking App (React/Java/MySQL, JWT, <200ms), Path Finder (Java, D
 Custom Unix Shell wsh (C), Data Visualization Portal (Flask/AWS).
 
 BEYOND THE CODE: GUTS tutoring (Math & CS), Badger Volunteers (health/sustainability), Cybersecurity
-UW, Dean's List x2. Languages: English, Hindi.
+UW, Dean's Honor List 7 of 8 semesters. Languages: English, Telugu.
 
 CONTACT: srujayreddy15@gmail.com, linkedin.com/in/srujay-jakkidi, github.com/SrujayReddy.
 
