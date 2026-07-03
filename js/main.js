@@ -200,8 +200,12 @@ function renderExperience() {
 function renderWork() {
   const cards = content.projects
     .map((p) => {
+      // Serve WebP (≈half the bytes) to browsers that support it, with the JPEG as
+      // the universal fallback. SVG art (path-finder) has no WebP sibling → plain img.
+      const webp = p.image && p.image.endsWith(".jpg") ? p.image.replace(/\.jpg$/, ".webp") : null;
+      const imgTag = `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy" decoding="async" width="640" height="360">`;
       const media = p.image
-        ? `<div class="work-card__media"><img src="${p.image}" alt="${esc(p.name)}" loading="lazy" decoding="async" width="640" height="360"></div>`
+        ? `<div class="work-card__media">${webp ? `<picture><source srcset="${webp}" type="image/webp">${imgTag}</picture>` : imgTag}</div>`
         : `<div class="work-card__media work-card__media--mono">{ ${esc(p.stack[0])} }</div>`;
       return `
       <a class="work-card" href="${p.href}" target="_blank" rel="noopener" data-reveal>
@@ -506,6 +510,11 @@ function boot() {
       mod.initMotion({ director, field });
     } catch (e) {
       console.warn("Motion deps unavailable; static layout.", e);
+      // If motion fails to load, NOTHING drives the acts — the education cap never
+      // activates (director.setActive is only called from motion.js) and its scroll
+      // reveal never runs. Engage the full static presentation so every section,
+      // including the flagship's SVG cap fallback, renders instead of an empty column.
+      document.documentElement.classList.add("no-webgl");
       applyStaticHero();
       applyStaticThesis();
     }

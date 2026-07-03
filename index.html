@@ -204,17 +204,21 @@
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="palette-listbox"
+            aria-autocomplete="list"
             aria-label="Command or question"
             placeholder="Type a command, or “?” to ask anything…"
           />
           <span class="palette__mode" aria-hidden="true">commands</span>
         </div>
-        <ul class="palette__list" role="listbox" aria-label="Commands"></ul>
+        <ul id="palette-listbox" class="palette__list" role="listbox" aria-label="Commands"></ul>
         <div class="palette__suggestions" hidden></div>
-        <div class="palette__answer" hidden></div>
+        <div class="palette__answer" role="status" aria-live="polite" aria-atomic="false" hidden></div>
         <div class="palette__foot">
           <span class="keys"><kbd>↑↓</kbd> navigate · <kbd>↵</kbd> select · <kbd>esc</kbd> close</span>
-          <span data-model-label>Live · Gemini 2.5 Flash</span>
+          <span data-model-label>Live · Gemini 2.5 Flash-Lite</span>
         </div>
       </div>
     </div>

@@ -231,7 +231,7 @@ export const content = {
         "Shortest walking paths across the UW–Madison campus via Dijkstra's algorithm, on a graph backed by a custom hashtable for fast map storage and retrieval.",
       stack: ["Java", "Graphs", "Dijkstra"],
       image: "assets/images/path-finder.svg",
-      href: "https://github.com/SrujayReddy",
+      href: "https://github.com/SrujayReddy/Path-Finder",
     },
     {
       name: "Custom Unix Shell (wsh)",

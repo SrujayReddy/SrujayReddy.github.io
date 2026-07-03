@@ -17,6 +17,7 @@ export const config = {
   TURNSTILE_SITE_KEY: "",
 
   // Cosmetic: model label shown in the palette footer. The real model is
-  // chosen in the Worker (Gemini 2.5 Flash on the free tier, or Claude Haiku 4.5).
-  MODEL_LABEL: "Gemini 2.5 Flash",
+  // chosen in the Worker (Gemini 2.5 Flash-Lite on the free tier — 1,000 req/day —
+  // or Claude Haiku 4.5 if an Anthropic key is set).
+  MODEL_LABEL: "Gemini 2.5 Flash-Lite",
 };
