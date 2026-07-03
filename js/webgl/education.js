@@ -302,6 +302,28 @@ export function makeEducationAct() {
     },
 
     cameraRig() {},
+    // Flagship dolly-in: as the pin scrubs, push the camera toward the cap and
+    // recentre the frame on it (peaks mid-pin), then track it upward through the
+    // toss. Purely ADDITIVE over the rail and eased to 0 at progress 0 and 1, so
+    // the wider camera journey is untouched. Skipped on the narrow layout (there
+    // the cap is already centred above the copy, so a sideways push would misframe).
+    rideRig(pos, look) {
+      if (baseX < 1) return;
+      const p = Math.max(0, Math.min(1, progress));
+      const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+      // Ramp the push-in by ~1/3 through the pin, HOLD it through the toss climax,
+      // then release in the last 10% as the act hands off — so the tassel-turn AND
+      // the toss both play framed tight, and the exit to the next section is clean.
+      const dwell = ss(0.05, 0.35, p) * (1 - ss(0.9, 1.0, p));
+      pos.x += dwell * 0.5; // drift toward the cap (world +x)
+      pos.z -= dwell * 0.62; // dolly in
+      look.x += dwell * 0.62; // recentre the frame on the cap
+      look.y += dwell * 0.06;
+      const toss = Math.max(0, (p - 0.82) / 0.18);
+      const tossE = toss * toss * (3 - 2 * toss);
+      look.y += tossE * 0.34; // follow the cap up as it's tossed
+      pos.y += tossE * 0.12;
+    },
     // Keep the cap IN the visible plane across resizes/orientation changes:
     // desktop = right half beside the copy; narrow = smaller, centered above it.
     resize(w) {

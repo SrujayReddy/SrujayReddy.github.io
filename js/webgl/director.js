@@ -184,6 +184,14 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
       // a whisper of parallax breath so static holds never feel frozen
       railPos.x += Math.sin(shared.uTime.value * 0.12) * 0.05;
       railPos.y += Math.cos(shared.uTime.value * 0.1) * 0.04;
+      // Optional per-act camera ACCENT on top of the rail: an active act may add a
+      // small additive offset to pos/look (e.g. the education dolly-in that pushes
+      // into the flagship cap mid-pin). The rail still owns the base journey; this
+      // just lets one moment breathe without re-authoring the spline. Eased to zero
+      // at each act's progress ends, so neighbours are untouched.
+      for (const a of acts.values()) {
+        if (a.rideRig && a.opacity > 0.02) a.rideRig(railPos, railLook, a.opacity, ctx);
+      }
       camera.position.lerp(railPos, 0.16);
       camera.lookAt(railLook);
     } else {
