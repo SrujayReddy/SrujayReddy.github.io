@@ -171,20 +171,18 @@ export function initVibe() {
   function applyVibe(vibe, mood) {
     current = vibe;
     document.body.classList.add("vibe-restyling");
-    // ── layout guardrail baseline ─────────────────────────────
+    // ── layout guardrail probes ───────────────────────────────
     // A theme may ship ANY font (hand-written presets today, model-generated
-    // strings tomorrow). Fonts with very different metrics reflow display text
-    // and can blow the composition apart. Measure the key display blocks now,
-    // compare after the theme lands, and self-heal (drop only the font) if the
-    // layout grew — colors always survive, the page never breaks.
+    // strings tomorrow). The hero HEADLINE is already immune (--font-display),
+    // so normal font swaps only reflow body/display text vertically — which we
+    // ALLOW (the whole point is to see the font change). We only self-heal when
+    // a font is so wide that display text OVERFLOWS its box (genuinely broken);
+    // then we drop just the font and keep the colours. The page never breaks.
     const probes = [
-      ...document.querySelectorAll(".hero__title .line"),
       document.querySelector(".positioning__statement"),
       document.querySelector(".edu__school"),
+      ...document.querySelectorAll(".hero__title .line"),
     ].filter(Boolean);
-    const baseline = probes.map((el) => el.getBoundingClientRect().height);
-    const heroEl = document.querySelector(".hero");
-    const heroBase = heroEl ? heroEl.scrollHeight : 0;
     const set = (k, val) => { if (val != null) root.style.setProperty(k, val); };
     const grad = `linear-gradient(110deg, ${vibe.plasma[0]}, ${vibe.plasma[1]} 45%, ${vibe.plasma[2]})`;
     // accent + plasma + glow/washes
@@ -228,15 +226,10 @@ export function initVibe() {
 
     // ── layout guardrail check ────────────────────────────────
     requestAnimationFrame(() => {
-      const grew = probes.some(
-        (el, i) => el.getBoundingClientRect().height > baseline[i] * 1.5 + 2
-      );
-      // the opening composition must SURVIVE any font: if the hero got taller
-      // than it was before the theme (wider glyphs → extra wraps → pushed
-      // below the fold), keep the colors but drop the font. The +48 margin
-      // absorbs the pill/label swap so only real font blowups (100s of px) trip it.
-      const heroGrew = heroEl && heroBase && heroEl.scrollHeight > heroBase + 48;
-      if (grew || heroGrew) root.style.removeProperty("--font-sans");
+      // horizontal overflow = a word too wide for its box (a genuinely broken
+      // font). Vertical reflow is fine and stays. Colours always survive.
+      const broken = probes.some((el) => el.scrollWidth > el.clientWidth + 4);
+      if (broken) root.style.removeProperty("--font-sans");
     });
 
     setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
