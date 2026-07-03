@@ -118,6 +118,9 @@ h1, h2, h3 {
   font-weight: 600;
   line-height: var(--lh-snug);
   letter-spacing: -0.02em;
+  /* long tokens (e.g. "Wisconsin–Madison") wrap instead of overflowing — keeps
+     headings intact under ANY live-theme font, so the font-swap demo can show. */
+  overflow-wrap: break-word;
 }
 
 .lead {

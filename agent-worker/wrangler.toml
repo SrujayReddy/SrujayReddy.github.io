@@ -17,7 +17,7 @@ RATE_PER_DAY = "800"
 # then paste the returned id below.
 [[kv_namespaces]]
 binding = "RATE_KV"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "1733836f651b48eab926245d3293f58e"
 
 # Secrets are NOT stored here. Set them with:
 #   wrangler secret put ANTHROPIC_API_KEY
