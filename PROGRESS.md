@@ -455,3 +455,25 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
       `max-width: min(58vw,22ch)` + ellipsis (the mood is model-generated, up to 48 chars).
 - Checked the other big display numbers (`.collapse .num` in bounded flex-wrap cards,
   `.phase__val` tiny + nowrap) — already overflow-safe, no change needed.
+
+## Round 16-17 (Vibe Studio polish + edge-cases + stuck-deploy fix)
+
+- [x] **Fixed the mood-pill / "thinking" chip overlap** on re-submit (they shared one
+      absolute slot) + `busy` guard so a second submit / swatch / reset can't race an
+      in-flight generation + a 25s fetch timeout so the UI can't hang in "thinking".
+- [x] **Night Sky preset** (deep indigo + soft-blue/lavender, `starfield` backdrop,
+      "midnight · starlit · calm") added ALONGSIDE Cyberpunk Neon (keeps "laser" + grid).
+      New `night` keyword set (over-broad "dark" dropped so it doesn't mis-route).
+- [x] **Sleeker apply transition** — the sweep is a soft vertical strip (bright edge +
+      plasma wash) that GPU-translates left→right; blend is per-apply (screen on dark,
+      multiply on light) so it's visible on every theme; never stacks.
+- [x] **"Out of tokens" is explained now** — ⌘K 429 → a fun "🪫 out of juice today,
+      refills tomorrow" message; Vibe Studio shows a note on ANY live failure before
+      falling back to a preset (rate-limit vs generic error) so a generic result is never
+      silent. (Worker returns 429 for its own daily cap + the upstream Gemini limit.)
+- [x] **Education flagship stability** — copy pinned to Geist/Geist-Mono + no
+      heading-transform so a taller/uppercase vibe font can't drift the 5 facts against
+      the fixed WebGL cap. Colours still change.
+- [x] **`.bignum` clipping** fix (14.5vw + nowrap) and **`.nojekyll`** (no-build site
+      skips Jekyll) to unstick Pages deploys. NOTE: the Pages *deploy* backend still
+      flakes intermittently ("try again later"); a fresh commit / re-run clears it.
