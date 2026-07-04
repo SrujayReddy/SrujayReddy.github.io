@@ -135,10 +135,11 @@ html.reduced-motion [data-reveal] {
   margin-bottom: 1.1rem;
 }
 .hero__title {
-  font-family: var(--font-display); /* immune to live-theme font swaps */
+  font-family: var(--font-display); /* Vibe Studio may reskin this (guardrail-protected) */
   font-size: var(--fs-display);
   line-height: var(--lh-tight);
   letter-spacing: -0.035em;
+  text-transform: var(--heading-transform, none);
   font-weight: 600;
   max-width: 16ch;
 }
@@ -295,15 +296,20 @@ html.reduced-motion .positioning__statement .word {
 }
 .thesis__advisor b { color: var(--ink-dim); font-weight: 600; }
 
-/* Big number beat */
+/* Big number beat. Sized to keep clear margins at every viewport AND under any
+   live-theme font (a wide serif/heavy font widens these huge digits) — it used to
+   run ~90vw wide and clip against the pin's overflow:hidden at the screen edges.
+   nowrap + max-width are the final safety net so it can never wrap or bleed. */
 .bignum {
   display: flex;
   align-items: baseline;
-  gap: 0.1em;
+  gap: 0.08em;
+  max-width: 100%;
+  white-space: nowrap;
   font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 0.9;
-  font-size: clamp(4.5rem, 18vw, 15rem);
+  font-size: clamp(3.25rem, 14.5vw, 13rem);
 }
 .bignum .gradient-text { font-variant-numeric: tabular-nums; }
 .bignum .unit { font-size: 0.42em; color: var(--ink-dim); }

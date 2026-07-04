@@ -15,14 +15,20 @@
 
 import { content } from "./content.js";
 import { config } from "./config.js";
+import { initBackground } from "./background.js";
+
+// the curated scene backdrops the AI (or a preset) may pick — whitelist-validated
+const SCENES = ["waves", "aurora", "starfield", "grid"];
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const HEX = /^#[0-9a-f]{6}$/i;
 const PROPS = [
   "--accent", "--accent-2", "--accent-3", "--plasma", "--plasma-bright", "--wash-1", "--wash-2", "--select-bg", "--glow",
   "--bg", "--bg-tint", "--surface", "--surface-2", "--ink", "--ink-dim", "--ink-mute", "--line", "--line-strong",
-  "--font-sans", "--radius", "--radius-lg",
+  "--font-sans", "--font-display", "--font-mono", "--heading-transform", "--tracking-heading", "--radius", "--radius-lg",
 ];
+// typography tokens the guardrail reverts together if a wild choice overflows the layout
+const TYPE_PROPS = ["--font-sans", "--font-display", "--font-mono", "--heading-transform", "--tracking-heading"];
 
 function hexToRgb(h) {
   const n = parseInt(h.slice(1), 16);
@@ -47,6 +53,8 @@ export function initVibe() {
   if (!v) return;
   const live = !!config.WORKER_URL;
   const root = document.documentElement;
+  // the safe scene-backdrop engine (a no-op if canvas/2D is unavailable)
+  const bg = initBackground();
 
   let current = null;
 
@@ -74,6 +82,10 @@ export function initVibe() {
           <b data-vibe-mood></b>
           <button type="button" data-vibe-reset>Reset</button>
         </div>
+        <div class="restyle__thinking" data-vibe-thinking hidden aria-live="polite">
+          <span class="restyle__orb" aria-hidden="true"></span>
+          <b data-vibe-thinking-text>Designing your look…</b>
+        </div>
       </div>
     </div>
   `;
@@ -83,6 +95,8 @@ export function initVibe() {
   const input = $("[data-vibe-input]");
   const pill = $("[data-vibe-pill]");
   const moodEl = $("[data-vibe-mood]");
+  const thinkingEl = $("[data-vibe-thinking]");
+  const thinkingText = $("[data-vibe-thinking-text]");
 
   // ── events ───────────────────────────────────────────────────
   mount.querySelectorAll("[data-vibe]").forEach((el) =>
@@ -102,10 +116,61 @@ export function initVibe() {
     const text = input.value.trim();
     if (!text) return;
     form.classList.add("is-busy");
-    const vibe = await resolve(text);
+    let vibe;
+    if (live) {
+      // the model now THINKS about the palette (a couple seconds) — show it working
+      // so the wait reads as craft, not lag.
+      const stop = startThinking();
+      try { vibe = await resolveLive(text); }
+      catch { vibe = resolveDormant(text); }
+      stop();
+    } else {
+      vibe = resolveDormant(text); // no backend → instant nearest-preset
+    }
     form.classList.remove("is-busy");
     applyVibe(vibe, vibe.mood || text);
   });
+
+  // ── "thinking" state: cycling status while the model designs a theme ──
+  const THINKING_MSGS = [
+    "Reading the vibe…",
+    "Mixing a palette…",
+    "Balancing contrast…",
+    "Choosing the type…",
+    "Composing the page…",
+  ];
+  function startThinking() {
+    const wrap = mount.querySelector(".restyle");
+    wrap && wrap.classList.add("is-thinking");
+    thinkingEl.hidden = false;
+    let i = 0;
+    thinkingText.textContent = THINKING_MSGS[0];
+    const timer = setInterval(() => {
+      i = (i + 1) % THINKING_MSGS.length;
+      thinkingText.textContent = THINKING_MSGS[i];
+    }, 1100);
+    return () => {
+      clearInterval(timer);
+      thinkingEl.hidden = true;
+      wrap && wrap.classList.remove("is-thinking");
+    };
+  }
+
+  // ── cinematic apply: a light-sweep of the new palette wipes across the page,
+  // synced with the colour crossfade — the reskin reads as a deliberate reveal. ─
+  function playSweep(vibe) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const p = Array.isArray(vibe.plasma) ? vibe.plasma : [vibe.accent, vibe.accent, vibe.accent];
+    const el = document.createElement("div");
+    el.className = "vibe-sweep";
+    el.style.setProperty("--s0", hexA(p[0], 0));
+    el.style.setProperty("--s1", hexA(p[1] || p[0], 0.62));
+    el.style.setProperty("--s2", hexA(p[2] || p[0], 0));
+    el.style.setProperty("--bloom", hexA(vibe.accent, 0.2));
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove(), { once: true });
+    setTimeout(() => el.isConnected && el.remove(), 1400); // belt-and-suspenders cleanup
+  }
 
   // ── resolve: live worker → validated theme, else nearest preset ──
   async function resolve(text) {
@@ -157,20 +222,31 @@ export function initVibe() {
       // a CSS-invalid font (stray ';', braces, unbalanced quotes) makes
       // setProperty silently no-op and leaks the PREVIOUS theme's font — only
       // accept safe font-family characters.
-      font:
-        typeof data.font === "string" && data.font.length < 120 && /^[\w\s"',.-]+$/.test(data.font)
-          ? data.font
-          : fb.font,
+      font: safeFont(data.font) || fb.font,
+      // fontDisplay = the big hero headline; fontMono = labels. Both optional →
+      // the headline falls back to the body font (still changes), mono to default.
+      fontDisplay: safeFont(data.fontDisplay) || safeFont(data.font) || fb.font,
+      fontMono: safeFont(data.fontMono),
+      headingCase: ["uppercase", "lowercase", "none"].includes(data.headingCase) ? data.headingCase : "none",
+      // heading letter-spacing: a small em value, clamped to a sane range.
+      tracking: /^-?0?\.?[0-9]{1,3}em$/.test(String(data.tracking || "")) ? data.tracking : null,
       radius: /^[0-9]{1,2}px$/.test(data.radius || "") ? data.radius : fb.radius,
       dark: lum(sbg) < 0.4,
+      // scene backdrop — whitelist ONLY; anything unknown → "none" (safe).
+      background: SCENES.includes(data.background) ? data.background : "none",
       mood: (typeof data.mood === "string" ? data.mood : fb.mood).slice(0, 48),
     };
+  }
+  // Accept only safe font-family characters (no braces/semicolons that would break CSS).
+  function safeFont(x) {
+    return typeof x === "string" && x.length < 120 && /^[\w\s"',.-]+$/.test(x) ? x : null;
   }
 
   // ── apply / reset ────────────────────────────────────────────
   function applyVibe(vibe, mood) {
     current = vibe;
     document.body.classList.add("vibe-restyling");
+    playSweep(vibe); // the palette wipes across the page as the colours crossfade
     // ── layout guardrail probes ───────────────────────────────
     // A theme may ship ANY font (hand-written presets today, model-generated
     // strings tomorrow). The hero HEADLINE is already immune (--font-display),
@@ -205,10 +281,16 @@ export function initVibe() {
     set("--ink-mute", vibe.inkMute);
     set("--line", vibe.line);
     set("--line-strong", vibe.lineStrong);
-    // type + shape language. Clear first so a rejected value falls back to the
-    // DEFAULT font, never the previously-applied vibe's font.
-    root.style.removeProperty("--font-sans");
+    // type + shape language — the expanded surface: body font, the big hero
+    // HEADLINE font, the label/mono font, heading case + letter-spacing, and radius.
+    // Clear each first so a rejected/absent value falls back to the DEFAULT, never
+    // the previously-applied vibe's value.
+    TYPE_PROPS.forEach((p) => root.style.removeProperty(p));
     set("--font-sans", vibe.font);
+    if (vibe.fontDisplay) set("--font-display", vibe.fontDisplay); // the headline restyles too
+    if (vibe.fontMono) set("--font-mono", vibe.fontMono);
+    if (vibe.headingCase && vibe.headingCase !== "none") set("--heading-transform", vibe.headingCase);
+    if (vibe.tracking) set("--tracking-heading", vibe.tracking);
     if (vibe.radius) { set("--radius", vibe.radius); set("--radius-lg", (parseFloat(vibe.radius) * 1.5 || 14) + "px"); }
     // browser chrome + the WebGL field (theme by darkness, tint by accent)
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -218,6 +300,13 @@ export function initVibe() {
       if (cinema.director.setTheme) cinema.director.setTheme(vibe.dark ? "dark" : "light");
       if (cinema.director.setVibe) cinema.director.setVibe(vibe.particle || vibe.accent);
     }
+    // scene backdrop (waves / aurora / starfield / grid — or none). The engine
+    // whitelist-validates, caps perf, and fails to an empty canvas: it can only add
+    // atmosphere, never break the page. Particles + content always render on top.
+    bg.setScene(vibe.background || "none", {
+      bg: vibe.bg, accent: vibe.accent, accent2: vibe.accent2,
+      plasma: vibe.plasma, ink: vibe.ink, dark: vibe.dark,
+    });
 
     moodEl.textContent = mood || vibe.label || "custom";
     pill.hidden = false;
@@ -226,13 +315,14 @@ export function initVibe() {
 
     // ── layout guardrail check ────────────────────────────────
     requestAnimationFrame(() => {
-      // horizontal overflow = a word too wide for its box (a genuinely broken
-      // font). Vertical reflow is fine and stays. Colours always survive.
+      // horizontal overflow = a word too wide for its box (a genuinely broken font
+      // or too-loose tracking / all-caps headline). Vertical reflow is fine and
+      // stays. Revert the TYPE tokens together (the colour redesign always survives).
       const broken = probes.some((el) => el.scrollWidth > el.clientWidth + 4);
-      if (broken) root.style.removeProperty("--font-sans");
+      if (broken) TYPE_PROPS.forEach((p) => root.style.removeProperty(p));
     });
 
-    setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
+    setTimeout(() => document.body.classList.remove("vibe-restyling"), 950);
   }
 
   function resetVibe() {
@@ -246,12 +336,13 @@ export function initVibe() {
       if (cinema.director.setTheme) cinema.director.setTheme(theme); // restore the real theme
       if (cinema.director.setVibe) cinema.director.setVibe(null);
     }
+    bg.clear(); // fade out + tear down any scene backdrop
     pill.hidden = true;
     const wrap = mount.querySelector(".restyle");
     if (wrap) wrap.classList.remove("has-vibe");
     current = null;
     input.value = "";
-    setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
+    setTimeout(() => document.body.classList.remove("vibe-restyling"), 950);
   }
 
   // deterministic-ish randomness without Date/Math.random pitfalls in tests:

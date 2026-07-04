@@ -17,7 +17,8 @@
  *                                     used when no ANTHROPIC_API_KEY is set)
  *   var     ALLOWED_ORIGIN           e.g. https://srujayreddy.github.io
  *   var     MODEL                    default claude-haiku-4-5
- *   var     GEMINI_MODEL             default gemini-2.5-flash-lite (1,000 req/day free)
+ *   var     GEMINI_MODEL             default gemini-2.5-flash-lite (1,000 req/day free) — chat
+ *   var     GEMINI_VIBE_MODEL        default gemini-2.5-flash — Vibe Studio (thinks harder)
  *   var     RATE_PER_MIN             default 8
  *   var     RATE_PER_DAY             default 800
  *   kv      RATE_KV                  (required for rate limiting)
@@ -111,12 +112,32 @@ const BENCH_RATES = { input: 1.0, output: 5.0, cacheRead: 0.1 }; // Haiku 4.5 $/
 // ── Vibe Studio ({mode:"vibe"}) — free text → a generated, accessible theme ──
 const VIBE_SYSTEM = `You are a senior brand / UI colour designer. Given a short "vibe" phrase,
 design ONE cohesive, tasteful, ACCESSIBLE theme and return it via the generate_theme tool.
+First reason about the WORLD the vibe evokes — its era, materials, lighting, and emotion — then
+choose colours that feel unmistakably like that world: bold, specific, and harmonious, never
+generic, muddy, or washed-out. Push for a palette that would make a designer stop and look.
 Rules: every colour is #rrggbb hex; bg vs ink MUST be >= 4.5:1 WCAG contrast (dark-on-light OR
 light-on-dark — your choice to fit the vibe); accent/accent2/plasma form a harmonious palette that
 pops on bg; surfaces sit just off bg; ink-dim/ink-mute are legible secondary/tertiary text; particle
-is the accent used behind the page; font is a WEB-SAFE CSS font-family stack (e.g.
-"Georgia, 'Times New Roman', serif") — never a font that needs loading; radius like "14px"; mood is a
-2–4 word label. Call generate_theme exactly once.`;
+is the accent used behind the page.
+TYPOGRAPHY — reshape the whole identity, not just colour. Use ALL of these together:
+- font: the body/UI font stack; fontDisplay: the BIG hero-headline font (be expressive here);
+  fontMono: the small label/eyebrow font. All three are WEB-SAFE CSS font-family stacks (e.g.
+  "Georgia,'Times New Roman',serif" · "'Courier New',monospace" · "'Trebuchet MS',sans-serif") —
+  NEVER a font that needs loading.
+- headingCase: one of none | uppercase | lowercase.
+- tracking: heading letter-spacing, e.g. "-0.02em" (tight) … "0.06em" (airy).
+- radius: e.g. "0px" (sharp/brutal) … "14px" … "26px" (soft/friendly).
+BACKGROUND — pick an animated backdrop that matches the world (or "none"). Choose EXACTLY one of:
+  none · waves (sea / ocean / water / rain / liquid) · aurora (sky / dream / ethereal / northern
+  lights / calm) · starfield (space / night / cosmic / galaxy) · grid (retro / synthwave / terminal
+  / cyber / 80s). It renders behind the page in YOUR colours, with the particle field on top — so
+  make bg/accent/plasma read well as that backdrop (e.g. a sea wants deep blue bg + teal/cyan plasma).
+  If none of these fits the vibe, use "none".
+Make the dials agree with the vibe: e.g. BRUTALIST → mono display font, uppercase headings, tight
+tracking, 0px radius, grid or none; DEEP SEA → blue/teal palette, waves background, soft radius;
+ELEGANT EDITORIAL → serif display, roomy tracking, soft radius, none/aurora; RETRO TERMINAL →
+monospace everything, uppercase, grid. mood is a 2–4 word label. Take the time to get it right, then
+call generate_theme exactly once.`;
 
 const VIBE_TOOL = {
   name: "generate_theme",
@@ -130,9 +151,13 @@ const VIBE_TOOL = {
       inkDim: { type: "string" }, inkMute: { type: "string" },
       accent: { type: "string" }, accent2: { type: "string" }, particle: { type: "string" },
       plasma: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 3 },
-      font: { type: "string" }, radius: { type: "string" }, mood: { type: "string" },
+      font: { type: "string" }, fontDisplay: { type: "string" }, fontMono: { type: "string" },
+      headingCase: { type: "string", enum: ["none", "uppercase", "lowercase"] },
+      tracking: { type: "string" },
+      background: { type: "string", enum: ["none", "waves", "aurora", "starfield", "grid"] },
+      radius: { type: "string" }, mood: { type: "string" },
     },
-    required: ["bg", "ink", "accent", "plasma", "mood"],
+    required: ["bg", "ink", "accent", "plasma", "font", "fontDisplay", "mood"],
   },
 };
 
@@ -417,7 +442,11 @@ async function handleVibe(body, env, cors, request) {
   let r;
   try {
     r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash-lite"}:generateContent`,
+      // Vibe generation is the "think harder for a better design" path: it runs a
+      // STRONGER model than chat (Flash, not Flash-Lite) with DYNAMIC THINKING on
+      // (thinkingBudget -1 → the model reasons about the palette before answering).
+      // Worth the extra couple seconds — the client shows a "thinking" state.
+      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_VIBE_MODEL || "gemini-2.5-flash"}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -426,13 +455,18 @@ async function handleVibe(body, env, cors, request) {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, radius, mood.` }],
+            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, fontDisplay, fontMono, headingCase, tracking, background, radius, mood.` }],
           },
           contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
           generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 700,
-            thinkingConfig: { thinkingBudget: 0 },
+            temperature: 1.0,
+            // thinking tokens are separate from the visible JSON; give the output
+            // ample room so a fully-considered, richer theme is never truncated.
+            maxOutputTokens: 3072,
+            // a generous explicit budget → the model genuinely deliberates over the
+            // palette + typography before answering (a few seconds; quality over speed).
+            thinkingConfig: { thinkingBudget: 8192 },
           },
         }),
       }

@@ -380,3 +380,78 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
         • MODEL_LABEL is now data-driven (single source). Verified in-browser.
       • Skipped (flagged to owner): thesis "Symposium" link `href:"#"` — a deliberate
         muted "pending" chip; left as-is rather than delete owner content.
+
+## Round 12 (Vibe Studio "think harder" + impact + circle fix)
+
+- [x] **Thesis Symposium link** now points at the real program PDF (honors.ls.wisc.edu).
+- [x] **Thesis particle circle — dim arc fixed** (`buildClockFormation` in main.js): the
+      bottom arc used to render the non-dominant phases near-black (`colorMix ~0.03`),
+      so it read as a sparse/dim gap. Rebuilt as an EVENLY-spaced (i/count + jitter),
+      uniformly-bright ring — one clean glowing circle, no dim arc. The per-phase data
+      lives in the DOM bar chart, not the ring's brightness.
+- [x] **Vibe Studio thinks harder** (worker.js + wrangler.toml): the vibe path now runs a
+      STRONGER model with DYNAMIC THINKING — `GEMINI_VIBE_MODEL` default `gemini-2.5-flash`
+      (vs Flash-Lite for chat), `thinkingBudget:-1`, `temperature:1.0`, `maxOutputTokens:2048`,
+      and a bolder design prompt. A couple seconds slower, a more considered palette.
+      **Needs a Worker redeploy** to take effect.
+- [x] **Thinking indicator** (vibe.js/vibe.css): free-text submit shows an animated
+      spinner pill with cycling status ("Reading the vibe…" → "Composing the page…") so
+      the extra thinking time reads as craft.
+- [x] **Bigger-impact apply** (vibe.js/vibe.css): every theme change now plays a
+      full-viewport light-SWEEP of the new palette (+ center bloom) synced with a longer
+      (0.72s) colour crossfade and the particle re-tint — the reskin lands as a reveal.
+      Verified: uniform circle, thinking state, sweep element + wiring, clean console.
+      Sweep/thinking *motion* needs the owner's eyes (hidden preview tab throttles CSS anim).
+
+## Round 13 (Vibe Studio: think longer + a MUCH bigger design surface)
+
+- [x] **Thinks longer** (worker.js): vibe path now runs `gemini-2.5-flash` with an explicit
+      `thinkingBudget: 8192` (was dynamic) + `maxOutputTokens: 3072` — genuinely deliberates
+      for a few seconds. (Needs a worker redeploy.)
+- [x] **Controls a lot more of the page.** The generated theme can now reshape the whole
+      TYPE identity, not just colour:
+      - `--font-display` — the BIG hero headline font (was locked to Geist; now vibe-driven,
+        guardrail-protected). `--font-mono` — labels/eyebrows. (+ `--font-sans` body as before.)
+      - `--heading-transform` (none/uppercase/lowercase) + `--tracking-heading` (letter-spacing)
+        — tokenised in tokens.css, wired into `h1,h2,h3` (base.css) + `.hero__title` (sections.css).
+      - `--radius` + full colour palette (as before).
+      Worker schema (`VIBE_TOOL`) + prompt expanded to design all of it cohesively (brutalist →
+      mono/heavy display, uppercase, 0px; editorial → serif, roomy tracking, soft radius).
+      Client `validate()` sanitises the new fields (safe-font regex, case enum, em-tracking regex);
+      `applyVibe()` clear-before-sets them; the overflow guardrail now reverts ALL type tokens
+      together (colour always survives). Verified end-to-end with a mocked brutalist theme:
+      hero → Arial Black UPPERCASE, body/labels → Courier, orange-on-black, radius 0; Reset
+      restores every default; guardrail only reverts on true overflow. Clean console, tests green.
+
+## Round 14 (Vibe Studio: AI-selected animated BACKGROUND scenes)
+
+- [x] **The AI can now change the whole backdrop** — safely. New `js/background.js` is a
+      sandboxed scene engine: the model NEVER writes background code, it only picks a scene
+      NAME from a fixed whitelist and we render it. Scenes: **waves** (sea/water/rain),
+      **aurora** (sky/ethereal/dream), **starfield** (space/night), **grid** (retro/synthwave/
+      terminal), or **none**. Each is drawn in the vibe's colours on ONE dedicated 2D canvas
+      at `z-index:-1` (behind the particle field + content), capped (DPR≤2, small counts),
+      paused when the tab is hidden, reduced-motion aware (one static frame), wrapped so any
+      throw fails to an EMPTY canvas, and torn down cleanly on reset. **Worst case = today's
+      site.** Whitelist-validated in `validate()`; the model can't inject anything.
+      - worker.js: `background` enum added to `VIBE_TOOL` + prompt ("a sea → deep blue palette
+        + waves") + JSON keys. vibe.js: `initBackground()`, `bg.setScene()` in applyVibe,
+        `bg.clear()` in reset. base.css: `#scene-canvas`. content.js: Cyberpunk Neon preset
+        → `grid` as a showcase.
+      - Verified in-browser (deterministic `window.__bg.step` hook): a mocked deep-sea theme
+        renders layered teal WAVES with particles floating on top; the neon preset renders a
+        magenta synthwave GRID; aurora/starfield paint too; reset clears; clean console.
+        (Needs a worker redeploy for the AI to emit `background`.)
+
+## Round 15 (overflow edge-cases from the font/vibe features)
+
+- [x] **Big thesis number (`.bignum`) no longer clips.** It ran ~90vw wide and, once
+      vibe fonts could widen those huge digits (serif/heavy), the text reached the screen
+      edges and got clipped by the pin's `overflow:hidden`. Pulled the clamp in
+      (`18vw/15rem` → `14.5vw/13rem`) and added `white-space:nowrap` + `max-width:100%`
+      as a hard safety net. Verified across Geist / Georgia / Arial Black at the widest
+      count (93–99%): text keeps ≥360px margins at every viewport, never overflows its box.
+- [x] **Long AI mood label can't blow out the pill** — `.restyle__pill b` gets
+      `max-width: min(58vw,22ch)` + ellipsis (the mood is model-generated, up to 48 chars).
+- Checked the other big display numbers (`.collapse .num` in bounded flex-wrap cards,
+  `.phase__val` tiny + nowrap) — already overflow-safe, no change needed.

@@ -405,39 +405,26 @@ function applyStaticHero() {
   });
 }
 
-// Build the thesis "latency clock" formation: particles arranged on a thin ring,
-// split into arcs by each cold-start phase's share. Image pull is the dominant
-// finding, so ~93% of the ring is one glowing arc — the truth, drawn as a clock
-// that is almost entirely one phase.
-function buildClockFormation(count, breakdown) {
+// Build the thesis "latency clock" formation: particles on a thin ring — a single
+// clean, unbroken glowing circle behind the section. Particles are spread EVENLY by
+// angle (i/count, with a hair of jitter) and are uniformly bright, so the ring has
+// no dim/sparse arc anywhere. (The per-phase breakdown lives in the DOM bar chart
+// — "Cold-start timeline, decomposed" — not in the ring's brightness.)
+function buildClockFormation(count) {
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count);
-  const total = breakdown.reduce((s, b) => s + b.share, 0) || 1;
-  const bounds = [];
-  let acc = 0;
-  for (const b of breakdown) {
-    const start = acc / total;
-    acc += b.share;
-    bounds.push({ start, end: acc / total, dominant: !!b.dominant });
-  }
   const R = 2.2;
   const thickness = 0.34;
   for (let i = 0; i < count; i++) {
-    const r = Math.random();
-    let seg = bounds[bounds.length - 1];
-    for (const b of bounds) {
-      if (r >= b.start && r < b.end) { seg = b; break; }
-    }
-    const span = seg.end - seg.start || 1;
-    const t = (r - seg.start) / span;
-    const a0 = seg.start * Math.PI * 2;
-    const a1 = seg.end * Math.PI * 2;
-    const ang = -Math.PI / 2 - (a0 + t * (a1 - a0)); // start at 12 o'clock, sweep clockwise
+    // even angular spacing → uniform density all the way around (no clumps/gaps);
+    // sub-step jitter kills any banding without letting sparse spots form.
+    const ang = -Math.PI / 2 - ((i + Math.random() * 0.7) / count) * Math.PI * 2;
     const rad = R + (Math.random() - 0.5) * thickness;
     positions[i * 3] = Math.cos(ang) * rad;
     positions[i * 3 + 1] = Math.sin(ang) * rad;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
-    colors[i] = seg.dominant ? 0.6 + Math.random() * 0.4 : Math.random() * 0.06;
+    // uniformly bright plasma across the whole ring (aColorMix 0.62–1.0).
+    colors[i] = 0.62 + Math.random() * 0.38;
   }
   return { positions, colors };
 }
@@ -489,7 +476,7 @@ function boot() {
         });
         field = director.register(makeFieldAct());
         director.register(makeEducationAct());
-        const clock = buildClockFormation(field.count, content.thesis.breakdown);
+        const clock = buildClockFormation(field.count);
         field.addFormation("clock", clock.positions, clock.colors);
         director.setActive("field", true);
         director.onReady(() => canvas.classList.add("is-ready"));

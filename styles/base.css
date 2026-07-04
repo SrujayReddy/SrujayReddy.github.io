@@ -59,6 +59,26 @@ img {
   border-radius: 4px;
 }
 
+/* ── Vibe Studio scene backdrop (fixed, BEHIND the particle field) ──
+   Created + driven by js/background.js. Sits above the body background but below
+   #webgl-canvas (z 0) and content (z 1). Decorative only, never interactive. */
+#scene-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.7s var(--ease-out);
+}
+#scene-canvas.is-on {
+  opacity: 1;
+}
+html.reduced-motion #scene-canvas {
+  transition: none;
+}
+
 /* ── WebGL canvas (fixed behind everything) ───────────────────── */
 #webgl-canvas {
   position: fixed;
@@ -117,7 +137,8 @@ main {
 h1, h2, h3 {
   font-weight: 600;
   line-height: var(--lh-snug);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-heading, -0.02em);
+  text-transform: var(--heading-transform, none);
   /* long tokens (e.g. "Wisconsin–Madison") wrap instead of overflowing — keeps
      headings intact under ANY live-theme font, so the font-swap demo can show. */
   overflow-wrap: break-word;
