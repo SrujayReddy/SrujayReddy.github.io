@@ -162,30 +162,51 @@
 @media (max-width: 900px) { .restyle__thinking { position: static; } }
 
 /* ── cinematic apply sweep (vibe.js injects one, then removes it) ──
-   A translucent band of the new palette wipes across the whole page while the
-   colours crossfade — the reskin lands as a deliberate reveal, not a snap. */
+   A soft vertical strip of the new palette — a bright leading edge trailing a wash —
+   GPU-translates smoothly left→right across the page while the colours crossfade, so
+   the reskin reads as a real-time reveal, not a snap. */
 .vibe-sweep {
   position: fixed;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42vw;
   z-index: 9998;
   pointer-events: none;
-  background:
-    radial-gradient(58% 50% at 50% 48%, var(--bloom), transparent 70%),
-    linear-gradient(115deg, var(--s0) 22%, var(--s1) 46%, var(--s2) 70%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%, 280% 100%;
-  background-position: 50% 50%, 165% 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--wash) 60%,
+    var(--edge2) 84%,
+    var(--edge) 96%,
+    transparent 100%
+  );
+  transform: translateX(-125%);
   opacity: 0;
-  animation: vibe-sweep 0.95s cubic-bezier(0.45, 0, 0.15, 1) forwards;
-  will-change: background-position, opacity;
+  animation: vibe-sweep 0.9s cubic-bezier(0.5, 0, 0.15, 1) forwards;
+  will-change: transform, opacity;
+  /* blend is set inline per-apply (screen on dark themes, multiply on light) */
 }
 @keyframes vibe-sweep {
-  0%   { opacity: 0; background-position: 50% 50%, 165% 0; }
-  18%  { opacity: 1; }
-  80%  { opacity: 1; }
-  100% { opacity: 0; background-position: 50% 50%, -95% 0; }
+  0% { transform: translateX(-125%); opacity: 0; }
+  12% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { transform: translateX(360%); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .vibe-sweep { display: none; } }
+
+/* rate-limit / status note reuses the thinking chip: static dot, wrap allowed. */
+.restyle.is-note .restyle__orb {
+  animation: none;
+  -webkit-mask: none;
+  mask: none;
+  background: var(--accent);
+}
+.restyle.is-note .restyle__thinking {
+  white-space: normal;
+  max-width: min(92vw, 40ch);
+  line-height: 1.3;
+}
 
 @media (max-width: 900px) {
   /* narrow screens scroll anyway — let the pill flow in the row, and fully

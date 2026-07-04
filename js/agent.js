@@ -242,8 +242,8 @@ export function initAgent({ onPizza } = {}) {
         stateEl.classList.remove("is-live");
         stateEl.classList.add("is-error");
         cursor.remove();
-        textEl.textContent =
-          "The agent is rate-limited at the moment (a daily cap keeps the bill safe). Try again shortly — the commands above still work.";
+        textEl.innerHTML =
+          `🪫 Out of juice for today — someone (maybe you!) used up the free daily AI budget, so the live agent is napping until it refills tomorrow. The ⌘K commands above still work, or reach Srujay at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
         return;
       }
       if (!res.ok || !res.body) throw new Error("worker " + res.status);
