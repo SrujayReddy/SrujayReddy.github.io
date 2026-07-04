@@ -74,7 +74,7 @@ export const content = {
     links: [
       { label: "Read the paper (MINDS@UW)", href: "https://minds.wisc.edu/items/934ca4c7-7f14-4347-847a-a328e0edb0a0" },
       { label: "Advisor — Remzi Arpaci-Dusseau", href: "https://pages.cs.wisc.edu/~remzi/" },
-      { label: "2026 Senior Honors Thesis Symposium", href: "#" },
+      { label: "2026 Senior Honors Thesis Symposium", href: "https://honors.ls.wisc.edu/wp-content/uploads/sites/1038/2026/04/2026-Symposium-Program.pdf" },
     ],
   },
 

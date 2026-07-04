@@ -74,6 +74,10 @@ export function initVibe() {
           <b data-vibe-mood></b>
           <button type="button" data-vibe-reset>Reset</button>
         </div>
+        <div class="restyle__thinking" data-vibe-thinking hidden aria-live="polite">
+          <span class="restyle__orb" aria-hidden="true"></span>
+          <b data-vibe-thinking-text>Designing your look…</b>
+        </div>
       </div>
     </div>
   `;
@@ -83,6 +87,8 @@ export function initVibe() {
   const input = $("[data-vibe-input]");
   const pill = $("[data-vibe-pill]");
   const moodEl = $("[data-vibe-mood]");
+  const thinkingEl = $("[data-vibe-thinking]");
+  const thinkingText = $("[data-vibe-thinking-text]");
 
   // ── events ───────────────────────────────────────────────────
   mount.querySelectorAll("[data-vibe]").forEach((el) =>
@@ -102,10 +108,61 @@ export function initVibe() {
     const text = input.value.trim();
     if (!text) return;
     form.classList.add("is-busy");
-    const vibe = await resolve(text);
+    let vibe;
+    if (live) {
+      // the model now THINKS about the palette (a couple seconds) — show it working
+      // so the wait reads as craft, not lag.
+      const stop = startThinking();
+      try { vibe = await resolveLive(text); }
+      catch { vibe = resolveDormant(text); }
+      stop();
+    } else {
+      vibe = resolveDormant(text); // no backend → instant nearest-preset
+    }
     form.classList.remove("is-busy");
     applyVibe(vibe, vibe.mood || text);
   });
+
+  // ── "thinking" state: cycling status while the model designs a theme ──
+  const THINKING_MSGS = [
+    "Reading the vibe…",
+    "Mixing a palette…",
+    "Balancing contrast…",
+    "Choosing the type…",
+    "Composing the page…",
+  ];
+  function startThinking() {
+    const wrap = mount.querySelector(".restyle");
+    wrap && wrap.classList.add("is-thinking");
+    thinkingEl.hidden = false;
+    let i = 0;
+    thinkingText.textContent = THINKING_MSGS[0];
+    const timer = setInterval(() => {
+      i = (i + 1) % THINKING_MSGS.length;
+      thinkingText.textContent = THINKING_MSGS[i];
+    }, 1100);
+    return () => {
+      clearInterval(timer);
+      thinkingEl.hidden = true;
+      wrap && wrap.classList.remove("is-thinking");
+    };
+  }
+
+  // ── cinematic apply: a light-sweep of the new palette wipes across the page,
+  // synced with the colour crossfade — the reskin reads as a deliberate reveal. ─
+  function playSweep(vibe) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const p = Array.isArray(vibe.plasma) ? vibe.plasma : [vibe.accent, vibe.accent, vibe.accent];
+    const el = document.createElement("div");
+    el.className = "vibe-sweep";
+    el.style.setProperty("--s0", hexA(p[0], 0));
+    el.style.setProperty("--s1", hexA(p[1] || p[0], 0.62));
+    el.style.setProperty("--s2", hexA(p[2] || p[0], 0));
+    el.style.setProperty("--bloom", hexA(vibe.accent, 0.2));
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove(), { once: true });
+    setTimeout(() => el.isConnected && el.remove(), 1400); // belt-and-suspenders cleanup
+  }
 
   // ── resolve: live worker → validated theme, else nearest preset ──
   async function resolve(text) {
@@ -171,6 +228,7 @@ export function initVibe() {
   function applyVibe(vibe, mood) {
     current = vibe;
     document.body.classList.add("vibe-restyling");
+    playSweep(vibe); // the palette wipes across the page as the colours crossfade
     // ── layout guardrail probes ───────────────────────────────
     // A theme may ship ANY font (hand-written presets today, model-generated
     // strings tomorrow). The hero HEADLINE is already immune (--font-display),
@@ -232,7 +290,7 @@ export function initVibe() {
       if (broken) root.style.removeProperty("--font-sans");
     });
 
-    setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
+    setTimeout(() => document.body.classList.remove("vibe-restyling"), 950);
   }
 
   function resetVibe() {
@@ -251,7 +309,7 @@ export function initVibe() {
     if (wrap) wrap.classList.remove("has-vibe");
     current = null;
     input.value = "";
-    setTimeout(() => document.body.classList.remove("vibe-restyling"), 820);
+    setTimeout(() => document.body.classList.remove("vibe-restyling"), 950);
   }
 
   // deterministic-ish randomness without Date/Math.random pitfalls in tests:

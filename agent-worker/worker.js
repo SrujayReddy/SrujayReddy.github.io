@@ -17,7 +17,8 @@
  *                                     used when no ANTHROPIC_API_KEY is set)
  *   var     ALLOWED_ORIGIN           e.g. https://srujayreddy.github.io
  *   var     MODEL                    default claude-haiku-4-5
- *   var     GEMINI_MODEL             default gemini-2.5-flash-lite (1,000 req/day free)
+ *   var     GEMINI_MODEL             default gemini-2.5-flash-lite (1,000 req/day free) — chat
+ *   var     GEMINI_VIBE_MODEL        default gemini-2.5-flash — Vibe Studio (thinks harder)
  *   var     RATE_PER_MIN             default 8
  *   var     RATE_PER_DAY             default 800
  *   kv      RATE_KV                  (required for rate limiting)
@@ -111,6 +112,9 @@ const BENCH_RATES = { input: 1.0, output: 5.0, cacheRead: 0.1 }; // Haiku 4.5 $/
 // ── Vibe Studio ({mode:"vibe"}) — free text → a generated, accessible theme ──
 const VIBE_SYSTEM = `You are a senior brand / UI colour designer. Given a short "vibe" phrase,
 design ONE cohesive, tasteful, ACCESSIBLE theme and return it via the generate_theme tool.
+First reason about the WORLD the vibe evokes — its era, materials, lighting, and emotion — then
+choose colours that feel unmistakably like that world: bold, specific, and harmonious, never
+generic, muddy, or washed-out. Push for a palette that would make a designer stop and look.
 Rules: every colour is #rrggbb hex; bg vs ink MUST be >= 4.5:1 WCAG contrast (dark-on-light OR
 light-on-dark — your choice to fit the vibe); accent/accent2/plasma form a harmonious palette that
 pops on bg; surfaces sit just off bg; ink-dim/ink-mute are legible secondary/tertiary text; particle
@@ -417,7 +421,11 @@ async function handleVibe(body, env, cors, request) {
   let r;
   try {
     r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash-lite"}:generateContent`,
+      // Vibe generation is the "think harder for a better design" path: it runs a
+      // STRONGER model than chat (Flash, not Flash-Lite) with DYNAMIC THINKING on
+      // (thinkingBudget -1 → the model reasons about the palette before answering).
+      // Worth the extra couple seconds — the client shows a "thinking" state.
+      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_VIBE_MODEL || "gemini-2.5-flash"}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -431,8 +439,11 @@ async function handleVibe(body, env, cors, request) {
           contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
           generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 700,
-            thinkingConfig: { thinkingBudget: 0 },
+            temperature: 1.0,
+            // thinking tokens are separate from the visible JSON; give the output
+            // ample room so a truly considered theme is never truncated.
+            maxOutputTokens: 2048,
+            thinkingConfig: { thinkingBudget: -1 },
           },
         }),
       }

@@ -380,3 +380,25 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
         • MODEL_LABEL is now data-driven (single source). Verified in-browser.
       • Skipped (flagged to owner): thesis "Symposium" link `href:"#"` — a deliberate
         muted "pending" chip; left as-is rather than delete owner content.
+
+## Round 12 (Vibe Studio "think harder" + impact + circle fix)
+
+- [x] **Thesis Symposium link** now points at the real program PDF (honors.ls.wisc.edu).
+- [x] **Thesis particle circle — dim arc fixed** (`buildClockFormation` in main.js): the
+      bottom arc used to render the non-dominant phases near-black (`colorMix ~0.03`),
+      so it read as a sparse/dim gap. Rebuilt as an EVENLY-spaced (i/count + jitter),
+      uniformly-bright ring — one clean glowing circle, no dim arc. The per-phase data
+      lives in the DOM bar chart, not the ring's brightness.
+- [x] **Vibe Studio thinks harder** (worker.js + wrangler.toml): the vibe path now runs a
+      STRONGER model with DYNAMIC THINKING — `GEMINI_VIBE_MODEL` default `gemini-2.5-flash`
+      (vs Flash-Lite for chat), `thinkingBudget:-1`, `temperature:1.0`, `maxOutputTokens:2048`,
+      and a bolder design prompt. A couple seconds slower, a more considered palette.
+      **Needs a Worker redeploy** to take effect.
+- [x] **Thinking indicator** (vibe.js/vibe.css): free-text submit shows an animated
+      spinner pill with cycling status ("Reading the vibe…" → "Composing the page…") so
+      the extra thinking time reads as craft.
+- [x] **Bigger-impact apply** (vibe.js/vibe.css): every theme change now plays a
+      full-viewport light-SWEEP of the new palette (+ center bloom) synced with a longer
+      (0.72s) colour crossfade and the particle re-tint — the reskin lands as a reveal.
+      Verified: uniform circle, thinking state, sweep element + wiring, clean console.
+      Sweep/thinking *motion* needs the owner's eyes (hidden preview tab throttles CSS anim).
