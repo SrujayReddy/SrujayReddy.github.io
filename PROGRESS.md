@@ -442,3 +442,16 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
         renders layered teal WAVES with particles floating on top; the neon preset renders a
         magenta synthwave GRID; aurora/starfield paint too; reset clears; clean console.
         (Needs a worker redeploy for the AI to emit `background`.)
+
+## Round 15 (overflow edge-cases from the font/vibe features)
+
+- [x] **Big thesis number (`.bignum`) no longer clips.** It ran ~90vw wide and, once
+      vibe fonts could widen those huge digits (serif/heavy), the text reached the screen
+      edges and got clipped by the pin's `overflow:hidden`. Pulled the clamp in
+      (`18vw/15rem` → `14.5vw/13rem`) and added `white-space:nowrap` + `max-width:100%`
+      as a hard safety net. Verified across Geist / Georgia / Arial Black at the widest
+      count (93–99%): text keeps ≥360px margins at every viewport, never overflows its box.
+- [x] **Long AI mood label can't blow out the pill** — `.restyle__pill b` gets
+      `max-width: min(58vw,22ch)` + ellipsis (the mood is model-generated, up to 48 chars).
+- Checked the other big display numbers (`.collapse .num` in bounded flex-wrap cards,
+  `.phase__val` tiny + nowrap) — already overflow-safe, no change needed.

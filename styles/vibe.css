@@ -101,7 +101,13 @@
   font-size: var(--fs-xs);
   color: var(--ink);
 }
-.restyle__pill b { font-weight: 600; }
+.restyle__pill b {
+  font-weight: 600;
+  max-width: min(58vw, 22ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .restyle__pill button {
   padding: 0.16rem 0.6rem;
   border-radius: 999px;
