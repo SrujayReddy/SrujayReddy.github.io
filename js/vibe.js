@@ -124,10 +124,13 @@ export function initVibe() {
     if (live) {
       // the model now THINKS about the palette (a couple seconds) — show it working
       // so the wait reads as craft, not lag.
-      const stop = startThinking();
+      const t = startThinking();
+      let rateLimited = false;
       try { vibe = await resolveLive(text); }
-      catch { vibe = resolveDormant(text); }
-      stop();
+      catch (e) { rateLimited = !!(e && e.rateLimited); vibe = resolveDormant(text); }
+      // tell the user WHY they got a generic result: the free AI budget is spent.
+      if (rateLimited) await t.note("🪫 Free AI's tapped out for today — refills tomorrow. Here's a close preset.", 3200);
+      t.stop();
     } else {
       vibe = resolveDormant(text); // no backend → instant nearest-preset
     }
@@ -150,14 +153,24 @@ export function initVibe() {
     thinkingEl.hidden = false;
     let i = 0;
     thinkingText.textContent = THINKING_MSGS[0];
-    const timer = setInterval(() => {
+    let timer = setInterval(() => {
       i = (i + 1) % THINKING_MSGS.length;
       thinkingText.textContent = THINKING_MSGS[i];
     }, 1100);
-    return () => {
-      clearInterval(timer);
-      thinkingEl.hidden = true;
-      wrap && wrap.classList.remove("is-thinking");
+    const stopCycle = () => { if (timer) { clearInterval(timer); timer = null; } };
+    return {
+      stop() {
+        stopCycle();
+        thinkingEl.hidden = true;
+        if (wrap) { wrap.classList.remove("is-thinking"); wrap.classList.remove("is-note"); }
+      },
+      // swap the spinner for a static status message, hold it, then continue.
+      async note(msg, ms) {
+        stopCycle();
+        wrap && wrap.classList.add("is-note");
+        thinkingText.textContent = msg;
+        await new Promise((r) => setTimeout(r, ms));
+      },
     };
   }
 
@@ -168,10 +181,10 @@ export function initVibe() {
     const p = Array.isArray(vibe.plasma) ? vibe.plasma : [vibe.accent, vibe.accent, vibe.accent];
     const el = document.createElement("div");
     el.className = "vibe-sweep";
-    el.style.setProperty("--s0", hexA(p[0], 0));
-    el.style.setProperty("--s1", hexA(p[1] || p[0], 0.62));
-    el.style.setProperty("--s2", hexA(p[2] || p[0], 0));
-    el.style.setProperty("--bloom", hexA(vibe.accent, 0.2));
+    // a soft wash trailing a bright leading edge — the strip GPU-translates L→R.
+    el.style.setProperty("--wash", hexA(p[1] || vibe.accent, 0.5));
+    el.style.setProperty("--edge2", hexA(p[2] || vibe.accent, 0.7));
+    el.style.setProperty("--edge", hexA(vibe.accent, 0.95));
     document.body.appendChild(el);
     el.addEventListener("animationend", () => el.remove(), { once: true });
     setTimeout(() => el.isConnected && el.remove(), 1400); // belt-and-suspenders cleanup
@@ -205,6 +218,7 @@ export function initVibe() {
         body: JSON.stringify({ mode: "vibe", prompt: text.slice(0, 120) }),
         signal: ctrl.signal,
       });
+      if (res.status === 429) { const e = new Error("rate_limited"); e.rateLimited = true; throw e; }
       if (!res.ok) throw new Error("vibe " + res.status);
       return validate(await res.json(), text);
     } finally {

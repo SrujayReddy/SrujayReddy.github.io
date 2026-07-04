@@ -774,6 +774,18 @@ html.reduced-motion .now__pipe i { display: none; }
   align-items: center;
 }
 .edu__copy { max-width: 38ch; }
+/* Flagship stability: the education copy is laid out to line up with the WebGL cap's
+   FIXED position, so keep its TYPE fixed — a taller/wider/uppercase vibe font would
+   drift the school heading + 5 facts against the cap ("disarranged"). The vibe's
+   COLOURS still change here; only the font/case is pinned so the composition holds. */
+.edu__copy {
+  font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.edu__copy .eyebrow,
+.edu__fact .k {
+  font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.edu__school { text-transform: none; }
 .edu__school {
   font-size: var(--fs-h1);
   letter-spacing: -0.035em;
