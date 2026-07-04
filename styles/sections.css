@@ -135,10 +135,11 @@ html.reduced-motion [data-reveal] {
   margin-bottom: 1.1rem;
 }
 .hero__title {
-  font-family: var(--font-display); /* immune to live-theme font swaps */
+  font-family: var(--font-display); /* Vibe Studio may reskin this (guardrail-protected) */
   font-size: var(--fs-display);
   line-height: var(--lh-tight);
   letter-spacing: -0.035em;
+  text-transform: var(--heading-transform, none);
   font-weight: 600;
   max-width: 16ch;
 }

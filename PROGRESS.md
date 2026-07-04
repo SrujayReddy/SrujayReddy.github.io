@@ -402,3 +402,23 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
       (0.72s) colour crossfade and the particle re-tint — the reskin lands as a reveal.
       Verified: uniform circle, thinking state, sweep element + wiring, clean console.
       Sweep/thinking *motion* needs the owner's eyes (hidden preview tab throttles CSS anim).
+
+## Round 13 (Vibe Studio: think longer + a MUCH bigger design surface)
+
+- [x] **Thinks longer** (worker.js): vibe path now runs `gemini-2.5-flash` with an explicit
+      `thinkingBudget: 8192` (was dynamic) + `maxOutputTokens: 3072` — genuinely deliberates
+      for a few seconds. (Needs a worker redeploy.)
+- [x] **Controls a lot more of the page.** The generated theme can now reshape the whole
+      TYPE identity, not just colour:
+      - `--font-display` — the BIG hero headline font (was locked to Geist; now vibe-driven,
+        guardrail-protected). `--font-mono` — labels/eyebrows. (+ `--font-sans` body as before.)
+      - `--heading-transform` (none/uppercase/lowercase) + `--tracking-heading` (letter-spacing)
+        — tokenised in tokens.css, wired into `h1,h2,h3` (base.css) + `.hero__title` (sections.css).
+      - `--radius` + full colour palette (as before).
+      Worker schema (`VIBE_TOOL`) + prompt expanded to design all of it cohesively (brutalist →
+      mono/heavy display, uppercase, 0px; editorial → serif, roomy tracking, soft radius).
+      Client `validate()` sanitises the new fields (safe-font regex, case enum, em-tracking regex);
+      `applyVibe()` clear-before-sets them; the overflow guardrail now reverts ALL type tokens
+      together (colour always survives). Verified end-to-end with a mocked brutalist theme:
+      hero → Arial Black UPPERCASE, body/labels → Courier, orange-on-black, radius 0; Reset
+      restores every default; guardrail only reverts on true overflow. Clean console, tests green.

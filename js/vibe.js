@@ -21,8 +21,10 @@ const HEX = /^#[0-9a-f]{6}$/i;
 const PROPS = [
   "--accent", "--accent-2", "--accent-3", "--plasma", "--plasma-bright", "--wash-1", "--wash-2", "--select-bg", "--glow",
   "--bg", "--bg-tint", "--surface", "--surface-2", "--ink", "--ink-dim", "--ink-mute", "--line", "--line-strong",
-  "--font-sans", "--radius", "--radius-lg",
+  "--font-sans", "--font-display", "--font-mono", "--heading-transform", "--tracking-heading", "--radius", "--radius-lg",
 ];
+// typography tokens the guardrail reverts together if a wild choice overflows the layout
+const TYPE_PROPS = ["--font-sans", "--font-display", "--font-mono", "--heading-transform", "--tracking-heading"];
 
 function hexToRgb(h) {
   const n = parseInt(h.slice(1), 16);
@@ -214,14 +216,22 @@ export function initVibe() {
       // a CSS-invalid font (stray ';', braces, unbalanced quotes) makes
       // setProperty silently no-op and leaks the PREVIOUS theme's font — only
       // accept safe font-family characters.
-      font:
-        typeof data.font === "string" && data.font.length < 120 && /^[\w\s"',.-]+$/.test(data.font)
-          ? data.font
-          : fb.font,
+      font: safeFont(data.font) || fb.font,
+      // fontDisplay = the big hero headline; fontMono = labels. Both optional →
+      // the headline falls back to the body font (still changes), mono to default.
+      fontDisplay: safeFont(data.fontDisplay) || safeFont(data.font) || fb.font,
+      fontMono: safeFont(data.fontMono),
+      headingCase: ["uppercase", "lowercase", "none"].includes(data.headingCase) ? data.headingCase : "none",
+      // heading letter-spacing: a small em value, clamped to a sane range.
+      tracking: /^-?0?\.?[0-9]{1,3}em$/.test(String(data.tracking || "")) ? data.tracking : null,
       radius: /^[0-9]{1,2}px$/.test(data.radius || "") ? data.radius : fb.radius,
       dark: lum(sbg) < 0.4,
       mood: (typeof data.mood === "string" ? data.mood : fb.mood).slice(0, 48),
     };
+  }
+  // Accept only safe font-family characters (no braces/semicolons that would break CSS).
+  function safeFont(x) {
+    return typeof x === "string" && x.length < 120 && /^[\w\s"',.-]+$/.test(x) ? x : null;
   }
 
   // ── apply / reset ────────────────────────────────────────────
@@ -263,10 +273,16 @@ export function initVibe() {
     set("--ink-mute", vibe.inkMute);
     set("--line", vibe.line);
     set("--line-strong", vibe.lineStrong);
-    // type + shape language. Clear first so a rejected value falls back to the
-    // DEFAULT font, never the previously-applied vibe's font.
-    root.style.removeProperty("--font-sans");
+    // type + shape language — the expanded surface: body font, the big hero
+    // HEADLINE font, the label/mono font, heading case + letter-spacing, and radius.
+    // Clear each first so a rejected/absent value falls back to the DEFAULT, never
+    // the previously-applied vibe's value.
+    TYPE_PROPS.forEach((p) => root.style.removeProperty(p));
     set("--font-sans", vibe.font);
+    if (vibe.fontDisplay) set("--font-display", vibe.fontDisplay); // the headline restyles too
+    if (vibe.fontMono) set("--font-mono", vibe.fontMono);
+    if (vibe.headingCase && vibe.headingCase !== "none") set("--heading-transform", vibe.headingCase);
+    if (vibe.tracking) set("--tracking-heading", vibe.tracking);
     if (vibe.radius) { set("--radius", vibe.radius); set("--radius-lg", (parseFloat(vibe.radius) * 1.5 || 14) + "px"); }
     // browser chrome + the WebGL field (theme by darkness, tint by accent)
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -284,10 +300,11 @@ export function initVibe() {
 
     // ── layout guardrail check ────────────────────────────────
     requestAnimationFrame(() => {
-      // horizontal overflow = a word too wide for its box (a genuinely broken
-      // font). Vertical reflow is fine and stays. Colours always survive.
+      // horizontal overflow = a word too wide for its box (a genuinely broken font
+      // or too-loose tracking / all-caps headline). Vertical reflow is fine and
+      // stays. Revert the TYPE tokens together (the colour redesign always survives).
       const broken = probes.some((el) => el.scrollWidth > el.clientWidth + 4);
-      if (broken) root.style.removeProperty("--font-sans");
+      if (broken) TYPE_PROPS.forEach((p) => root.style.removeProperty(p));
     });
 
     setTimeout(() => document.body.classList.remove("vibe-restyling"), 950);

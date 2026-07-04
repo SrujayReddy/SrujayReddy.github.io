@@ -118,9 +118,19 @@ generic, muddy, or washed-out. Push for a palette that would make a designer sto
 Rules: every colour is #rrggbb hex; bg vs ink MUST be >= 4.5:1 WCAG contrast (dark-on-light OR
 light-on-dark — your choice to fit the vibe); accent/accent2/plasma form a harmonious palette that
 pops on bg; surfaces sit just off bg; ink-dim/ink-mute are legible secondary/tertiary text; particle
-is the accent used behind the page; font is a WEB-SAFE CSS font-family stack (e.g.
-"Georgia, 'Times New Roman', serif") — never a font that needs loading; radius like "14px"; mood is a
-2–4 word label. Call generate_theme exactly once.`;
+is the accent used behind the page.
+TYPOGRAPHY — reshape the whole identity, not just colour. Use ALL of these together:
+- font: the body/UI font stack; fontDisplay: the BIG hero-headline font (be expressive here);
+  fontMono: the small label/eyebrow font. All three are WEB-SAFE CSS font-family stacks (e.g.
+  "Georgia,'Times New Roman',serif" · "'Courier New',monospace" · "'Trebuchet MS',sans-serif") —
+  NEVER a font that needs loading.
+- headingCase: one of none | uppercase | lowercase.
+- tracking: heading letter-spacing, e.g. "-0.02em" (tight) … "0.06em" (airy).
+- radius: e.g. "0px" (sharp/brutal) … "14px" … "26px" (soft/friendly).
+Make the dials agree with the vibe: e.g. BRUTALIST → mono display font, uppercase headings, tight
+tracking, 0px radius; ELEGANT EDITORIAL → serif display, roomy tracking, soft radius; RETRO TERMINAL
+→ monospace everything, uppercase. mood is a 2–4 word label. Take the time to get it right, then call
+generate_theme exactly once.`;
 
 const VIBE_TOOL = {
   name: "generate_theme",
@@ -134,9 +144,12 @@ const VIBE_TOOL = {
       inkDim: { type: "string" }, inkMute: { type: "string" },
       accent: { type: "string" }, accent2: { type: "string" }, particle: { type: "string" },
       plasma: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 3 },
-      font: { type: "string" }, radius: { type: "string" }, mood: { type: "string" },
+      font: { type: "string" }, fontDisplay: { type: "string" }, fontMono: { type: "string" },
+      headingCase: { type: "string", enum: ["none", "uppercase", "lowercase"] },
+      tracking: { type: "string" },
+      radius: { type: "string" }, mood: { type: "string" },
     },
-    required: ["bg", "ink", "accent", "plasma", "mood"],
+    required: ["bg", "ink", "accent", "plasma", "font", "fontDisplay", "mood"],
   },
 };
 
@@ -434,16 +447,18 @@ async function handleVibe(body, env, cors, request) {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, radius, mood.` }],
+            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, fontDisplay, fontMono, headingCase, tracking, radius, mood.` }],
           },
           contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
           generationConfig: {
             responseMimeType: "application/json",
             temperature: 1.0,
             // thinking tokens are separate from the visible JSON; give the output
-            // ample room so a truly considered theme is never truncated.
-            maxOutputTokens: 2048,
-            thinkingConfig: { thinkingBudget: -1 },
+            // ample room so a fully-considered, richer theme is never truncated.
+            maxOutputTokens: 3072,
+            // a generous explicit budget → the model genuinely deliberates over the
+            // palette + typography before answering (a few seconds; quality over speed).
+            thinkingConfig: { thinkingBudget: 8192 },
           },
         }),
       }

@@ -100,6 +100,10 @@
   --lh-body: 1.6;
 
   --tracking-eyebrow: 0.22em;
+  /* Heading type — defaults match the base design; Vibe Studio may reskin these
+     (case + letter-spacing) along with the fonts for a bigger identity change. */
+  --tracking-heading: -0.02em;
+  --heading-transform: none;
 
   /* ── Space & layout ───────────────────────────────────────────── */
   --maxw: 1180px;
