@@ -8,7 +8,11 @@ compatibility_date = "2025-01-01"
 # Public, non-secret config. Override per your setup.
 [vars]
 ALLOWED_ORIGIN = "https://srujayreddy.github.io"
-MODEL = "claude-haiku-4-5"   # or "claude-sonnet-4-6" for a sharper, pricier agent
+MODEL = "claude-haiku-4-5"   # Anthropic model (only used if ANTHROPIC_API_KEY is set)
+# Gemini model (used when GEMINI_API_KEY is set — the free-tier path). Flash-Lite
+# gives 1,000 requests/day on the free tier (vs 250 for plain Flash) at 15 RPM,
+# and it comfortably covers RATE_PER_DAY below. Plenty for grounded Q&A + themes.
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 RATE_PER_MIN = "8"
 RATE_PER_DAY = "800"
 

@@ -356,3 +356,27 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
 - [ ] **Needs the owner's eyes (real browser, scrolling):** the fly-through *feel* at
       true scroll speed, and the live agent/theme behaviour on the deployed site (the
       forced-render + curl prove correctness, not feel).
+
+## Round 11 (model → Flash-Lite + multi-lens review sweep)
+
+- [x] **Gemini model → `gemini-2.5-flash-lite`** (worker.js defaults + wrangler.toml
+      `GEMINI_MODEL`): 1,000 req/day free (4× the old 250) at 15 RPM, and it now
+      comfortably covers the worker's own `RATE_PER_DAY=800` (which previously exceeded
+      Flash's 250 quota). Labels updated (config.MODEL_LABEL + palette). **Needs a
+      Worker redeploy** (`wrangler deploy`) to take effect live.
+- [x] **Worker SYSTEM_PROMPT re-synced to content.js** — it was stale: "English, Hindi"
+      (→ English & Telugu), "Dean's List x2" (→ Dean's Honor List 7 of 8 semesters), old
+      OpenAI/CDIS copy. The live agent would have stated wrong facts. Now mirrored 1:1.
+- [x] **12-finding review sweep** (5 lenses × adversarial verify). Fixed 11:
+      • HIGH: WebGL-loads-but-motion-fails now adds `no-webgl` so the flagship cap's SVG
+        fallback renders instead of a blank column. • ⌘K Escape closes from any focus
+        position (was input-only). • combobox `aria-activedescendant` + option ids so SR
+        announces the highlighted command. • `.palette__answer` is now an aria-live
+        status region. • close()'s deferred teardown is cancelled on reopen (no blank-
+        palette race). • "reduced motion" command now pauses the WebGL rAF (not just
+        hides the canvas). • `[data-reveal].in-view` releases `will-change`. • project
+        cards serve WebP (≈half the bytes, JPEG fallback via `<picture>`). • short-phone
+        education pin no longer clips the last fact. • Path Finder → its real repo.
+        • MODEL_LABEL is now data-driven (single source). Verified in-browser.
+      • Skipped (flagged to owner): thesis "Symposium" link `href:"#"` — a deliberate
+        muted "pending" chip; left as-is rather than delete owner content.

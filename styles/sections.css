@@ -12,6 +12,9 @@
 [data-reveal].in-view {
   opacity: 1;
   transform: none;
+  /* release the compositor-layer hint once revealed — the reveal is one-shot, so
+     holding will-change on every revealed element would waste GPU memory. */
+  will-change: auto;
 }
 html.reduced-motion [data-reveal] {
   opacity: 1;
@@ -832,6 +835,18 @@ html.reduced-motion .edu__cap { display: grid; }
   html.no-webgl .edu__cap, html.reduced-motion .edu__cap { order: -1; margin-bottom: 1.5rem; }
   /* the 3D cap sits centered in the top third on phones — keep the copy below it */
   html:not(.no-webgl):not(.reduced-motion) .edu__layout { padding-top: 30svh; }
+}
+
+/* Short phones with the WebGL cap active: shrink the reserved cap space and tighten
+   the facts so all five rows stay inside the pinned viewport (previously the last
+   fact was clipped below the fold on ~700px-tall phones — and Vibe Studio's larger
+   fonts made it worse). */
+@media (max-width: 760px) and (max-height: 730px) {
+  html:not(.no-webgl):not(.reduced-motion) .edu__layout { padding-top: 22svh; }
+  .edu__school { margin-top: 0.8rem; }
+  .edu__degree { margin-top: 0.7rem; }
+  .edu__facts { margin-top: 1.4rem; }
+  .edu__fact { padding: 0.55rem 0; }
 }
 
 /* ── Beyond the code ──────────────────────────────────────────── */

@@ -33,9 +33,18 @@ export function initAgent({ onPizza } = {}) {
   let mode = "command"; // "command" | "ask"
   let lastFocus = null;
   let streamAbort = null;
+  let closeTimer = null; // deferred teardown; cancelled if we reopen within 220ms
+
+  // Model label is data-driven from config (single source of truth) and reflects
+  // whether the Worker is wired — no hand-syncing a hardcoded string in the markup.
+  const modelLabel = root.querySelector("[data-model-label]");
+  if (modelLabel && config.MODEL_LABEL) {
+    modelLabel.textContent = (config.WORKER_URL ? "Live · " : "Resting · ") + config.MODEL_LABEL;
+  }
 
   // ── open / close ─────────────────────────────────────────────
   function open(prefill = "") {
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; } // cancel pending teardown
     lastFocus = document.activeElement;
     root.hidden = false;
     requestAnimationFrame(() => root.classList.add("is-open"));
@@ -51,7 +60,9 @@ export function initAgent({ onPizza } = {}) {
     root.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     if (streamAbort) streamAbort.abort();
-    setTimeout(() => {
+    if (closeTimer) clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => {
+      closeTimer = null;
       root.hidden = true;
       answerWrap.hidden = true;
       answerWrap.innerHTML = "";
@@ -72,7 +83,9 @@ export function initAgent({ onPizza } = {}) {
     );
     suggestWrap.hidden = m !== "ask";
     list.hidden = m === "ask";
+    input.setAttribute("aria-expanded", m === "ask" ? "false" : "true");
     if (m === "ask") {
+      input.removeAttribute("aria-activedescendant");
       answerWrap.hidden = true;
       answerWrap.innerHTML = "";
     }
@@ -99,11 +112,13 @@ export function initAgent({ onPizza } = {}) {
       li.className = "palette__item";
       li.innerHTML = `<span class="icon">?</span><span class="label">No command — press Enter to ask the agent</span>`;
       list.appendChild(li);
+      syncActiveDescendant();
       return;
     }
     items.forEach((c, i) => {
       const li = document.createElement("li");
       li.className = "palette__item" + (i === activeIndex ? " is-active" : "");
+      li.id = `palette-opt-${i}`;
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", i === activeIndex ? "true" : "false");
       li.dataset.id = c.id;
@@ -115,6 +130,7 @@ export function initAgent({ onPizza } = {}) {
       });
       list.appendChild(li);
     });
+    syncActiveDescendant();
   }
   function highlight() {
     [...list.children].forEach((el, i) => {
@@ -122,6 +138,14 @@ export function initAgent({ onPizza } = {}) {
       el.classList.toggle("is-active", on);
       el.setAttribute("aria-selected", on ? "true" : "false");
     });
+    syncActiveDescendant();
+  }
+  // Point the combobox input at the highlighted option so screen readers announce
+  // it as the user arrows (DOM focus stays in the input). Cleared in ask mode / empty.
+  function syncActiveDescendant() {
+    const active = mode === "command" && list.querySelector(".palette__item.is-active");
+    if (active && active.id) input.setAttribute("aria-activedescendant", active.id);
+    else input.removeAttribute("aria-activedescendant");
   }
 
   // ── command actions ──────────────────────────────────────────
@@ -145,14 +169,14 @@ export function initAgent({ onPizza } = {}) {
         return;
       case "open-github": window.open(content.contact.links.find(l=>l.label==="GitHub").href, "_blank"); return close();
       case "open-linkedin": window.open(content.contact.links.find(l=>l.label==="LinkedIn").href, "_blank"); return close();
-      case "toggle-motion":
-        document.documentElement.classList.toggle("reduced-motion");
-        flashInput(
-          document.documentElement.classList.contains("reduced-motion")
-            ? "Reduced motion: on"
-            : "Reduced motion: off"
-        );
+      case "toggle-motion": {
+        const on = document.documentElement.classList.toggle("reduced-motion");
+        // Actually stop the work, not just hide the canvas: pause the WebGL rAF
+        // loop so "reduced motion: on" doesn't keep rendering to a display:none canvas.
+        window.__cinema?.director?.setRunning(!on);
+        flashInput(on ? "Reduced motion: on" : "Reduced motion: off");
         return;
+      }
       case "pizza":
         close();
         onEgg();
@@ -295,8 +319,12 @@ export function initAgent({ onPizza } = {}) {
     }
   });
 
+  // Escape closes from ANY focus position inside the dialog (the input-level
+  // handler only fires while the input is focused; Tab can move focus onto
+  // suggestion chips or answer links, from where Escape must still dismiss).
   // Focus trap: Tab must cycle within the modal, never escape to the page behind.
   root.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); return close(); }
     if (e.key !== "Tab") return;
     const list = [...root.querySelectorAll('input, button, [href], [tabindex]:not([tabindex="-1"])')]
       .filter((el) => !el.disabled && el.offsetParent !== null);
