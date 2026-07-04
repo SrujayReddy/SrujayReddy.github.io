@@ -125,6 +125,11 @@
 .restyle.is-thinking .restyle__label { opacity: 0; pointer-events: none; }
 .restyle.is-thinking .restyle__swatches,
 .restyle.is-thinking .restyle__input { opacity: 0.5; transition: opacity 0.2s ease; }
+/* the thinking chip and the mood pill share the SAME slot — while thinking, the
+   chip owns it (hide the pill) and lock the controls so nothing can race the
+   in-flight request. */
+.restyle.is-thinking .restyle__pill { display: none; }
+.restyle.is-thinking .restyle__swatches { pointer-events: none; }
 .restyle__thinking {
   position: absolute;
   top: -0.5rem;
