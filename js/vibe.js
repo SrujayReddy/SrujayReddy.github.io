@@ -57,6 +57,7 @@ export function initVibe() {
   const bg = initBackground();
 
   let current = null;
+  let busy = false; // a vibe request is in flight → lock out concurrent actions
 
   // ── compact hero widget ──────────────────────────────────────
   const swatches = v.presets
@@ -101,20 +102,23 @@ export function initVibe() {
   // ── events ───────────────────────────────────────────────────
   mount.querySelectorAll("[data-vibe]").forEach((el) =>
     el.addEventListener("click", () => {
+      if (busy) return; // don't let a swatch race an in-flight generation
       const p = v.presets.find((x) => x.id === el.dataset.vibe);
       if (p) applyVibe(p, p.mood);
     })
   );
   $("[data-vibe-surprise]").addEventListener("click", () => {
+    if (busy) return;
     const p = v.presets[Math.floor(rand() * v.presets.length)];
     input.value = p.label;
     applyVibe(p, p.mood);
   });
-  $("[data-vibe-reset]").addEventListener("click", resetVibe);
+  $("[data-vibe-reset]").addEventListener("click", () => { if (!busy) resetVibe(); });
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
-    if (!text) return;
+    if (!text || busy) return; // ignore empty + re-submits while one is in flight
+    busy = true;
     form.classList.add("is-busy");
     let vibe;
     if (live) {
@@ -128,6 +132,7 @@ export function initVibe() {
       vibe = resolveDormant(text); // no backend → instant nearest-preset
     }
     form.classList.remove("is-busy");
+    busy = false;
     applyVibe(vibe, vibe.mood || text);
   });
 
@@ -190,12 +195,21 @@ export function initVibe() {
     return best;
   }
   async function resolveLive(text) {
-    const res = await fetch(config.WORKER_URL, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "vibe", prompt: text.slice(0, 120) }),
-    });
-    if (!res.ok) throw new Error("vibe " + res.status);
-    return validate(await res.json(), text);
+    // a hard timeout so a slow/hung Worker can never lock the UI in "thinking":
+    // on abort the fetch rejects → the caller falls back to the nearest preset.
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 25000);
+    try {
+      const res = await fetch(config.WORKER_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: "vibe", prompt: text.slice(0, 120) }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error("vibe " + res.status);
+      return validate(await res.json(), text);
+    } finally {
+      clearTimeout(to);
+    }
   }
   // hex-only validation; any bad field falls back to the nearest preset's value.
   function validate(data, text) {
