@@ -125,11 +125,12 @@ export function initVibe() {
       // the model now THINKS about the palette (a couple seconds) — show it working
       // so the wait reads as craft, not lag.
       const t = startThinking();
-      let rateLimited = false;
+      let failure = null; // null = fresh AI theme; else why we fell back to a preset
       try { vibe = await resolveLive(text); }
-      catch (e) { rateLimited = !!(e && e.rateLimited); vibe = resolveDormant(text); }
-      // tell the user WHY they got a generic result: the free AI budget is spent.
-      if (rateLimited) await t.note("🪫 Free AI's tapped out for today — refills tomorrow. Here's a close preset.", 3200);
+      catch (e) { failure = e && e.rateLimited ? "rate" : "error"; vibe = resolveDormant(text); }
+      // ALWAYS tell the user WHY a generic result appeared instead of a fresh AI theme.
+      if (failure === "rate") await t.note("🪫 Free AI's out for today (refills tomorrow) — showing a close preset.", 3200);
+      else if (failure === "error") await t.note("⚡ Couldn't reach the live AI just now — showing a close preset.", 2600);
       t.stop();
     } else {
       vibe = resolveDormant(text); // no backend → instant nearest-preset
@@ -178,6 +179,7 @@ export function initVibe() {
   // synced with the colour crossfade — the reskin reads as a deliberate reveal. ─
   function playSweep(vibe) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll(".vibe-sweep").forEach((e) => e.remove()); // never stack sweeps
     const p = Array.isArray(vibe.plasma) ? vibe.plasma : [vibe.accent, vibe.accent, vibe.accent];
     const el = document.createElement("div");
     el.className = "vibe-sweep";
@@ -185,6 +187,8 @@ export function initVibe() {
     el.style.setProperty("--wash", hexA(p[1] || vibe.accent, 0.5));
     el.style.setProperty("--edge2", hexA(p[2] || vibe.accent, 0.7));
     el.style.setProperty("--edge", hexA(vibe.accent, 0.95));
+    // screen glows on a DARK theme; multiply keeps the strip visible on a LIGHT one.
+    el.style.mixBlendMode = vibe.dark ? "screen" : "multiply";
     document.body.appendChild(el);
     el.addEventListener("animationend", () => el.remove(), { once: true });
     setTimeout(() => el.isConnected && el.remove(), 1400); // belt-and-suspenders cleanup

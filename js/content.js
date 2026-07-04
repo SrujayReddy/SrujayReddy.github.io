@@ -158,7 +158,7 @@ export const content = {
       nordic:  ["nordic", "calm", "minimal", "scandi", "clean", "airy", "blue", "slate", "ocean", "ice", "winter", "cool"],
       sunset:  ["sunset", "warm", "bold", "brutal", "orange", "fire", "desert", "miami", "peach", "sun", "bakery"],
       neon:    ["cyber", "neon", "punk", "vapor", "future", "techno", "electric", "laser", "arcade", "glow", "magenta", "synth"],
-      night:   ["night", "sky", "star", "starry", "midnight", "cosmic", "galaxy", "celestial", "moon", "nebula", "space", "dark", "aurora"],
+      night:   ["night", "sky", "star", "starry", "midnight", "cosmic", "galaxy", "celestial", "moon", "nebula", "space", "astronomy"],
       forest:  ["forest", "nature", "green", "earth", "organic", "moss", "plant", "jungle", "sage", "eco", "lab", "leaf"],
       mono:    ["mono", "editorial", "minimal", "black", "white", "classic", "newspaper", "swiss", "grayscale", "print", "type"],
       vintage: ["vintage", "paper", "old", "sepia", "craft", "kraft", "retro", "antique", "book", "cream", "film"],

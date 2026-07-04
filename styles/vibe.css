@@ -185,7 +185,7 @@
   opacity: 0;
   animation: vibe-sweep 0.9s cubic-bezier(0.5, 0, 0.15, 1) forwards;
   will-change: transform, opacity;
-  mix-blend-mode: screen;
+  /* blend is set inline per-apply (screen on dark themes, multiply on light) */
 }
 @keyframes vibe-sweep {
   0% { transform: translateX(-125%); opacity: 0; }
@@ -204,7 +204,7 @@
 }
 .restyle.is-note .restyle__thinking {
   white-space: normal;
-  max-width: min(90vw, 32ch);
+  max-width: min(92vw, 40ch);
   line-height: 1.3;
 }
 
