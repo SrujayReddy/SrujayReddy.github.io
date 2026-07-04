@@ -15,6 +15,10 @@
 
 import { content } from "./content.js";
 import { config } from "./config.js";
+import { initBackground } from "./background.js";
+
+// the curated scene backdrops the AI (or a preset) may pick — whitelist-validated
+const SCENES = ["waves", "aurora", "starfield", "grid"];
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -49,6 +53,8 @@ export function initVibe() {
   if (!v) return;
   const live = !!config.WORKER_URL;
   const root = document.documentElement;
+  // the safe scene-backdrop engine (a no-op if canvas/2D is unavailable)
+  const bg = initBackground();
 
   let current = null;
 
@@ -226,6 +232,8 @@ export function initVibe() {
       tracking: /^-?0?\.?[0-9]{1,3}em$/.test(String(data.tracking || "")) ? data.tracking : null,
       radius: /^[0-9]{1,2}px$/.test(data.radius || "") ? data.radius : fb.radius,
       dark: lum(sbg) < 0.4,
+      // scene backdrop — whitelist ONLY; anything unknown → "none" (safe).
+      background: SCENES.includes(data.background) ? data.background : "none",
       mood: (typeof data.mood === "string" ? data.mood : fb.mood).slice(0, 48),
     };
   }
@@ -292,6 +300,13 @@ export function initVibe() {
       if (cinema.director.setTheme) cinema.director.setTheme(vibe.dark ? "dark" : "light");
       if (cinema.director.setVibe) cinema.director.setVibe(vibe.particle || vibe.accent);
     }
+    // scene backdrop (waves / aurora / starfield / grid — or none). The engine
+    // whitelist-validates, caps perf, and fails to an empty canvas: it can only add
+    // atmosphere, never break the page. Particles + content always render on top.
+    bg.setScene(vibe.background || "none", {
+      bg: vibe.bg, accent: vibe.accent, accent2: vibe.accent2,
+      plasma: vibe.plasma, ink: vibe.ink, dark: vibe.dark,
+    });
 
     moodEl.textContent = mood || vibe.label || "custom";
     pill.hidden = false;
@@ -321,6 +336,7 @@ export function initVibe() {
       if (cinema.director.setTheme) cinema.director.setTheme(theme); // restore the real theme
       if (cinema.director.setVibe) cinema.director.setVibe(null);
     }
+    bg.clear(); // fade out + tear down any scene backdrop
     pill.hidden = true;
     const wrap = mount.querySelector(".restyle");
     if (wrap) wrap.classList.remove("has-vibe");

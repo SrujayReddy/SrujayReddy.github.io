@@ -422,3 +422,23 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
       together (colour always survives). Verified end-to-end with a mocked brutalist theme:
       hero → Arial Black UPPERCASE, body/labels → Courier, orange-on-black, radius 0; Reset
       restores every default; guardrail only reverts on true overflow. Clean console, tests green.
+
+## Round 14 (Vibe Studio: AI-selected animated BACKGROUND scenes)
+
+- [x] **The AI can now change the whole backdrop** — safely. New `js/background.js` is a
+      sandboxed scene engine: the model NEVER writes background code, it only picks a scene
+      NAME from a fixed whitelist and we render it. Scenes: **waves** (sea/water/rain),
+      **aurora** (sky/ethereal/dream), **starfield** (space/night), **grid** (retro/synthwave/
+      terminal), or **none**. Each is drawn in the vibe's colours on ONE dedicated 2D canvas
+      at `z-index:-1` (behind the particle field + content), capped (DPR≤2, small counts),
+      paused when the tab is hidden, reduced-motion aware (one static frame), wrapped so any
+      throw fails to an EMPTY canvas, and torn down cleanly on reset. **Worst case = today's
+      site.** Whitelist-validated in `validate()`; the model can't inject anything.
+      - worker.js: `background` enum added to `VIBE_TOOL` + prompt ("a sea → deep blue palette
+        + waves") + JSON keys. vibe.js: `initBackground()`, `bg.setScene()` in applyVibe,
+        `bg.clear()` in reset. base.css: `#scene-canvas`. content.js: Cyberpunk Neon preset
+        → `grid` as a showcase.
+      - Verified in-browser (deterministic `window.__bg.step` hook): a mocked deep-sea theme
+        renders layered teal WAVES with particles floating on top; the neon preset renders a
+        magenta synthwave GRID; aurora/starfield paint too; reset clears; clean console.
+        (Needs a worker redeploy for the AI to emit `background`.)

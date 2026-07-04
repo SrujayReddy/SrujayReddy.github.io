@@ -127,7 +127,7 @@ export const content = {
         bg: "#0a0a14", bgTint: "#11121f", surface: "#15172a", surface2: "#1b1d33",
         ink: "#e9e7fb", inkDim: "#a6a3d6", inkMute: "#6f6ca0",
         line: "rgba(160,150,255,.16)", lineStrong: "rgba(160,150,255,.28)",
-        font: 'ui-monospace, "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace', radius: "3px" },
+        font: 'ui-monospace, "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace', background: "grid", radius: "3px" },
       { id: "forest", label: "Forest Lab", mood: "earthy · green · serif", dark: false,
         accent: "#2f7d52", accent2: "#6f8c2a", plasma: ["#2f7d52", "#4e8c3a", "#7a9a2e"], particle: "#2f7d52",
         bg: "#eef3ec", bgTint: "#e2ebde", surface: "#fbfdfa", surface2: "#eef3ea",

@@ -127,10 +127,17 @@ TYPOGRAPHY — reshape the whole identity, not just colour. Use ALL of these tog
 - headingCase: one of none | uppercase | lowercase.
 - tracking: heading letter-spacing, e.g. "-0.02em" (tight) … "0.06em" (airy).
 - radius: e.g. "0px" (sharp/brutal) … "14px" … "26px" (soft/friendly).
+BACKGROUND — pick an animated backdrop that matches the world (or "none"). Choose EXACTLY one of:
+  none · waves (sea / ocean / water / rain / liquid) · aurora (sky / dream / ethereal / northern
+  lights / calm) · starfield (space / night / cosmic / galaxy) · grid (retro / synthwave / terminal
+  / cyber / 80s). It renders behind the page in YOUR colours, with the particle field on top — so
+  make bg/accent/plasma read well as that backdrop (e.g. a sea wants deep blue bg + teal/cyan plasma).
+  If none of these fits the vibe, use "none".
 Make the dials agree with the vibe: e.g. BRUTALIST → mono display font, uppercase headings, tight
-tracking, 0px radius; ELEGANT EDITORIAL → serif display, roomy tracking, soft radius; RETRO TERMINAL
-→ monospace everything, uppercase. mood is a 2–4 word label. Take the time to get it right, then call
-generate_theme exactly once.`;
+tracking, 0px radius, grid or none; DEEP SEA → blue/teal palette, waves background, soft radius;
+ELEGANT EDITORIAL → serif display, roomy tracking, soft radius, none/aurora; RETRO TERMINAL →
+monospace everything, uppercase, grid. mood is a 2–4 word label. Take the time to get it right, then
+call generate_theme exactly once.`;
 
 const VIBE_TOOL = {
   name: "generate_theme",
@@ -147,6 +154,7 @@ const VIBE_TOOL = {
       font: { type: "string" }, fontDisplay: { type: "string" }, fontMono: { type: "string" },
       headingCase: { type: "string", enum: ["none", "uppercase", "lowercase"] },
       tracking: { type: "string" },
+      background: { type: "string", enum: ["none", "waves", "aurora", "starfield", "grid"] },
       radius: { type: "string" }, mood: { type: "string" },
     },
     required: ["bg", "ink", "accent", "plasma", "font", "fontDisplay", "mood"],
@@ -447,7 +455,7 @@ async function handleVibe(body, env, cors, request) {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, fontDisplay, fontMono, headingCase, tracking, radius, mood.` }],
+            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, fontDisplay, fontMono, headingCase, tracking, background, radius, mood.` }],
           },
           contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
           generationConfig: {
