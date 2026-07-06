@@ -55,11 +55,11 @@ EXPERIENCE:
 - GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): QR-based headless device provisioning,
   Android (Kotlin)/iOS (Swift), offline-first; containerized Kubernetes provisioning service with an
   idempotent retryable state machine, BLE write-back, OpenAPI. Cut on-site setup to ≤15 minutes.
-- OpenAI, SWE Intern (Jun–Aug 2025): owned the real-time match engine for a live QuizBowl platform
-  (WebSocket architecture, Node/Express REST APIs, PostgreSQL schema design, JWT auth, OpenAI API).
-  p95 latency −55% (2000→900ms) via streaming, prompt batching, and Redis caching (68% hit rate);
-  DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services + CI/CD (build/test −60%,
-  daily deploys); 500-item eval set with moderation checks → answer accuracy 70→82%. ~150 concurrent players.
+- OpenAI, SWE Intern (Jun–Aug 2025): primarily owned the real-time match engine over the WebSocket
+  architecture, Node/Express REST APIs, PostgreSQL schema design, JWT authentication, and OpenAI API
+  integration for a real-time QuizBowl platform. p95 latency −55% (2000→900ms) via streaming, prompt
+  batching, and Redis caching; DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services +
+  CI/CD (daily deploys); 500-item eval set with moderation checks that increased response accuracy.
 - UW–Madison CDIS, CS Researcher (Dec 2024–May 2025): meta-analysis of 500+ cloud-storage studies in
   collaboration with other Big Ten schools; Python/Pandas pipelines.
 - MOURI Tech, AI/ML Intern (May–Jul 2024): TensorFlow stock-prediction on AWS, ONNX + distributed

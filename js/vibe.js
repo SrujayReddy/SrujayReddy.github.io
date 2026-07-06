@@ -39,6 +39,11 @@ function hexA(h, a) {
   const [r, g, b] = hexToRgb(h);
   return `rgba(${r},${g},${b},${a})`;
 }
+// blend two hexes (t=0 → a, t=1 → b); used to derive readable secondary inks.
+function mixHex(a, b, t) {
+  const A = hexToRgb(a), B = hexToRgb(b);
+  return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("");
+}
 function lum(h) {
   if (!HEX.test(h)) return 0.5;
   const [r, g, b] = hexToRgb(h).map((c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
@@ -129,8 +134,8 @@ export function initVibe() {
       try { vibe = await resolveLive(text); }
       catch (e) { failure = e && e.rateLimited ? "rate" : "error"; vibe = resolveDormant(text); }
       // ALWAYS tell the user WHY a generic result appeared instead of a fresh AI theme.
-      if (failure === "rate") await t.note("🪫 Free AI's out for today (refills tomorrow) — showing a close preset.", 3200);
-      else if (failure === "error") await t.note("⚡ Couldn't reach the live AI just now — showing a close preset.", 2600);
+      if (failure === "rate") await t.note("🪫 Srujay's API key was exhausted by an earlier visitor — it refills tomorrow. Here's a close preset.", 3400);
+      else if (failure === "error") await t.note("⚡ Couldn't reach the live AI just now — here's a close preset.", 2600);
       t.stop();
     } else {
       vibe = resolveDormant(text); // no backend → instant nearest-preset
@@ -141,12 +146,14 @@ export function initVibe() {
   });
 
   // ── "thinking" state: cycling status while the model designs a theme ──
+  // A quiet joke on AI "thinking" verbs — everything it is definitely not doing.
   const THINKING_MSGS = [
-    "Reading the vibe…",
-    "Mixing a palette…",
-    "Balancing contrast…",
-    "Choosing the type…",
-    "Composing the page…",
+    "not cerebrating…",
+    "not pontificating…",
+    "not ruminating…",
+    "not cogitating…",
+    "not percolating…",
+    "not marinating…",
   ];
   function startThinking() {
     const wrap = mount.querySelector(".restyle");
@@ -248,8 +255,11 @@ export function initVibe() {
       bgTint: safe ? hx(data.bgTint, fb.bgTint) : fb.bgTint,
       surface: safe ? hx(data.surface, fb.surface) : fb.surface,
       surface2: safe ? hx(data.surface2, fb.surface2) : fb.surface2,
-      inkDim: safe ? hx(data.inkDim, fb.inkDim) : fb.inkDim,
-      inkMute: safe ? hx(data.inkMute, fb.inkMute) : fb.inkMute,
+      // secondary inks are contrast-CLAMPED, not just hex-checked: a generated
+      // theme may pick faint ones. If too dim vs bg, re-derive from ink→bg blends
+      // so body/meta text stays readable in every generated mode.
+      inkDim: ((c) => (contrast(sbg, c) >= 4.5 ? c : mixHex(sink, sbg, 0.2)))(safe ? hx(data.inkDim, fb.inkDim) : fb.inkDim),
+      inkMute: ((c) => (contrast(sbg, c) >= 4.0 ? c : mixHex(sink, sbg, 0.35)))(safe ? hx(data.inkMute, fb.inkMute) : fb.inkMute),
       line: fb.line, lineStrong: fb.lineStrong,
       // a CSS-invalid font (stray ';', braces, unbalanced quotes) makes
       // setProperty silently no-op and leaks the PREVIOUS theme's font — only

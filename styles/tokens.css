@@ -144,8 +144,11 @@
   --line-strong: rgba(255, 255, 255, 0.14);
 
   --ink: #eceef2;
-  --ink-dim: #aab0bd;
-  --ink-mute: #6b7280;
+  /* Brighter than light-mode's inverse: on near-black, secondary/tertiary text
+     needs more lift to stay readable (the old #6b7280 mute was ~3.9:1 — small
+     mono labels in Experience were genuinely hard to read). */
+  --ink-dim: #b9bfcc;
+  --ink-mute: #8d95a6;
 
   /* On dark, the bright hues read best directly. */
   --accent: var(--violet);
