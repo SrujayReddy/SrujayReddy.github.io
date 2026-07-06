@@ -243,7 +243,7 @@ export function initAgent({ onPizza } = {}) {
         stateEl.classList.add("is-error");
         cursor.remove();
         textEl.innerHTML =
-          `🪫 Out of juice for today — someone (maybe you!) used up the free daily AI budget, so the live agent is napping until it refills tomorrow. The ⌘K commands above still work, or reach Srujay at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
+          `🪫 Srujay's API key was exhausted by an earlier visitor — it refills tomorrow. The commands above still work, or reach him at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
         return;
       }
       if (!res.ok || !res.body) throw new Error("worker " + res.status);

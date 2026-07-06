@@ -452,6 +452,18 @@ function boot() {
   document.querySelectorAll("[data-egg]").forEach((b) => b.addEventListener("click", fireEgg));
   initVibe();
 
+  // Play the hero entrance NOW (pure CSS, see sections.css .hero.is-in) — the
+  // page opens instantly instead of waiting for the CDN. Double-rAF so the
+  // hidden initial state paints first and the transitions actually run; the
+  // timeout covers background/hidden tabs where rAF is throttled to zero (the
+  // hero must never sit unrevealed waiting for focus).
+  const hero = document.querySelector(".hero");
+  if (hero) {
+    const heroIn = () => hero.classList.add("is-in");
+    requestAnimationFrame(() => requestAnimationFrame(heroIn));
+    setTimeout(heroIn, 300);
+  }
+
   if (reduced) {
     document.documentElement.classList.add("no-webgl");
     applyStaticHero();

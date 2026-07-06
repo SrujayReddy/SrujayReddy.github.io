@@ -477,3 +477,34 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
 - [x] **`.bignum` clipping** fix (14.5vw + nowrap) and **`.nojekyll`** (no-build site
       skips Jekyll) to unstick Pages deploys. NOTE: the Pages *deploy* backend still
       flakes intermittently ("try again later"); a fresh commit / re-run clears it.
+
+## Round 18 (instant load, thesis snap, dark readability, copy + polish)
+
+- [x] **"Double load" fixed.** Root cause: the hero entrance was a GSAP timeline, so the
+      headline sat INVISIBLE until gsap arrived from esm.sh, then everything re-hid and
+      re-animated. Entrance is now pure CSS (`.hero.is-in`, added by boot the moment the
+      baseline renders; timeout fallback for background tabs where rAF is throttled) —
+      motion.js no longer touches the hero. Plus `preconnect` + `modulepreload` for
+      three/gsap/ScrollTrigger/lenis so the CDN fetches start at HTML-parse time.
+- [x] **Thesis fast-scroll**: ScrollTrigger `snap` (1/4, 5 beats) + pin lengthened 4→5×vh —
+      fast flicks now land ON a beat instead of blasting past all five.
+- [x] **Dark-mode readability**: dark `--ink-dim` #aab0bd→#b9bfcc, `--ink-mute`
+      #6b7280→#8d95a6 (was ~3.9:1 — the unreadable Experience meta). Vibe `validate()`
+      now contrast-CLAMPS generated `inkDim`/`inkMute` (re-derived from ink→bg blends if
+      too faint) so every generated mode stays readable.
+- [x] **Dots dissolve at Experience**: the field fades out as #experience approaches
+      (director-eased ~0.8s) and stays off below (returns on scroll-up) — the line-dense
+      rows are readable now.
+- [x] **Vibe loading words**: "not cerebrating… / not pontificating… / not ruminating… /
+      not cogitating… / not percolating… / not marinating…" (the AI-thinking-verbs joke).
+- [x] **Rate-limit copy**: "Srujay's API key was exhausted by an earlier visitor — it
+      refills tomorrow" (⌘K + Vibe Studio; a static site cannot identify visitors, so
+      "an earlier visitor" is the honest version of the joke).
+- [x] **OpenAI copy** rewritten to the owner's wording (owned the match engine over the
+      WebSocket architecture …); dropped "70%→82%", now "increased response accuracy";
+      third metric chip removed. knowledgeBase + worker SYSTEM_PROMPT synced (**needs
+      `wrangler deploy`**).
+- [x] **Analytics**: commented Cloudflare Web Analytics beacon in index.html (privacy-
+      first, no cookies/consent; owner adds the site in the CF dashboard + pastes token).
+- [x] Mobile palette fixes from the prior round (hints/footers overflowing) included.
+- Needs owner's eyes on the live site: entrance feel, thesis snap feel at real scroll speed.

@@ -40,21 +40,10 @@ export function initMotion({ director, field } = {}) {
   }
 
   // ── Hero entrance ────────────────────────────────────────────
-  const heroSpans = gsap.utils.toArray(".hero__title .line > span");
-  // GSAP must OWN the yPercent channel from the start. The CSS sets
-  // translateY(110%) to avoid FOUC, but that lands in the px translate channel
-  // which gsap's yPercent tween can't clear — so seed yPercent explicitly.
-  gsap.set(heroSpans, { yPercent: 110 });
-  gsap.set(".hero__name, .hero__eyebrow, .hero__sub, .hero__cta, .hero__restyle", { opacity: 0, y: 12 });
-  gsap
-    .timeline({ delay: 0.15 })
-    .to(".hero__name", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" })
-    .to(heroSpans, { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.08 }, "-=0.5")
-    .to(
-      ".hero__eyebrow, .hero__sub, .hero__cta, .hero__restyle",
-      { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.08 },
-      "-=0.7"
-    );
+  // Handled by pure CSS now (.hero.is-in, added by boot the moment the baseline
+  // renders) so the page opens instantly. Re-animating it here was the "double
+  // load": gsap arrived from the CDN seconds later, re-hid the visible hero and
+  // played the entrance again. motion.js must NOT touch the hero.
 
   // ── Positioning split-text word reveal ───────────────────────
   const words = gsap.utils.toArray(".positioning__statement .word");
@@ -77,6 +66,19 @@ export function initMotion({ director, field } = {}) {
   // ── Signature: thesis scrollytelling (pin + scrub) ───────────
   buildThesisTimeline(field);
 
+  // The ambient dots fight the line-dense experience rows (and everything below)
+  // — ease the organism out as experience approaches and keep it off for the
+  // rest of the page; it returns if you scroll back up. The director smooths
+  // the opacity (~0.8s), so it reads as a slow dissolve, not a cut.
+  if (director) {
+    ScrollTrigger.create({
+      trigger: "#experience",
+      start: "top 80%",
+      onEnter: () => director.setActive("field", false),
+      onLeaveBack: () => director.setActive("field", true),
+    });
+  }
+
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => ScrollTrigger.refresh());
   }
@@ -96,9 +98,18 @@ function buildThesisTimeline(field) {
     scrollTrigger: {
       trigger: ".thesis",
       start: "top top",
-      end: () => "+=" + window.innerHeight * 4,
+      end: () => "+=" + window.innerHeight * 5, // more scroll room per beat
       pin: pin,
       scrub: 0.6,
+      // Fast scrollers used to blast through all five beats in a blink. Snap
+      // pulls the scroll to the nearest beat when the flick ends, so every
+      // slide actually lands and gets read — without fighting slow scrolling.
+      snap: {
+        snapTo: 1 / 4, // 5 beats → 4 intervals
+        duration: { min: 0.25, max: 0.7 },
+        delay: 0.06,
+        ease: "power2.inOut",
+      },
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
       onToggle: (self) => {

@@ -63,6 +63,23 @@
     <link rel="stylesheet" href="styles/command.css" />
     <link rel="stylesheet" href="styles/vibe.css" />
 
+    <!-- Warm up the CDN + start fetching the heavy deps at PARSE time, in parallel
+         with main.js — instead of discovering them only when main.js runs its
+         dynamic imports. Kills the long "plain page → everything pops in" window. -->
+    <link rel="preconnect" href="https://esm.sh" crossorigin />
+    <link rel="modulepreload" href="https://esm.sh/three@0.169.0" />
+    <link rel="modulepreload" href="https://esm.sh/gsap@3.12.5" />
+    <link rel="modulepreload" href="https://esm.sh/gsap@3.12.5/ScrollTrigger" />
+    <link rel="modulepreload" href="https://esm.sh/lenis@1.1.14" />
+
+    <!-- Visitor analytics (OPTIONAL — ships disabled). Cloudflare Web Analytics is
+         privacy-first: no cookies, no fingerprinting, no consent banner needed, and
+         it can NOT identify visitors — you see counts, pages, countries, referrers.
+         Enable: Cloudflare dashboard → Analytics & Logs → Web Analytics → Add site
+         (srujayreddy.github.io) → copy the beacon token below and uncomment. -->
+    <!-- <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+         data-cf-beacon='{"token": "PASTE_YOUR_TOKEN_HERE"}'></script> -->
+
     <!-- Pinned ES module dependencies (fetched by the browser, no build step) -->
     <script type="importmap">
       {

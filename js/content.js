@@ -186,11 +186,10 @@ export const content = {
       period: "Jun — Aug 2025",
       place: "Madison, WI · Hybrid",
       body:
-        "Owned the real-time match engine for a live QuizBowl platform through a selective UW–Madison partnership — WebSocket architecture, REST APIs in Node/Express, PostgreSQL schema design, JWT auth, and OpenAI API integration. Cut p95 latency 55% with streaming, prompt batching, and Redis caching (68% hit rate); dropped DB p95 62% with indexing and pooling; Dockerized the services and set up CI/CD for daily deploys. Built a 500-item eval set with moderation checks, lifting answer accuracy from 70% to 82%.",
+        "I primarily owned the real-time match engine over the WebSocket architecture, REST APIs in Node/Express, PostgreSQL schema design, JWT authentication, and OpenAI API integration for a real-time QuizBowl platform. Cut p95 latency 55% with streaming, prompt batching, and Redis caching; dropped DB p95 62% with indexing and pooling; Dockerized the services and set up CI/CD for daily deploys. Built a 500-item eval set with moderation checks that increased response accuracy.",
       metrics: [
         { v: "−55%", k: "p95 latency (2000→900ms)" },
         { v: "−62%", k: "DB p95 (120→45ms)" },
-        { v: "+12 pts", k: "answer accuracy (70→82%)" },
       ],
       stack: ["Node.js", "Express", "PostgreSQL", "WebSockets", "Redis", "Docker", "OpenAI API"],
     },
@@ -339,11 +338,11 @@ EXPERIENCE:
 - GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): QR-based headless device provisioning,
   Android (Kotlin)/iOS (Swift), offline-first; containerized Kubernetes provisioning service with an
   idempotent retryable state machine, BLE write-back, OpenAPI. Cut on-site setup to ≤15 minutes.
-- OpenAI, SWE Intern (Jun–Aug 2025): owned the real-time match engine for a live QuizBowl platform
-  (WebSocket architecture, Node/Express REST APIs, PostgreSQL schema design, JWT auth, OpenAI API).
-  p95 latency −55% (2000→900ms) via streaming, prompt batching, and Redis caching (68% hit rate);
-  DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services + CI/CD (build/test −60%,
-  daily deploys); 500-item eval set with moderation checks → answer accuracy 70→82%. ~150 concurrent players.
+- OpenAI, SWE Intern (Jun–Aug 2025): primarily owned the real-time match engine over the WebSocket
+  architecture, Node/Express REST APIs, PostgreSQL schema design, JWT authentication, and OpenAI API
+  integration for a real-time QuizBowl platform. p95 latency −55% (2000→900ms) via streaming, prompt
+  batching, and Redis caching; DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services +
+  CI/CD (daily deploys); 500-item eval set with moderation checks that increased response accuracy.
 - UW–Madison CDIS, CS Researcher (Dec 2024–May 2025): meta-analysis of 500+ cloud-storage studies in
   collaboration with other Big Ten schools; Python/Pandas pipelines.
 - MOURI Tech, AI/ML Intern (May–Jul 2024): TensorFlow stock-prediction on AWS, ONNX + distributed

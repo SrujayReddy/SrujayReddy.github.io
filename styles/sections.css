@@ -154,6 +154,38 @@ html.reduced-motion [data-reveal] {
 html.js .hero__title .line > span {
   transform: translateY(110%);
 }
+html.js .hero__name,
+html.js .hero__eyebrow,
+html.js .hero__sub,
+html.js .hero__cta,
+html.js .hero__restyle {
+  opacity: 0;
+  transform: translateY(12px);
+}
+/* The entrance is PURE CSS, played the moment the baseline renders (.is-in is
+   added by boot). It used to be a GSAP timeline — which meant the headline sat
+   invisible until gsap arrived from the CDN, then everything re-animated: the
+   "slow / double load". Now the page opens instantly; motion.js no longer
+   touches the hero. */
+.hero.is-in .hero__title .line > span {
+  transform: none;
+  transition: transform 0.95s var(--ease-out);
+}
+.hero.is-in .line:nth-child(2) > span { transition-delay: 0.08s; }
+.hero.is-in .line:nth-child(3) > span { transition-delay: 0.16s; }
+.hero.is-in .hero__name,
+.hero.is-in .hero__eyebrow,
+.hero.is-in .hero__sub,
+.hero.is-in .hero__cta,
+.hero.is-in .hero__restyle {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+}
+.hero.is-in .hero__eyebrow { transition-delay: 0.2s; }
+.hero.is-in .hero__sub { transition-delay: 0.3s; }
+.hero.is-in .hero__cta { transition-delay: 0.38s; }
+.hero.is-in .hero__restyle { transition-delay: 0.46s; }
 .hero__name {
   font-size: clamp(0.95rem, 1.3vw, 1.15rem);
   letter-spacing: var(--tracking-eyebrow);
@@ -849,10 +881,12 @@ html.reduced-motion .edu__cap { display: grid; }
 
 @media (max-width: 760px) {
   .edu__layout { grid-template-columns: 1fr; }
-  .edu__fact { grid-template-columns: 7rem 1fr; }
+  .edu__fact { grid-template-columns: 7rem 1fr; padding: 0.68rem 0; }
+  .edu__facts { margin-top: 1.7rem; }
   html.no-webgl .edu__cap, html.reduced-motion .edu__cap { order: -1; margin-bottom: 1.5rem; }
-  /* the 3D cap sits centered in the top third on phones — keep the copy below it */
-  html:not(.no-webgl):not(.reduced-motion) .edu__layout { padding-top: 30svh; }
+  /* the 3D cap sits centered in the top third on phones — keep the copy below it.
+     26svh (was 30) leaves the copy + 5 facts more room without crowding the cap. */
+  html:not(.no-webgl):not(.reduced-motion) .edu__layout { padding-top: 26svh; }
 }
 
 /* Short phones with the WebGL cap active: shrink the reserved cap space and tighten

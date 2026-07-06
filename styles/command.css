@@ -189,6 +189,20 @@
 }
 .palette__foot .keys { display: flex; gap: 0.8rem; }
 
+/* ── Mobile: the palette had NO narrow-screen handling — the mode tag + long
+   hints + the keyboard-hint footer all overflowed and forced cramped wrapping
+   ("Copy / email / address", the model label breaking into "Liv/Gem/2.5"). */
+@media (max-width: 560px) {
+  .palette__input-row { padding: 0.9rem 1rem; gap: 0.55rem; }
+  .palette__input { font-size: 1rem; min-width: 0; }
+  .palette__mode { display: none; }
+  .palette__item { gap: 0.7rem; padding: 0.7rem 0.55rem; }
+  .palette__item .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .palette__item .hint { display: none; } /* the long hints starve the label → wrapping */
+  .palette__foot .keys { display: none; } /* keyboard hints are irrelevant on touch */
+  .palette__foot { justify-content: flex-start; }
+}
+
 /* ── Easter egg overlay ───────────────────────────────────────── */
 #egg-layer {
   position: fixed;
