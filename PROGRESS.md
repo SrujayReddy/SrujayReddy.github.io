@@ -508,3 +508,5 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
       first, no cookies/consent; owner adds the site in the CF dashboard + pastes token).
 - [x] Mobile palette fixes from the prior round (hints/footers overflowing) included.
 - Needs owner's eyes on the live site: entrance feel, thesis snap feel at real scroll speed.
+
+<!-- deploy-bump: 943ecd3 -->
