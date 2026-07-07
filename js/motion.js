@@ -101,15 +101,6 @@ function buildThesisTimeline(field) {
       end: () => "+=" + window.innerHeight * 5, // more scroll room per beat
       pin: pin,
       scrub: 0.6,
-      // Fast scrollers used to blast through all five beats in a blink. Snap
-      // pulls the scroll to the nearest beat when the flick ends, so every
-      // slide actually lands and gets read — without fighting slow scrolling.
-      snap: {
-        snapTo: 1 / 4, // 5 beats → 4 intervals
-        duration: { min: 0.25, max: 0.7 },
-        delay: 0.06,
-        ease: "power2.inOut",
-      },
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
       onToggle: (self) => {
@@ -131,6 +122,30 @@ function buildThesisTimeline(field) {
       },
     },
   });
+
+  // ── beat snap, THROUGH Lenis ──────────────────────────────────
+  // ScrollTrigger's built-in `snap` writes scrollTop directly — but Lenis
+  // re-animates the scroll position every frame and overwrites it, so that snap
+  // silently loses and fast scrollers blow through all five beats in a blink.
+  // Instead: when scrolling settles anywhere inside the pin, glide to the
+  // nearest beat with lenis.scrollTo — every slide actually lands and gets
+  // read, and slow deliberate scrolling is never interrupted mid-gesture.
+  const st = tl.scrollTrigger;
+  const lenis = window.__lenis;
+  if (lenis && st) {
+    let settle;
+    lenis.on("scroll", () => {
+      if (!st.isActive) return;
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        if (!st.isActive) return;
+        const target = st.start + (Math.round(st.progress * 4) / 4) * (st.end - st.start);
+        if (Math.abs(target - lenis.scroll) > 2) {
+          lenis.scrollTo(target, { duration: 0.7, easing: (t) => 1 - Math.pow(1 - t, 3) });
+        }
+      }, 130);
+    });
+  }
 
   const fadeBeat = (from, to) => {
     if (from != null) tl.to(beats[from], { autoAlpha: 0, y: -16, duration: 0.4 }, "+=0.25");

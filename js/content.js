@@ -19,11 +19,6 @@ export const content = {
     education: "B.S. Honors, Computer Science & Data Science — UW–Madison",
     tagline:
       "I build high-impact AI systems that are both intelligent and measurably reliable.",
-    heroLines: [
-      "I design, build, and deploy",
-      "LLM-powered AI agents —",
-      "then measure them until they're fast.",
-    ],
   },
 
   positioning: {
