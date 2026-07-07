@@ -57,7 +57,7 @@ EXPERIENCE:
   idempotent retryable state machine, BLE write-back, OpenAPI. Cut on-site setup to ≤15 minutes.
 - OpenAI, SWE Intern (Jun–Aug 2025): primarily owned the real-time match engine over the WebSocket
   architecture, Node/Express REST APIs, PostgreSQL schema design, JWT authentication, and OpenAI API
-  integration for a real-time QuizBowl platform. p95 latency −55% (2000→900ms) via streaming, prompt
+  integration. p95 latency −55% (2000→900ms) via streaming, prompt
   batching, and Redis caching; DB p95 −62% (120→45ms) via indexing and pooling; Dockerized services +
   CI/CD (daily deploys); 500-item eval set with moderation checks that increased response accuracy.
 - UW–Madison CDIS, CS Researcher (Dec 2024–May 2025): meta-analysis of 500+ cloud-storage studies in
