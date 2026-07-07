@@ -94,6 +94,8 @@ function buildThesisTimeline(field) {
   gsap.set(beats, { autoAlpha: 0, y: 20 });
   gsap.set(beats[0], { autoAlpha: 1, y: 0 });
 
+  let entryAt = 0; // set by onEnter/onEnterBack, consumed by the settle-snap below
+
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: ".thesis",
@@ -103,6 +105,10 @@ function buildThesisTimeline(field) {
       scrub: 0.6,
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
+      // mark fresh entries so the settle-snap can catch the OPENING slide:
+      // +time = entered from above (show beat 0), −time = from below (last beat).
+      onEnter: () => { entryAt = performance.now(); },
+      onEnterBack: () => { entryAt = -performance.now(); },
       onToggle: (self) => {
         if (!field) return;
         if (self.isActive) {
@@ -139,7 +145,18 @@ function buildThesisTimeline(field) {
       clearTimeout(settle);
       settle = setTimeout(() => {
         if (!st.isActive) return;
-        const target = st.start + (Math.round(st.progress * 4) / 4) * (st.end - st.start);
+        // ENTRY CATCH: a fast scroll from the section above carries momentum past
+        // the opening slide and used to rest on beat 1–2 (the timeline) — the
+        // thesis never got its title moment. If we settled within ~1.2s of
+        // entering and still rest in the entry half, present the OPENING slide
+        // (beat 0 from above, the last beat from below). Deliberate scrolling
+        // deeper than halfway is respected. Otherwise: nearest beat.
+        const fresh = entryAt !== 0 && performance.now() - Math.abs(entryAt) < 1200;
+        let beat = Math.round(st.progress * 4);
+        if (fresh && entryAt > 0 && st.progress < 0.5) beat = 0;
+        else if (fresh && entryAt < 0 && st.progress > 0.5) beat = 4;
+        entryAt = 0; // consume — later settles inside the pin snap to nearest
+        const target = Math.min(st.start + (beat / 4) * (st.end - st.start), st.end - 2);
         if (Math.abs(target - lenis.scroll) > 2) {
           lenis.scrollTo(target, { duration: 0.7, easing: (t) => 1 - Math.pow(1 - t, 3) });
         }
