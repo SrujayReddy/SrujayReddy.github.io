@@ -95,6 +95,9 @@ function buildThesisTimeline(field) {
   gsap.set(beats[0], { autoAlpha: 1, y: 0 });
 
   let entryAt = 0; // set by onEnter/onEnterBack, consumed by the settle-snap below
+  // Desktop wheel-step controller (filled in after the trigger exists; the
+  // callbacks below may fire before then, so it starts as a safe no-op).
+  const deck = { engage() {}, release() {}, active: false };
 
   const tl = gsap.timeline({
     scrollTrigger: {
@@ -107,9 +110,10 @@ function buildThesisTimeline(field) {
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
       // mark fresh entries so the settle-snap can catch the OPENING slide:
       // +time = entered from above (show beat 0), −time = from below (last beat).
-      onEnter: () => { entryAt = performance.now(); },
-      onEnterBack: () => { entryAt = -performance.now(); },
+      onEnter: () => { entryAt = performance.now(); deck.engage(false); },
+      onEnterBack: () => { entryAt = -performance.now(); deck.engage(true); },
       onToggle: (self) => {
+        if (!self.isActive) deck.release(); // leaving in either direction frees the page
         if (!field) return;
         if (self.isActive) {
           // entering with morph≈0 → swapping the target buffer is invisible
@@ -141,10 +145,10 @@ function buildThesisTimeline(field) {
   if (lenis && st) {
     let settle;
     lenis.on("scroll", () => {
-      if (!st.isActive) return;
+      if (!st.isActive || deck.active) return; // the desktop deck drives itself
       clearTimeout(settle);
       settle = setTimeout(() => {
-        if (!st.isActive) return;
+        if (!st.isActive || deck.active) return;
         // ENTRY CATCH: a fast scroll from the section above carries momentum past
         // the opening slide and used to rest on beat 1–2 (the timeline) — the
         // thesis never got its title moment. If we settled within ~1.2s of
@@ -162,6 +166,71 @@ function buildThesisTimeline(field) {
         }
       }, 130);
     });
+  }
+
+  // ── the deck: ONE SLIDE PER GESTURE (desktop wheels) ──────────
+  // Even with the settle-snap, a fast wheel scrub still FLASHED all five beats
+  // past before anything could snap — you couldn't comprehend one slide before
+  // the next arrived. On fine-pointer devices the deck now steps instead of
+  // scrubbing: entering the pin parks on the opening slide and stops Lenis;
+  // each wheel flick advances exactly ONE beat (a readable animated glide);
+  // flicking past either end hands the page back and you scroll on. Touch
+  // devices keep the scrub + settle-snap above — Lenis can't intercept native
+  // touch scrolling, and step-locking a thumb-drag would feel broken.
+  const FLICK = 90;    // accumulated wheel delta that means "next slide"
+  const STEP_S = 0.65; // glide duration between beats
+  const COOL_MS = 350; // post-glide lockout so trackpad inertia can't double-step
+  const desktopWheel = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if (lenis && st && desktopWheel) {
+    let beat = 0, gliding = false, accum = 0, lastWheel = 0, coolUntil = 0;
+    const beatPos = (b) => Math.min(st.start + (b / 4) * (st.end - st.start), st.end - 2);
+    const glide = (b, dur) => {
+      gliding = true;
+      lenis.scrollTo(beatPos(b), {
+        duration: dur, force: true, lock: true,
+        easing: (t) => 1 - Math.pow(1 - t, 3),
+        onComplete: () => { gliding = false; coolUntil = performance.now() + COOL_MS; },
+      });
+    };
+    deck.engage = (fromBelow, atBeat) => {
+      if (deck.active) return;
+      deck.active = true;
+      beat = atBeat != null ? atBeat : fromBelow ? 4 : 0;
+      accum = 0;
+      lenis.stop(); // Lenis ignores user scroll from here; the deck drives
+      glide(beat, 0.55); // park on the opening slide
+    };
+    deck.release = () => {
+      if (!deck.active) return;
+      deck.active = false;
+      gliding = false;
+      lenis.start();
+    };
+    window.addEventListener(
+      "wheel",
+      (e) => {
+        if (!deck.active) return;
+        if (!st.isActive) { deck.release(); return; } // safety: never trap the page
+        e.preventDefault(); // the deck owns the wheel while pinned
+        const now = performance.now();
+        if (gliding || now < coolUntil) return;
+        if (Math.abs(e.deltaY) < 8) return; // inertia dribble doesn't count
+        if (now - lastWheel > 260) accum = 0; // stale momentum resets
+        lastWheel = now;
+        accum += e.deltaY;
+        if (Math.abs(accum) < FLICK) return;
+        const dir = accum > 0 ? 1 : -1;
+        accum = 0;
+        const next = beat + dir;
+        if (next < 0 || next > 4) { deck.release(); return; } // exit past the ends
+        beat = next;
+        glide(beat, STEP_S);
+      },
+      { passive: false }
+    );
+    // Page loaded (or refreshed) already inside the pin → engage on the nearest
+    // beat instead of yanking to the opening slide.
+    if (st.isActive) deck.engage(false, Math.round(st.progress * 4));
   }
 
   const fadeBeat = (from, to) => {

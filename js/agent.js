@@ -17,6 +17,16 @@ import { config } from "./config.js";
 
 let onEgg = () => {};
 
+// "a visitor from Madison, US about 40 min ago" — from the Worker's city-level
+// lastSeen record (no names exist on a static site; the city is the honest max).
+function whoUsedIt(seen) {
+  if (!seen || (!seen.city && !seen.country)) return "an earlier visitor";
+  const place = [seen.city, seen.country].filter(Boolean).join(", ");
+  const mins = seen.ts ? Math.max(1, Math.round((Date.now() - seen.ts) / 60000)) : null;
+  const ago = mins == null ? "" : mins < 60 ? ` about ${mins} min ago` : ` about ${Math.round(mins / 60)}h ago`;
+  return `a visitor from ${place}${ago}`;
+}
+
 export function initAgent({ onPizza } = {}) {
   onEgg = onPizza || (() => {});
   const root = document.getElementById("palette");
@@ -242,8 +252,12 @@ export function initAgent({ onPizza } = {}) {
         stateEl.classList.remove("is-live");
         stateEl.classList.add("is-error");
         cursor.remove();
+        // the Worker remembers WHERE the last AI call came from (city-level,
+        // via Cloudflare geo — visitors have no names on a static site).
+        let seen = null;
+        try { seen = (await res.json()).lastSeen; } catch {}
         textEl.innerHTML =
-          `🪫 Srujay's API key was exhausted by an earlier visitor — it refills tomorrow. The commands above still work, or reach him at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
+          `🪫 Srujay's API key was exhausted by ${whoUsedIt(seen)} — it refills tomorrow. The commands above still work, or reach him at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
         return;
       }
       if (!res.ok || !res.body) throw new Error("worker " + res.status);
