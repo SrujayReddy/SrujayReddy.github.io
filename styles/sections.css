@@ -128,8 +128,11 @@ html.reduced-motion [data-reveal] {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding-block: clamp(5rem, 9vh, 6.5rem) 2rem;
+  /* Anchor the opening near the top like the original composition — with the
+     tall headline gone, vertical centering left the short text block floating
+     mid-screen ("placed at the center"). */
+  justify-content: flex-start;
+  padding-block: clamp(8rem, 21vh, 14rem) 2rem;
 }
 .hero__eyebrow {
   margin-bottom: 1.1rem;
@@ -186,18 +189,18 @@ html.js .hero__restyle {
 .hero.is-in .hero__sub { transition-delay: 0.3s; }
 .hero.is-in .hero__cta { transition-delay: 0.38s; }
 .hero.is-in .hero__restyle { transition-delay: 0.46s; }
-/* The NAME is the hero h1 now (the tagline headline was removed — owner wants
-   the opening simple and direct). A larger tracked nameplate anchors the fold;
-   it uses --font-display so live themes can still restyle the display type. */
+/* The name keeps its ORIGINAL quiet mono-label look (owner's call — it is the
+   h1 semantically, but visually identical to the old design: small, tracked,
+   ink-dim mono). The weight/line-height lines neutralize the h1 defaults. */
 .hero__name {
-  font-size: clamp(1.7rem, 3.6vw, 2.7rem);
-  letter-spacing: 0.14em;
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.15;
-  margin-bottom: 0.9rem;
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  margin-bottom: 0.8rem;
 }
 .hero__sub {
   margin-top: 1.3rem;

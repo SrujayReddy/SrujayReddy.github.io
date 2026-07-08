@@ -162,7 +162,7 @@ const VIBE_TOOL = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = env.ALLOWED_ORIGIN || "*";
     const cors = {
       "Access-Control-Allow-Origin": origin,
@@ -189,7 +189,7 @@ export default {
 
     // The Build Bench + Vibe Studio reuse this CORS/origin envelope, own branches.
     if (body.mode === "bench") return handleBench(body, env, cors, request);
-    if (body.mode === "vibe") return handleVibe(body, env, cors, request);
+    if (body.mode === "vibe") return handleVibe(body, env, cors, request, ctx);
 
     const question = String(body.question || "").trim().slice(0, MAX_INPUT_CHARS);
     if (!question) return json({ error: "empty_question" }, 400, cors);
@@ -215,13 +215,14 @@ export default {
         env.RATE_KV.get(dayKey).then((v) => parseInt(v || "0", 10)),
       ]);
       if (ipCount >= perMin || dayCount >= perDay)
-        return json({ error: "rate_limited" }, 429, cors);
+        return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
 
       // best-effort increment (KV is eventually consistent — fine for soft caps)
       await Promise.all([
         env.RATE_KV.put(ipKey, String(ipCount + 1), { expirationTtl: 120 }),
         env.RATE_KV.put(dayKey, String(dayCount + 1), { expirationTtl: 90000 }),
       ]);
+      recordLastUser(request, env, ctx); // remember WHERE this call came from
     }
 
     if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
@@ -270,7 +271,7 @@ export default {
     }
     // Pass an upstream rate-limit straight through so the client shows its honest
     // "rate-limited" message instead of a generic error (Gemini free tier is small).
-    if (upstream.status === 429) return json({ error: "rate_limited" }, 429, cors);
+    if (upstream.status === 429) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
     if (!upstream.ok || !upstream.body) {
       return json({ error: "upstream_error", status: upstream.status }, 502, cors);
     }
@@ -379,7 +380,7 @@ async function handleBench(body, env, cors, request) {
 // Vibe Studio: one Anthropic call, tool-forced to emit a theme JSON. Returns the
 // raw theme; the client (js/vibe.js validate()) hex-checks + contrast-gates it
 // before it ever touches the page, so a bad model output can only fall back safely.
-async function handleVibe(body, env, cors, request) {
+async function handleVibe(body, env, cors, request, ctx) {
   const prompt = String(body.prompt || "").trim().slice(0, 120);
   if (!prompt) return json({ error: "empty_prompt" }, 400, cors);
 
@@ -396,11 +397,12 @@ async function handleVibe(body, env, cors, request) {
       env.RATE_KV.get(ipKey).then((v) => parseInt(v || "0", 10)),
       env.RATE_KV.get(dayKey).then((v) => parseInt(v || "0", 10)),
     ]);
-    if (ipC >= perMin || dayC >= perDay) return json({ error: "rate_limited" }, 429, cors);
+    if (ipC >= perMin || dayC >= perDay) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
     await Promise.all([
       env.RATE_KV.put(ipKey, String(ipC + 1), { expirationTtl: 120 }),
       env.RATE_KV.put(dayKey, String(dayC + 1), { expirationTtl: 90000 }),
     ]);
+    recordLastUser(request, env, ctx); // remember WHERE this call came from
   }
 
   if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
@@ -474,7 +476,7 @@ async function handleVibe(body, env, cors, request) {
   } catch {
     return json({ error: "upstream_unreachable" }, 502, cors);
   }
-  if (r.status === 429) return json({ error: "rate_limited" }, 429, cors);
+  if (r.status === 429) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
   if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
   const data = await r.json();
   try {
@@ -492,6 +494,33 @@ function json(obj, status, cors) {
     status,
     headers: { ...cors, "content-type": "application/json" },
   });
+}
+
+// ── "who used it last" (city-level, honest) ─────────────────────
+// Cloudflare attaches coarse geo to every request (request.cf) — no IP is
+// stored, no cookie is set, and visitors have no accounts, so a NAME is
+// impossible; the city is the closest truthful answer. We remember where the
+// most recent AI call came from, and when the budget runs out the UI can say
+// "exhausted by a visitor from Madison, US — 40 minutes ago".
+async function lastSeen(env) {
+  if (!env.RATE_KV) return null;
+  try {
+    const v = await env.RATE_KV.get("last_ai_user");
+    return v ? JSON.parse(v) : null;
+  } catch {
+    return null;
+  }
+}
+function recordLastUser(request, env, ctx) {
+  if (!env.RATE_KV) return;
+  try {
+    const cf = request.cf || {};
+    const put = env.RATE_KV.put(
+      "last_ai_user",
+      JSON.stringify({ city: cf.city || null, country: cf.country || null, ts: Date.now() })
+    );
+    if (ctx && ctx.waitUntil) ctx.waitUntil(put.catch(() => {}));
+  } catch {}
 }
 
 async function verifyTurnstile(secret, token, request) {

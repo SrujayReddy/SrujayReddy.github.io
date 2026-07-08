@@ -39,6 +39,16 @@ function hexA(h, a) {
   const [r, g, b] = hexToRgb(h);
   return `rgba(${r},${g},${b},${a})`;
 }
+// "a visitor from Madison, US about 40 min ago" — from the Worker's city-level
+// lastSeen record (no names exist on a static site; the city is the honest max).
+function whoUsedIt(seen) {
+  if (!seen || (!seen.city && !seen.country)) return "an earlier visitor";
+  const place = [seen.city, seen.country].filter(Boolean).join(", ");
+  const mins = seen.ts ? Math.max(1, Math.round((Date.now() - seen.ts) / 60000)) : null;
+  const ago = mins == null ? "" : mins < 60 ? ` about ${mins} min ago` : ` about ${Math.round(mins / 60)}h ago`;
+  return `a visitor from ${place}${ago}`;
+}
+
 // blend two hexes (t=0 → a, t=1 → b); used to derive readable secondary inks.
 function mixHex(a, b, t) {
   const A = hexToRgb(a), B = hexToRgb(b);
@@ -131,10 +141,11 @@ export function initVibe() {
       // so the wait reads as craft, not lag.
       const t = startThinking();
       let failure = null; // null = fresh AI theme; else why we fell back to a preset
+      let seen = null;
       try { vibe = await resolveLive(text); }
-      catch (e) { failure = e && e.rateLimited ? "rate" : "error"; vibe = resolveDormant(text); }
+      catch (e) { failure = e && e.rateLimited ? "rate" : "error"; seen = e && e.lastSeen; vibe = resolveDormant(text); }
       // ALWAYS tell the user WHY a generic result appeared instead of a fresh AI theme.
-      if (failure === "rate") await t.note("🪫 Srujay's API key was exhausted by an earlier visitor — it refills tomorrow. Here's a close preset.", 3400);
+      if (failure === "rate") await t.note(`🪫 Srujay's API key was exhausted by ${whoUsedIt(seen)} — it refills tomorrow. Here's a close preset.`, 3600);
       else if (failure === "error") await t.note("⚡ Couldn't reach the live AI just now — here's a close preset.", 2600);
       t.stop();
     } else {
@@ -229,7 +240,12 @@ export function initVibe() {
         body: JSON.stringify({ mode: "vibe", prompt: text.slice(0, 120) }),
         signal: ctrl.signal,
       });
-      if (res.status === 429) { const e = new Error("rate_limited"); e.rateLimited = true; throw e; }
+      if (res.status === 429) {
+        const e = new Error("rate_limited");
+        e.rateLimited = true;
+        try { e.lastSeen = (await res.json()).lastSeen; } catch {}
+        throw e;
+      }
       if (!res.ok) throw new Error("vibe " + res.status);
       return validate(await res.json(), text);
     } finally {
