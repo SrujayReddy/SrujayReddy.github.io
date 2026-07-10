@@ -52,9 +52,10 @@ Senior Honors Thesis Symposium. He also authored and presented (onstage) the 202
 Honors Thesis Advising Award for his advisor — one of five recipients college-wide.
 
 EXPERIENCE:
-- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): QR-based headless device provisioning,
-  Android (Kotlin)/iOS (Swift), offline-first; containerized Kubernetes provisioning service with an
-  idempotent retryable state machine, BLE write-back, OpenAPI. Cut on-site setup to ≤15 minutes.
+- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): working on hospital medical-device setup —
+  QR-based headless device provisioning, Android (Kotlin)/iOS (Swift), offline-first; containerized
+  Kubernetes provisioning service with an idempotent retryable state machine, BLE write-back, OpenAPI.
+  Cut on-site setup to ≤15 minutes.
 - OpenAI, SWE Intern (Jun–Aug 2025): primarily owned the real-time match engine over the WebSocket
   architecture, Node/Express REST APIs, PostgreSQL schema design, JWT authentication, and OpenAI API
   integration. p95 latency −55% (2000→900ms) via streaming, prompt
