@@ -128,11 +128,10 @@ html.reduced-motion [data-reveal] {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  /* Anchor the opening in the upper third — with the tall headline gone,
-     vertical centering left the short text block floating mid-screen, and
-     hugging the very top felt cramped. ~26vh sits it "a little lower". */
-  justify-content: flex-start;
-  padding-block: clamp(10rem, 26vh, 17rem) 2rem;
+  /* Full composition (name label → big headline → sub → CTAs) centres in the
+     fold like the original aesthetic version. */
+  justify-content: center;
+  padding-block: clamp(5rem, 9vh, 6.5rem) 2rem;
 }
 .hero__eyebrow {
   margin-bottom: 1.1rem;
