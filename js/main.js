@@ -31,16 +31,14 @@ const tc = (on) => (on ? ` <span class="to-confirm" title="Figure to confirm">ap
 // ── Hero ──────────────────────────────────────────────────────
 function renderHero() {
   const id = content.identity;
-  const lines = id.heroLines
-    .map((l) => `<span class="line"><span>${esc(l)}</span></span>`)
-    .join("");
   const gh = content.contact.links.find((l) => l.label === "GitHub").href;
+  // No big tagline headline (owner's call — keep the opening simple and direct):
+  // the NAME is the h1, the role eyebrow + sub carry the rest.
   mount(
     "hero",
     `
-    <p class="hero__name">${esc(id.name)}</p>
+    <h1 class="hero__name">${esc(id.name)}</h1>
     <span class="eyebrow hero__eyebrow">${esc(id.role)} @ ${esc(id.company)} · ${esc(id.companyNote)}</span>
-    <h1 class="hero__title">${lines}</h1>
     <p class="hero__sub">${esc(id.tagline)} Based in <strong>${esc(id.location)}</strong>.</p>
     <div class="hero__cta">
       <button class="btn btn--primary" data-open-palette="ask" type="button">⌘K · Ask anything about me</button>
