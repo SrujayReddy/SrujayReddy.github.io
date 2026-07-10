@@ -94,19 +94,21 @@ function buildThesisTimeline(field) {
   gsap.set(beats, { autoAlpha: 0, y: 20 });
   gsap.set(beats[0], { autoAlpha: 1, y: 0 });
 
-  // Plain scrub crossfade — the version that always scrolled cleanly. The pin
-  // holds while scroll drives the beat timeline; NOTHING stops Lenis or
-  // intercepts the wheel, so the page can never be trapped. (The one-slide-per-
-  // gesture "deck" was removed — repeatedly froze scroll on real devices.)
+  let entryAt = 0; // set by onEnter/onEnterBack, consumed by the settle-snap below
+
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: ".thesis",
       start: "top top",
-      end: () => "+=" + window.innerHeight * 4,
+      end: () => "+=" + window.innerHeight * 5, // more scroll room per beat
       pin: pin,
       scrub: 0.6,
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
+      // mark fresh entries so the settle-snap can catch the OPENING slide:
+      // +time = entered from above (show beat 0), −time = from below (last beat).
+      onEnter: () => { entryAt = performance.now(); },
+      onEnterBack: () => { entryAt = -performance.now(); },
       onToggle: (self) => {
         if (!field) return;
         if (self.isActive) {
@@ -126,6 +128,42 @@ function buildThesisTimeline(field) {
       },
     },
   });
+
+  // ── beat snap, THROUGH Lenis (never stops it — can't trap the page) ──
+  // ScrollTrigger's built-in `snap` writes scrollTop directly, but Lenis
+  // re-animates the scroll position every frame and overwrites it, so that snap
+  // silently loses. Instead: when scrolling settles anywhere inside the pin,
+  // glide to the nearest beat with lenis.scrollTo — every slide lands and gets
+  // read, and slow deliberate scrolling is never interrupted mid-gesture. This
+  // is the settle-snap (PR #5), NOT the wheel-stealing "deck" — Lenis is never
+  // stopped, so scroll can never freeze.
+  const st = tl.scrollTrigger;
+  const lenis = window.__lenis;
+  if (lenis && st) {
+    let settle;
+    lenis.on("scroll", () => {
+      if (!st.isActive) return;
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        if (!st.isActive) return;
+        // ENTRY CATCH: a fast scroll from the section above carries momentum past
+        // the opening slide and used to rest on beat 1–2 (the timeline) — the
+        // thesis never got its title moment. If we settled within ~1.2s of
+        // entering and still rest in the entry half, present the OPENING slide
+        // (beat 0 from above, the last beat from below). Deliberate scrolling
+        // deeper than halfway is respected. Otherwise: nearest beat.
+        const fresh = entryAt !== 0 && performance.now() - Math.abs(entryAt) < 1200;
+        let beat = Math.round(st.progress * 4);
+        if (fresh && entryAt > 0 && st.progress < 0.5) beat = 0;
+        else if (fresh && entryAt < 0 && st.progress > 0.5) beat = 4;
+        entryAt = 0; // consume — later settles inside the pin snap to nearest
+        const target = Math.min(st.start + (beat / 4) * (st.end - st.start), st.end - 2);
+        if (Math.abs(target - lenis.scroll) > 2) {
+          lenis.scrollTo(target, { duration: 0.7, easing: (t) => 1 - Math.pow(1 - t, 3) });
+        }
+      }, 130);
+    });
+  }
 
   const fadeBeat = (from, to) => {
     if (from != null) tl.to(beats[from], { autoAlpha: 0, y: -16, duration: 0.4 }, "+=0.25");
