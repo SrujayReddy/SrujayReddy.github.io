@@ -129,9 +129,18 @@ html.reduced-motion [data-reveal] {
   display: flex;
   flex-direction: column;
   /* Anchor the opening near the top — with the tall headline gone, vertical
-     centering left the short text block floating mid-screen. */
+     centering left the short text block floating mid-screen. The name/role
+     block sits slightly higher than before (owner's call) so it reads as its
+     own group above the intro. */
   justify-content: flex-start;
-  padding-block: clamp(8rem, 21vh, 14rem) 2rem;
+  padding-block: clamp(7rem, 16vh, 11rem) 2rem;
+}
+/* The mount wrap is the hero's ONLY child — without this, auto margins on the
+   hero__* blocks have no full-height flex context to push against. */
+.hero > .wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .hero__eyebrow {
   margin-bottom: 1.1rem;
@@ -202,7 +211,11 @@ html.js .hero__restyle {
   margin-bottom: 0.8rem;
 }
 .hero__sub {
-  margin-top: 1.3rem;
+  /* Owner's call: the name/role group stays up top; EVERYTHING from the intro
+     down (CTAs, restyle demo, scroll cue) hugs the lower part of the screen.
+     margin-top:auto soaks up all the free space, so the block sits as low as
+     it can on any screen height without pushing the demo below the fold. */
+  margin-top: auto;
   max-width: 52ch;
   color: var(--ink-dim);
   font-size: var(--fs-lead);
@@ -219,7 +232,9 @@ html.js .hero__restyle {
   align-items: center;
 }
 .hero__scrollcue {
-  margin-top: auto;
+  /* no auto margin here — .hero__sub owns the free space now, so the cue
+     travels with the bottom block instead of detaching from it */
+  margin-top: 0;
   padding-top: 1.4rem;
   display: inline-flex;
   align-items: center;
@@ -248,7 +263,6 @@ html.js .hero__restyle {
 @media (max-height: 840px) {
   .hero { padding-block: 4.4rem 1.2rem; }
   .hero__title { font-size: clamp(2rem, 4.4vw, 3.85rem); }
-  .hero__sub { margin-top: 1rem; }
   .hero__cta { margin-top: 1.2rem; }
   .hero__scrollcue { padding-top: 1rem; }
 }

@@ -510,3 +510,41 @@ All owner nitpicks addressed and verified live (light, 1440×900 + 1280×800 + m
 - Needs owner's eyes on the live site: entrance feel, thesis snap feel at real scroll speed.
 
 <!-- deploy-bump: 943ecd3 -->
+
+## Round 19 (thesis pace: slow the story down without ever touching the brakes)
+
+Owner: fast scrolling blasts the thesis and its animations play at flick speed —
+slow the pace so the section is experienced as intended. Three levers, all inside
+`js/motion.js`, NONE of which can trap (Lenis is never stopped, no wheel listener,
+no preventDefault — the hard rule from the frozen-"deck" incident stands):
+
+- [x] **Runway 5→7×vh** — each of the 5 beats now costs ~40% more physical scrolling.
+- [x] **Scrub 0.6→1** — even an instant scroll jump plays the beat crossfade over ~1s
+      instead of snapping past.
+- [x] **Wheel pace zone (0.6×)** — Lenis 1.1.14's supported `virtualScroll` option
+      scales `data.deltaY` while the thesis ScrollTrigger `isActive`. Lenis calls the
+      hook BEFORE consuming the deltas, so mutation is picked up; we never return
+      `false` (that would eat the event). Worst possible failure = constant 0.6×
+      scroll speed; a freeze is structurally impossible. Native paths (touch,
+      scrollbar, keyboard) bypass the hook and stay full speed — so on MOBILE only
+      the longer runway applies, not the wheel damping (known limitation).
+- Settle-snap + entry-catch untouched (beat math is proportional, still lands).
+- Verified in the hidden preview: pin length = exactly 7×vh, scrub = 1, probe delta
+  100→60 only while inside the pin (100 before/after), one beat visible mid-pin.
+  All three node tests green. **Needs the owner's real-mouse/trackpad pass for feel**
+  — 0.6× + 7vh ≈ 2.3× more wheel effort per beat; if it feels heavy, tune
+  `pace.scale` (one constant) or the runway back toward 6.
+- [x] **Hero regrouped** (owner: name/FDE up top, intro block "closer to the 3/4
+      end of the screen") — name/role stays high (`.hero` top padding 21vh→16vh);
+      everything from the intro down (CTAs, restyle demo, scroll cue) is BOTTOM-
+      ANCHORED: `.hero__sub { margin-top: auto }` soaks up the free space. Gotcha
+      found: `.hero`'s only flex child is the mount `.wrap`, so auto margins on
+      hero__* elements never had a full-height flex context (the scrollcue's old
+      `margin-top:auto` was silently inert!) — fixed with `.hero > .wrap { flex:1;
+      display:flex; flex-direction:column }`. Self-adjusts to screen height: intro
+      starts @63% (900px tall), 62% (780px), 48% (375×812 phone — block is taller
+      there); demo + cue always on screen, no x-overflow. Geometry-verified in the
+      preview; needs the owner's eyes for the look.
+- [x] **⌘K palette**: removed the "Joey doesn't share food" hint from the "Order a
+      pizza" command (owner's call — the row was too loud). Command + egg unchanged;
+      agent.js renders a missing hint as an empty span, verified in preview.
