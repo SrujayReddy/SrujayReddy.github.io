@@ -17,11 +17,23 @@ import Lenis from "lenis";
 gsap.registerPlugin(ScrollTrigger);
 
 export function initMotion({ director, field } = {}) {
+  // ── thesis pace zone: slow the WHEEL while the thesis pin is active ──
+  // Lenis calls options.virtualScroll(data) before consuming the deltas, so
+  // scaling data.deltaY here is the supported way to add "weight" to a section.
+  // HARD RULE: never return false (that would eat the event) and never stop
+  // Lenis — the worst possible failure is a constant 0.6× scroll speed, so a
+  // frozen page is structurally impossible. Native scroll paths (touch,
+  // scrollbar, keyboard) bypass this entirely and stay at full speed.
+  const pace = { st: null, scale: 0.6 };
+
   // ── Lenis smooth scroll wired into ScrollTrigger ─────────────
   const lenis = new Lenis({
     duration: 1.05,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
+    virtualScroll: (data) => {
+      if (pace.st && pace.st.isActive) data.deltaY *= pace.scale;
+    },
   });
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
@@ -64,7 +76,7 @@ export function initMotion({ director, field } = {}) {
   buildEducationTimeline(director);
 
   // ── Signature: thesis scrollytelling (pin + scrub) ───────────
-  buildThesisTimeline(field);
+  buildThesisTimeline(field, pace);
 
   // The ambient dots fight the line-dense experience rows (and everything below)
   // — ease the organism out as experience approaches and keep it off for the
@@ -85,7 +97,7 @@ export function initMotion({ director, field } = {}) {
   window.addEventListener("load", () => ScrollTrigger.refresh());
 }
 
-function buildThesisTimeline(field) {
+function buildThesisTimeline(field, pace) {
   const pin = document.querySelector(".thesis__pin");
   if (!pin) return;
   const beats = gsap.utils.toArray(".thesis__beat");
@@ -100,9 +112,14 @@ function buildThesisTimeline(field) {
     scrollTrigger: {
       trigger: ".thesis",
       start: "top top",
-      end: () => "+=" + window.innerHeight * 5, // more scroll room per beat
+      // 7 viewport-heights of runway: each beat costs real scrolling (pairs
+      // with the pace zone; momentum banked BEFORE entry still lands at full
+      // speed — the entry-catch below is what rescues those).
+      end: () => "+=" + window.innerHeight * 7,
       pin: pin,
-      scrub: 0.6,
+      // 1s catch-up: even an instant scroll jump plays the crossfade at a
+      // readable speed instead of snapping the beats past.
+      scrub: 1,
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
       // mark fresh entries so the settle-snap can catch the OPENING slide:
@@ -138,6 +155,7 @@ function buildThesisTimeline(field) {
   // is the settle-snap (PR #5), NOT the wheel-stealing "deck" — Lenis is never
   // stopped, so scroll can never freeze.
   const st = tl.scrollTrigger;
+  if (pace) pace.st = st; // arms the wheel pace zone (initMotion's virtualScroll)
   const lenis = window.__lenis;
   if (lenis && st) {
     let settle;
