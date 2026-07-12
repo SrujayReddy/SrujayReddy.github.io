@@ -545,3 +545,6 @@ no preventDefault — the hard rule from the frozen-"deck" incident stands):
       starts @63% (900px tall), 62% (780px), 48% (375×812 phone — block is taller
       there); demo + cue always on screen, no x-overflow. Geometry-verified in the
       preview; needs the owner's eyes for the look.
+- [x] **⌘K palette**: removed the "Joey doesn't share food" hint from the "Order a
+      pizza" command (owner's call — the row was too loud). Command + egg unchanged;
+      agent.js renders a missing hint as an empty span, verified in preview.

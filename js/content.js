@@ -301,7 +301,7 @@ export const content = {
     { id: "open-github", label: "Open GitHub", hint: "github.com/SrujayReddy", icon: "↗" },
     { id: "open-linkedin", label: "Open LinkedIn", hint: "in/srujay-jakkidi", icon: "↗" },
     { id: "toggle-motion", label: "Toggle reduced motion", hint: "Calmer experience", icon: "◐" },
-    { id: "pizza", label: "Order a pizza", hint: "Joey doesn't share food", icon: "🍕", egg: true },
+    { id: "pizza", label: "Order a pizza", icon: "🍕", egg: true },
   ],
 
   // Suggested prompts for the AI "ask" mode.
