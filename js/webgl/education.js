@@ -56,6 +56,7 @@ export function makeEducationAct() {
   let THREE, group, capPivot, board, skull, button;
   let cordGeo, cordMat, fringeGeo, fringeMat, cordCurvePts, tubePts, renderCurve;
   let nodes, prev, segLen, nodeCount, tubular, radial, eIdx;
+  let tubeRadii, ringSin, ringCos;
   let gLocal, vTmp, vEdge, vLocal, qInv, vAnchor;
   let lights;
   let velvetMats, goldMats;
@@ -81,6 +82,20 @@ export function makeEducationAct() {
       // glass-smooth, high-density tube — a fluid curve, never a faceted pipe.
       tubular = isMobile ? 80 : 120;
       radial = isMobile ? 12 : 16;
+      // Ring angles and taper never change. Store JS's full-precision results
+      // once; every rendered vertex/normal remains identical to the old loop.
+      tubeRadii = new Float64Array(tubular + 1);
+      ringSin = new Float64Array(radial + 1);
+      ringCos = new Float64Array(radial + 1);
+      for (let i = 0; i <= tubular; i++) {
+        const t = i / tubular;
+        tubeRadii[i] = 0.058 * (1 - t) + 0.034 * t;
+      }
+      for (let j = 0; j <= radial; j++) {
+        const v = (j / radial) * Math.PI * 2;
+        ringSin[j] = Math.sin(v);
+        ringCos[j] = -Math.cos(v);
+      }
       eIdx = Math.floor(nodeCount * 0.3);
 
       cSheenL = new THREE.Color(0x2b2f44); // restrained slate sheen — reads BLACK, not navy
@@ -297,7 +312,7 @@ export function makeEducationAct() {
         renderCurve.getPoint(i / tubular, tubePts[i]);
         collidePoint(tubePts[i], TUBE_MARGIN);
       }
-      updateTube(THREE, cordGeo, renderCurve, tubePts, tubular, radial);
+      updateTube(cordGeo, renderCurve, tubePts, tubular, radial, tubeRadii, ringSin, ringCos);
       updateFringe(fringeGeo, nodes[nodeCount - 1], nodes[nodeCount - 2], timeAcc);
     },
 
@@ -613,7 +628,7 @@ function buildEnvMap(THREE, renderer) {
 
 // Build the tube rings from a COLLIDED centerline (positions) + the curve's Frenet
 // frames (orientation). High tubular×radial density → a continuous, glass-smooth tube.
-function updateTube(THREE, geo, curve, points, tubular, radial) {
+function updateTube(geo, curve, points, tubular, radial, radii, ringSin, ringCos) {
   const frames = curve.computeFrenetFrames(tubular, false);
   const pos = geo.attributes.position.array;
   const nrm = geo.attributes.normal ? geo.attributes.normal.array : null;
@@ -621,11 +636,9 @@ function updateTube(THREE, geo, curve, points, tubular, radial) {
   for (let i = 0; i <= tubular; i++) {
     const P = points[i];
     const N = frames.normals[i], B = frames.binormals[i];
-    const t = i / tubular;
-    const r = 0.058 * (1 - t) + 0.034 * t; // fuller, tapering cord — reads as real braid
+    const r = radii[i]; // fuller, tapering cord — reads as real braid
     for (let j = 0; j <= radial; j++) {
-      const v = (j / radial) * Math.PI * 2;
-      const sin = Math.sin(v), cos = -Math.cos(v);
+      const sin = ringSin[j], cos = ringCos[j];
       const nx = cos * N.x + sin * B.x, ny = cos * N.y + sin * B.y, nz = cos * N.z + sin * B.z;
       pos[k] = P.x + r * nx; pos[k + 1] = P.y + r * ny; pos[k + 2] = P.z + r * nz;
       // (nx,ny,nz) is exactly the unit outward normal (N,B orthonormal, cos²+sin²=1),

@@ -12,7 +12,7 @@ import { initEasterEgg } from "./easter-egg.js";
 import { initTheme } from "./theme.js";
 import { initVibe } from "./vibe.js";
 
-// three / gsap / lenis are loaded lazily (dynamic import) so a CDN hiccup
+// three / gsap / lenis are loaded lazily (dynamic import) so a loading failure
 // degrades to a fully-rendered static page instead of a blank one.
 
 document.documentElement.classList.add("js");
@@ -38,8 +38,8 @@ function renderHero() {
     "hero",
     `
     <h1 class="hero__name">${esc(id.name)}</h1>
-    <span class="eyebrow hero__eyebrow">${esc(id.role)} @ ${esc(id.company)} · ${esc(id.companyNote)}</span>
-    <p class="hero__sub">${esc(id.tagline)} Based in <strong>${esc(id.location)}</strong>.</p>
+    <span class="eyebrow hero__eyebrow">${id.role ? `${esc(id.role)} @ ` : "At "}${esc(id.company)}${id.companyNote ? ` · ${esc(id.companyNote)}` : ""}</span>
+    <p class="hero__sub">${esc(id.tagline)}${id.location ? ` Based in <strong>${esc(id.location)}</strong>.` : ""}</p>
     <div class="hero__cta">
       <button class="btn btn--primary" data-open-palette="ask" type="button">⌘K · Ask anything about me</button>
       <a class="btn" href="${gh}" target="_blank" rel="noopener">GitHub ↗</a>
@@ -139,7 +139,7 @@ function renderThesis() {
   );
 }
 
-// ── Now (Strada) ──────────────────────────────────────────────
+// ── Now (current role) ──────────────────────────────────────────────
 function renderNow() {
   const n = content.now;
   const pillars = n.pillars
@@ -150,14 +150,14 @@ function renderNow() {
     `
     <span class="eyebrow" data-reveal>${esc(n.eyebrow)}</span>
     <div class="now__head" data-reveal>
-      <h2 class="now__title">${esc(n.title)} · ${esc(n.company)}</h2>
-      <span class="now__badge">${esc(n.companyNote)}</span>
+      <h2 class="now__title">${n.title ? `${esc(n.title)} · ` : ""}${esc(n.company)}</h2>
+      ${n.companyNote ? `<span class="now__badge">${esc(n.companyNote)}</span>` : ""}
       <span class="now__period">${esc(n.period)}</span>
     </div>
     <p class="now__body" data-reveal>${esc(n.body)}</p>
     <div class="now__pipe" aria-hidden="true"><b></b><b></b><b></b><i></i></div>
     <div class="now__pillars">${pillars}</div>
-    <div class="now__stack" data-reveal>${chips(n.stack)}</div>
+    ${n.stack.length ? `<div class="now__stack" data-reveal>${chips(n.stack)}</div>` : ""}
   `
   );
 }
@@ -314,17 +314,6 @@ function renderContact() {
 }
 
 // ── dependency-free baseline ──────────────────────────────────
-function hasWebGL() {
-  try {
-    const c = document.createElement("canvas");
-    return !!(
-      window.WebGLRenderingContext &&
-      (c.getContext("webgl2") || c.getContext("webgl"))
-    );
-  } catch {
-    return false;
-  }
-}
 
 function navState() {
   const nav = document.querySelector(".nav");
@@ -471,10 +460,16 @@ function boot() {
 
   // Progressive enhancement: WebGL (SceneDirector) + GSAP/Lenis, each optional.
   (async () => {
+    // Fetch scrolling and graphics concurrently; initialize motion after the acts.
+    // Attach the rejection handler immediately so a failed optional module stays safe.
+    const motionModule = import("./motion.js").then(
+      (module) => ({ module }),
+      (error) => ({ error })
+    );
     let director = null;
     let field = null;
     const canvas = document.getElementById("webgl-canvas");
-    if (canvas && hasWebGL()) {
+    if (canvas) {
       try {
         const [{ createSceneDirector }, { makeFieldAct }, { makeEducationAct }] = await Promise.all([
           import("./webgl/director.js"),
@@ -503,8 +498,12 @@ function boot() {
     }
 
     try {
-      const mod = await import("./motion.js");
-      mod.initMotion({ director, field });
+      const result = await motionModule;
+      if (result.error) throw result.error;
+      // Preserve a task boundary between GPU setup and layout/pinning work,
+      // even when every optional module is already cached or preloaded.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      result.module.initMotion({ director, field });
     } catch (e) {
       console.warn("Motion deps unavailable; static layout.", e);
       // If motion fails to load, NOTHING drives the acts — the education cap never

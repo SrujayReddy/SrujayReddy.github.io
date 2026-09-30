@@ -98,7 +98,7 @@ Then point `WORKER_URL` at the local URL `wrangler dev` prints (e.g.
 curl -N -X POST http://127.0.0.1:8787 \
   -H 'content-type: application/json' \
   -H 'Origin: https://srujayreddy.github.io' \
-  -d '{"question":"What does Srujay do at Strada?"}'
+  -d '{"question":"Where does Srujay work now?"}'
 ```
 
 ---

@@ -11,22 +11,22 @@ export const content = {
   identity: {
     name: "Srujay Reddy Jakkidi",
     short: "Srujay",
-    role: "Forward Deployed Engineer",
-    company: "Strada",
-    companyNote: "YC S23",
-    secondaryRole: "Member of Technical Staff",
-    location: "San Francisco Bay Area",
+    role: "Software Development Engineer I",
+    company: "Amazon",
+    companyNote: "",
+    secondaryRole: "",
+    location: "Seattle",
     education: "B.S. Honors, Computer Science & Data Science — UW–Madison",
     tagline:
-      "I build high-impact AI systems that are both intelligent and measurably reliable.",
+      "I’m driven to keep raising the bar on what I build and the impact it has for the people it reaches.",
   },
 
   positioning: {
     // Split-text reveal. The emphasized words get the accent treatment.
-    lead: "Intelligent systems are not enough.",
+    lead: "Ambitious problems. Meaningful outcomes.",
     statement:
-      "I engineer AI agents designed to be observable, measurable, and resilient — because reliability is the only competitive advantage that compounds in production. My systems are built for unpredictable inputs, long-running workflows, and failure at scale, where success is measured by performance over millions of decisions.",
-    emphasis: ["observable", "measurable", "resilient", "reliability"],
+      "I take ambiguous problems and make them actionable. I measure how the software behaves, improve it until it holds up, and stay close to the people who depend on it. I care about the craft and the impact: building things that work well and make a real difference for stakeholders.",
+    emphasis: ["actionable", "measure", "craft", "impact"],
   },
 
   // ── Signature: the thesis, rendered as scroll-driven data-viz ───────────────
@@ -76,18 +76,18 @@ export const content = {
   // ── Now: the current role, featured ─────────────────────────────────────────
   now: {
     eyebrow: "Now",
-    company: "Strada",
-    companyNote: "YC S23",
-    title: "Forward Deployed Engineer",
-    period: "May 2026 — Present · San Francisco",
+    company: "Amazon",
+    companyNote: "Stores Payments",
+    title: "Software Development Engineer I",
+    period: "Sep 2026 — Present · Seattle",
     body:
-      "Building and deploying LLM-powered AI agents for insurance operations in TypeScript and Node.js. I work hands-on with enterprise customers — turning ambiguous domain needs into production software that runs in live operations.",
+      "On the Unified Financing Offers (UFO) team in Amazon Stores Payments, I build services that power financing offers across Amazon’s shopping and product pages. The work brings latency and reliability into focus for an experience used by millions of customers.",
     pillars: [
-      { k: "Agent orchestration", v: "Tool-calling, multi-step workflows, Temporal." },
-      { k: "Forward-deployed", v: "Embedded with customers, from need to shipped." },
-      { k: "Real-world performance", v: "Latency, reliability, and cost in production." },
+      { k: "Customer impact", v: "Financing offers for millions of customers." },
+      { k: "Low latency", v: "Fast services across shopping and product pages." },
+      { k: "Reliability", v: "Software that customers can depend on." },
     ],
-    stack: ["TypeScript", "Node.js", "React", "Temporal", "AI Agents"],
+    stack: ["Java", "Microservices"],
   },
 
   // ── Vibe Studio: 2nd AI feature — type a vibe, the WHOLE page redesigns live ──
@@ -163,12 +163,25 @@ export const content = {
   // ── Experience timeline (newest → oldest) ───────────────────────────────────
   experience: [
     {
+      org: "Strada (YC S23)",
+      role: "Forward Deployed Engineer",
+      period: "May — Aug 2026",
+      place: "San Francisco Bay Area",
+      body:
+        "Built and deployed LLM-powered AI agents for insurance operations in TypeScript and Node.js. Worked directly with enterprise customers to turn ambiguous requirements into production software, with a focus on orchestration, reliability, latency, and cost.",
+      metrics: [
+        { v: "Enterprise AI", k: "production workflows" },
+        { v: "Customer-facing", k: "from need to shipped" },
+      ],
+      stack: ["TypeScript", "Node.js", "React", "Temporal", "AI Agents"],
+    },
+    {
       org: "GE HealthCare",
       role: "Software Engineer (Capstone)",
       period: "Sep — Dec 2025",
       place: "Waukesha, WI · Hybrid",
       body:
-        "Working on hospital medical-device setup — QR-based, headless device provisioning on Android (Kotlin) and iOS (Swift) with an offline-first cache, plus a containerized Kubernetes provisioning service with an idempotent, retryable state machine, BLE write-back, and OpenAPI contracts.",
+        "Worked on hospital medical-device setup — QR-based, headless device provisioning on Android (Kotlin) and iOS (Swift) with an offline-first cache, plus a containerized Kubernetes provisioning service with an idempotent, retryable state machine, BLE write-back, and OpenAPI contracts.",
       metrics: [
         { v: "≤ 15 min", k: "on-site setup" },
         { v: "Offline-first", k: "low-signal field installs" },
@@ -293,7 +306,7 @@ export const content = {
   // Action ids are wired in agent.js.
   commands: [
     { id: "go-thesis", label: "Jump to the thesis", hint: "Section", icon: "→" },
-    { id: "go-now", label: "Jump to Strada (now)", hint: "Section", icon: "→" },
+    { id: "go-now", label: "Jump to Amazon (now)", hint: "Section", icon: "→" },
     { id: "go-experience", label: "Jump to experience", hint: "Section", icon: "→" },
     { id: "go-work", label: "Jump to projects", hint: "Section", icon: "→" },
     { id: "go-contact", label: "Jump to contact", hint: "Section", icon: "→" },
@@ -306,7 +319,7 @@ export const content = {
 
   // Suggested prompts for the AI "ask" mode.
   askSuggestions: [
-    "What does Srujay do at Strada?",
+    "Where does Srujay work now?",
     "Explain the thesis finding in one line.",
     "What's his most impressive metric?",
     "Is he open to new roles?",
@@ -315,12 +328,17 @@ export const content = {
 
 // Knowledge base string fed to the Worker's system prompt (kept in sync with the above).
 export const knowledgeBase = `
-Srujay Reddy Jakkidi — Forward Deployed Engineer at Strada (YC S23), San Francisco Bay Area.
+Srujay Reddy Jakkidi — Software Development Engineer I at Amazon, based in Seattle;
+previously a Forward Deployed Engineer at Strada (YC S23).
 Recent UW–Madison graduate: B.S. Honors in Computer Science and Data Science (GPA 3.9, May 2026).
 
-NOW — Strada (May 2026–present): designs, builds, and deploys LLM-powered AI agents for insurance
-operations in TypeScript/Node.js. Works hands-on with enterprise customers. Focus: agent
-orchestration, tool-calling, Temporal, real-world performance. Stack: TypeScript, Node, React, Temporal.
+NOW — Amazon, Software Development Engineer I (Sep 2026–present), Seattle, WA: works on the Unified
+Financing Offers (UFO) team in Amazon Stores Payments. Builds services that power financing offers
+across Amazon shopping and product pages for millions of customers, with a focus on low latency and
+reliable software. Confirmed skills: Java, Microservices.
+He is driven to keep raising the bar on what he can build and its impact for stakeholders. He takes
+ambiguous problems, makes them actionable, measures how the software behaves, and improves it until
+it holds up. He cares about the craft, the people it reaches, and making a real difference.
 
 SIGNATURE — Honors Thesis "Where Does the Time Go? Decomposing Kubernetes Pod Startup Latency Under
 Bandwidth Constraints" (published in MINDS@UW, Jun 2026), advised by Prof. Remzi Arpaci-Dusseau
@@ -330,7 +348,11 @@ Senior Honors Thesis Symposium. He also authored and presented (onstage) the 202
 Honors Thesis Advising Award for his advisor — one of five recipients college-wide.
 
 EXPERIENCE:
-- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): working on hospital medical-device setup —
+- Strada (YC S23), Forward Deployed Engineer, San Francisco Bay Area (May–Aug 2026):
+  built and deployed LLM-powered AI agents for insurance operations
+  in TypeScript/Node.js. Worked hands-on with enterprise customers. Focus: agent orchestration,
+  tool-calling, Temporal, reliability, latency, and cost. Stack: TypeScript, Node.js, React, Temporal.
+- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): worked on hospital medical-device setup —
   QR-based headless device provisioning, Android (Kotlin)/iOS (Swift), offline-first; containerized
   Kubernetes provisioning service with an idempotent retryable state machine, BLE write-back, OpenAPI.
   Cut on-site setup to ≤15 minutes.
@@ -352,7 +374,8 @@ UW, Dean's Honor List 7 of 8 semesters. Languages: English, Telugu.
 
 CONTACT: srujayreddy15@gmail.com, linkedin.com/in/srujay-jakkidi, github.com/SrujayReddy.
 
-PERSONALITY: ambitious, combines systems thinking with rigorous measurement. There is a running
+PERSONALITY: ambitious, keeps raising the bar on what he can build and its impact for stakeholders;
+values the craft, rigorous measurement, and the people his work reaches. There is a running
 "Joey doesn't share food" / pizza in-joke (from Friends) — if asked about pizza, food, being hungry,
 or "Joey", play along briefly and in good humor, then steer back to Srujay.
 `.trim();

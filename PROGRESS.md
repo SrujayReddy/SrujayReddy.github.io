@@ -548,3 +548,28 @@ no preventDefault — the hard rule from the frozen-"deck" incident stands):
 - [x] **⌘K palette**: removed the "Joey doesn't share food" hint from the "Order a
       pizza" command (owner's call — the row was too loud). Command + egg unchanged;
       agent.js renders a missing hint as an empty span, verified in preview.
+
+
+## September 2026 — performance and Amazon profile refresh
+
+- Self-hosted the exact pinned Three.js/GSAP/ScrollTrigger/Lenis final ESM files;
+  all executable code/exports and licenses retained. Reproducible checksum-verified
+  `scripts/vendor-dependencies.py`; GitHub Pages still requires no build.
+- Preloaded baseline modules, fetched graphics/motion concurrently, removed the
+  throwaway WebGL context, retained a task boundary before motion initialization.
+- Cached exact tassel ring math; skipped repeated empty GPU renders after clearing.
+  Particle counts, DPR, shaders, materials, geometry density, camera, scroll pace,
+  images and CSS are unchanged.
+- Confirmed LinkedIn screenshots: Amazon SDE I, Stores Payments / Unified Financing
+  Offers, Seattle, Sep 2026–present. Strada is May–Aug 2026. Updated hero/About/Now,
+  experience, palette, metadata/JSON-LD and local Worker knowledge.
+- Verified node physics/camera/vibe tests; 1,200 byte-identical geometry/rope frames;
+  12 byte-identical cap screenshots across desktop/mobile and light/dark. Browser
+  interactions and reduced-motion/no-WebGL/failed-library fallbacks verified.
+- Final controlled cold-context tests show ~31% faster graphics + scrolling readiness,
+  CLS 0 before/after and slightly lower observed long-task blocking. First paint did
+  not improve in the final run. See `PERFORMANCE.md` for full values and limits.
+- Final browser screenshots inspected on desktop/mobile; no horizontal overflow.
+  Owner can review real-trackpad feel at localhost:8137. No live AI test calls made.
+- Page and Worker changes are prepared for review, not deployed. Updating the live
+  assistant's answers requires a separate Worker deployment with the page release.

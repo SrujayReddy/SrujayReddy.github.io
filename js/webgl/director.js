@@ -97,6 +97,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
   let ready = false;
   let onReady = null;
   let raf = 0;
+  let needsClear = true;
   const clock = new THREE.Clock();
   let themeTarget = shared.uTheme.value;
   const camPos = new THREE.Vector3().copy(CAM_HOME);
@@ -167,6 +168,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
     shared.uMouse.value.lerp(mouseTarget, 0.06);
 
     // per-act opacity easing + update
+    let hasVisibleAct = false;
     for (const a of acts.values()) {
       a.opacity += (a._opacityTarget - a.opacity) * Math.min(1, dt * 4);
       if (a.opacity < 0.002 && a._opacityTarget === 0) {
@@ -174,6 +176,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
         if (a.group) a.group.visible = false;
       }
       if (a.update) a.update(dt, ctx);
+      if (a.group && a.group.visible) hasVisibleAct = true;
     }
 
     // camera: ride the unified spline (one continuous track), or legacy idle drift
@@ -205,7 +208,11 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
       camera.lookAt(camLook);
     }
 
-    renderer.render(scene, camera);
+    // Once every act has faded out, clear the previous frame exactly once.
+    // Keep all simulation/camera clocks running so scrolling back resumes with
+    // the same state, without sending an empty scene to the GPU every frame.
+    if (hasVisibleAct || needsClear) renderer.render(scene, camera);
+    needsClear = hasVisibleAct;
 
     if (!ready) {
       ready = true;
