@@ -62,6 +62,9 @@ def main():
         if filename.endswith(".mjs"):
             # Keep code and license notices intact; omit unshipped debug maps.
             data = re.sub(rb"\n//# sourceMappingURL=[^\r\n]*\s*$", b"\n", data)
+        elif filename.endswith(".txt"):
+            # Match Git text normalization on every checkout.
+            data = data.replace(b"\r\n", b"\n")
         artifacts[filename] = data
 
     if args.check:
