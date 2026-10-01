@@ -1,113 +1,87 @@
-# ⌘K Agent Worker
+# Portfolio AI Worker
 
-This Cloudflare Worker powers BOTH AI features on the site: the **“Ask anything”**
-command-palette mode and the **live theme generator** (free-text “describe your own…”
-in the hero restyle demo, `{mode:"vibe"}`). It holds your API key (as a Worker secret —
-never in the repo), proxies to the model provider, streams answers back as SSE, and
-enforces hard cost/abuse caps so the bill cannot run away.
+The Worker supplies streamed Q&A in ⌘K and structured theme JSON for Vibe Studio.
+The default is **Cloudflare Workers AI** through the native `AI` binding; no model
+API key is required. The portfolio's controls, streaming format, theme animation,
+contrast validation and preset fallback stay the same.
 
-**Two provider options — set ONE secret:**
+`AI_PROVIDER` explicitly selects `workers-ai`, `gemini`, or `anthropic`. Old provider
+secrets never select a provider, and errors never fall back to a paid provider.
+The retired `mode: "bench"` endpoint returns `bench_unavailable`.
 
-| | Secret | Model (default) | Cost |
-|---|---|---|---|
-| A | `ANTHROPIC_API_KEY` | `claude-haiku-4-5` | paid key (≈$1/$5 per Mtok) |
-| B | `GEMINI_API_KEY` | `gemini-2.5-flash` | **free** — key from [Google AI Studio](https://aistudio.google.com) → “Get API key” |
+## Free usage and activation
 
-If both are set, Anthropic wins. With only `GEMINI_API_KEY`, chat streaming and theme
-generation run on Gemini's free tier (rate-limited by Google per key; the Worker's own
-caps keep usage well inside it).
+Workers AI includes **10,000 neurons per day**, resetting at 00:00 UTC. On the
+**Workers Free** plan, inference fails after that allowance. A Workers Paid
+account can incur overage. Check the account plan before deploying; the counters
+in this Worker are abuse controls, **not a guaranteed spending ceiling**.
+Other Workers/KV plan limits also apply.
+[Official pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/).
 
-The site ships with the agent **dormant**. Everything else (jump-to-section, copy email,
-open links, reduced motion, preset themes) works with no backend. The AI modes light up
-the moment you deploy this Worker and paste its URL into `js/config.js`.
+Chat uses [Llama 3.1 8B FP8](https://developers.cloudflare.com/workers-ai/models/llama-3.1-8b-instruct-fp8/);
+Vibe uses [Llama 3.3 70B FP8 Fast](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/),
+which supports JSON schema output. Models are configurable via `WORKERS_AI_MODEL`
+and `WORKERS_AI_VIBE_MODEL`. Real answer/theme quality and latency require a live
+smoke test; mocked tests do not establish those qualities.
 
----
+ChatGPT Pro does not automatically fund ordinary OpenAI API-key traffic. The
+[Sign in with ChatGPT flow](https://developers.openai.com/cookbook/articles/sign-in-with-chatgpt)
+authorizes an eligible user's own plan in participating apps; remotely hosted
+apps require access. It is not a drop-in shared allowance for anonymous visitors.
 
-## What it does
-
-- **CORS locked** to `ALLOWED_ORIGIN` (your site origin).
-- **Per-IP rate limit** — `RATE_PER_MIN` requests/minute (KV sliding window).
-- **Global daily cap** — `RATE_PER_DAY` requests/day = a hard budget ceiling.
-- **Input + output caps** — questions truncated to 600 chars, `max_tokens` = 400.
-- **Optional Turnstile** bot-check (set `TURNSTILE_SECRET`).
-- Default model: **Claude Haiku 4.5** (`claude-haiku-4-5`) — fast and cheap. Switch to
-  `claude-sonnet-4-6` via the `MODEL` var for a sharper, pricier agent.
-
-> Pricing (per 1M tokens, confirm against the latest Anthropic pricing before launch):
-> Haiku 4.5 ≈ $1 in / $5 out · Sonnet 4.6 ≈ $3 in / $15 out. With the caps above, a
-> day's worst-case spend is bounded by `RATE_PER_DAY × max_tokens`.
-
----
-
-## Deploy (≈ 5 minutes)
-
-Prereqs: a [Cloudflare account](https://dash.cloudflare.com/sign-up), an
-[Anthropic API key](https://console.anthropic.com/), and Node.
+From this directory, with Wrangler v4 installed:
 
 ```bash
-cd agent-worker
-npm install -g wrangler         # or: npx wrangler ...
 wrangler login
-
-# 1) Create the KV namespace for rate-limit counters, then paste the printed id
-#    into wrangler.toml ([[kv_namespaces]] id = "...").
-wrangler kv namespace create RATE_KV
-
-# 2) Store ONE provider secret (never committed)
-wrangler secret put GEMINI_API_KEY      # free key from aistudio.google.com
-# ...or, if you have an Anthropic key instead:
-# wrangler secret put ANTHROPIC_API_KEY
-# optional bot-proofing:
-# wrangler secret put TURNSTILE_SECRET
-
-# 3) Set your site origin in wrangler.toml ([vars] ALLOWED_ORIGIN), then ship:
+wrangler whoami
+# Confirm Workers Free in the Cloudflare dashboard before activating inference.
+wrangler deploy --dry-run
 wrangler deploy
 ```
 
-`wrangler deploy` prints a URL like `https://srujay-agent.<you>.workers.dev`.
+The existing KV namespace and endpoint are retained. If deploying to a different
+account, create its own namespace and update `wrangler.toml`. Set `ALLOWED_ORIGIN`
+to the portfolio origin. The public endpoint is in `../js/config.js` and its label
+is provider-neutral, so frontend and backend deployments can occur separately.
+Do not paste secrets into frontend code or commit `.dev.vars` files.
 
-### Turn the agent on
+For Gemini or Anthropic, deliberately change `AI_PROVIDER`, then provision only
+the corresponding Worker secret with `wrangler secret put GEMINI_API_KEY` or
+`wrangler secret put ANTHROPIC_API_KEY`. Their account-specific quotas/pricing
+apply. No fixed Gemini daily allowance is promised here.
 
-Open `js/config.js` in the repo root and set:
+## Verification without inference or billing
 
-```js
-WORKER_URL: "https://srujay-agent.<you>.workers.dev",
-```
-
-Commit and push. Done — the palette's ask-mode now streams live answers.
-
----
-
-## Local testing
-
-```bash
-cd agent-worker
-ANTHROPIC_API_KEY=sk-ant-... wrangler dev
-```
-
-Then point `WORKER_URL` at the local URL `wrangler dev` prints (e.g.
-`http://127.0.0.1:8787`) and open the site from a local server. Verify:
-
-- streaming text appears token-by-token,
-- a wrong `Origin` is rejected (403),
-- the rate limit trips after `RATE_PER_MIN` quick requests (429),
-- with `WORKER_URL` unset, ask-mode shows the honest “resting” state.
+From the repository root:
 
 ```bash
-# quick smoke test (expects an SSE stream of {"text": "..."} lines):
-curl -N -X POST http://127.0.0.1:8787 \
-  -H 'content-type: application/json' \
-  -H 'Origin: https://srujayreddy.github.io' \
-  -d '{"question":"Where does Srujay work now?"}'
+node tests/worker-ai.mjs
 ```
 
----
+These tests mock the AI binding, external provider requests and KV. They cover
+streaming/chunk boundaries, UTF-8, cancellation, timeouts, structured output,
+provider selection, rate limits and error sanitization. `wrangler deploy
+--dry-run` bundles without publishing or performing inference. A regular
+`wrangler dev` request to the AI binding runs **remotely**, even during local
+development; do not use it as a no-cost mock.
 
-## Notes
+After verifying the Free plan, live checks should cover a current-Amazon question,
+an unknown/private fact (the agent should decline to invent), and custom light,
+dark and expressive typography themes. Verify first-token latency, theme quality
+and the existing client contrast/overflow safeguards before public activation.
 
-- The system prompt / knowledge base lives in `worker.js` (`SYSTEM_PROMPT`). Keep it in
-  sync with `knowledgeBase` in `js/content.js`.
-- This folder is **not** served by GitHub Pages in any meaningful way — it's source for
-  Cloudflare. Nothing here contains secrets.
-- KV counters are eventually consistent; the caps are intentionally *soft* ceilings for
-  cost safety, not exact quotas.
+## Request contract
+
+- `POST {question}` → SSE `data: {"text":"…"}` and final `[DONE]`.
+- `POST {mode:"vibe",prompt}` → validated theme JSON; the browser retains its
+  contrast, font and CSS guards.
+- `429 daily_limit` means a confirmed daily allowance/cap; `429 rate_limited`
+  means temporary throttling or capacity. Unknown provider failures stay generic.
+- A stream failure sends an error event instead of presenting a partial answer as
+  complete. Client cancellation and a configurable timeout stop upstream work.
+- CORS restricts browser origins. It is not authentication. KV uses fixed minute
+  and UTC-day windows and is eventually consistent; parallel requests can race.
+- Optional `TURNSTILE_SECRET` enforces a supplied `turnstileToken` for both modes;
+  enabling it requires wiring a token-producing widget in the frontend.
+
+Keep the knowledge in `worker.js` synchronized with `js/content.js`.

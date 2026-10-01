@@ -17,7 +17,10 @@ html.lenis,
 html.lenis body {
   height: auto;
 }
-.lenis.lenis-smooth {
+/* Lenis also writes scrollTop while idle (immediate jumps and refreshes).
+   Native smooth scrolling must stay off for its entire lifetime, or those
+   writes start a second animation with a stale Lenis position. */
+html.lenis {
   scroll-behavior: auto !important;
 }
 

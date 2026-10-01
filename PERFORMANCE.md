@@ -82,3 +82,90 @@ The public site is not changed by local edits. Publishing the page requires a
 GitHub Pages deployment; the updated assistant knowledge also requires deploying
 `agent-worker/worker.js` separately. Its existing endpoint is live, so until that
 Worker is deployed its answers continue using the previous knowledge.
+
+## Follow-up: thesis → Now scrolling and full rendering pass
+
+The September 30 follow-up compares with `eea37f6`, the already optimized local
+version above. It addresses continuous runtime work and navigation races.
+
+- The Now pipeline's 64 px signal now translates on the compositor. A
+  ResizeObserver updates its travel distance only when the track changes size;
+  the original CSS remains the fallback. Its 3.6 s duration, easing, opacity,
+  gradient, glow and path are retained. A wide invisible moving carrier was
+  rejected because its overflow caused extra paint work.
+- Pending thesis snaps cancel at the raw input event and on either exit. They
+  cannot override active Lenis animations or held touches. Settled beat targets,
+  entry catch, 130 ms delay, 700 ms easing, 0.6 wheel scale and seven-viewport
+  runway are retained. Palette focus restoration no longer scrolls to an old
+  offscreen button. Native CSS smooth scrolling stays disabled for the entire
+  Lenis lifetime, avoiding a second animation during idle scrollTop writes.
+- Unchanged counter integers and settled education reveal styles avoid repeated
+  DOM writes. Camera rail and particle rendering were audited; their density,
+  appearance and interpolation remain the same.
+- The tassel reuses Frenet/tangent/arc-length vectors and storage with the exact
+  pinned Three r169 arithmetic. Static fringe offsets and unchanged material
+  theme values are cached; dynamic geometry carries the appropriate GPU hint.
+- Vibe backgrounds cache invariant gradients and colors on resize/theme changes.
+  The original canvas clear is retained: removing it changed three star-edge
+  pixels by one channel value in a parity check.
+
+### Runtime trace
+
+Chrome on macOS, 1440×900/DPR2, 4× CPU slowdown, one sequential before/after
+trace per stage. Approximately three seconds per stage; the exit stage applies
+28 wheel deltas of 150 px. These are local diagnostic samples, not field data or
+Lighthouse scores.
+
+| Layout operations | Before (`eea37f6`) | Final |
+| --- | ---: | ---: |
+| Thesis hold | 179 | 0 |
+| Thesis exit scroll | 190 | 12 |
+| Now hold | 182 | 0 |
+| Experience hold | 182 | 0 |
+
+During the Now hold, layout time fell from 69.4 ms to 0; measured main-thread
+task time fell from 723.5 ms to 629.4 ms. During exit, layout time fell from
+84.8 ms to 8.7 ms. Frame-time p95 remained approximately 16.8 ms in both versions;
+this machine already sustained roughly 60 fps. The supported claim is less work
+and removal of scroll races, not a demonstrated universal FPS increase.
+
+### Verification
+
+- 1,920 full cap frames exactly match `eea37f6`: 338,181,120 geometry attribute
+  bytes plus rope/tube coordinates, transforms, visibility, materials and lights.
+- The committed `cap-frames.mjs` compares 720 frame sets against real shipped
+  Three.js, including coincident/straight curves and arc-length cache resizing.
+- Twelve new cap screenshots are byte-identical: desktop/mobile, light/dark,
+  progress 0/0.5/1. All 48 background frames are byte-identical across four scenes,
+  two sizes, two palettes and three sampled times, including scene changes/reset.
+- Signal screenshots including the glow are byte-identical at the midpoint at
+  widths 1440 and 900. Five sampled times retain identical opacity/size/easing;
+  transform positions differ from old layout rounding by at most 1/64 CSS px.
+  The signal remains hidden at the original mobile breakpoint.
+- Fourteen deterministic motion tests pass; the original source fails the new
+  pending-wheel-timer regression. Existing physics, camera and vibe-data tests pass.
+- Chrome desktop, mobile viewport and reduced-motion navigation checks pass at
+  4× CPU slowdown: settled thesis beat, wheel exit, reverse exit, palette jumps,
+  focus restoration, theme/reset and no horizontal overflow or uncaught errors.
+  The desktop/mobile Amazon jump lands at its intended 20 px offset.
+- Browser AI tests intercept the endpoint. Streamed replies, temporary/daily
+  limits, interrupted streams and generated theme application pass without
+  making live inference requests. The Worker has 15 mocked contract checks and
+  passes Wrangler's deployment dry run.
+
+Screenshots and numerical parity establish the tested states, not every browser,
+physical trackpad or live model response. The owner can review the local page at
+`http://127.0.0.1:8137/`. The public site and live Worker have not been changed.
+
+### AI replacement status
+
+The local Worker defaults explicitly to Workers AI (Llama 3.1 8B FP8 chat,
+Llama 3.3 70B FP8 Fast themes). Existing provider keys cannot select a paid
+provider, and there is no automatic paid fallback. Chat/Vibe preserve their
+browser contracts; rate-limit messaging distinguishes temporary capacity from
+confirmed daily exhaustion. See `agent-worker/README.md` for the plan constraints.
+
+Wrangler authentication is expired and cannot refresh. The account's Free plan,
+model availability and live response/theme quality must be verified before
+activation. No inference or paid-plan change was performed. Frontend publishing
+also remains blocked by the previously observed GitHub write-access failure.

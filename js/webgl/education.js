@@ -56,12 +56,12 @@ export function makeEducationAct() {
   let THREE, group, capPivot, board, skull, button;
   let cordGeo, cordMat, fringeGeo, fringeMat, cordCurvePts, tubePts, renderCurve;
   let nodes, prev, segLen, nodeCount, tubular, radial, eIdx;
-  let tubeRadii, ringSin, ringCos;
+  let tubeRadii, ringSin, ringCos, updateFrames;
   let gLocal, vTmp, vEdge, vLocal, qInv, vAnchor;
   let lights;
   let velvetMats, goldMats;
   let cSheenL, cSheenD, cVelEmis, cGoldL, cGoldD, cGoldEmis, cFringeL, cFringeD;
-  let themeVal = 0, themeMix = 0, themeTargetV = 0, themePrimed = false;
+  let themeVal = 0, themeMix = 0, themeTargetV = 0, themePrimed = false, appliedThemeMix = null;
   let baseX = 2.05, baseY = 0.28, baseScale = 0.66; // responsive placement (see resize)
   let progress = 0;
   let twirl = -0.5, pitchS = 0.12, rollS = -0.16;
@@ -186,6 +186,9 @@ export function makeEducationAct() {
       // ONE persistent curve, reused every frame (cordCurvePts is mutated in place).
       renderCurve = new THREE.CatmullRomCurve3(cordCurvePts, false, "centripetal", 0.5);
       cordGeo = new THREE.TubeGeometry(renderCurve, tubular, CORD_R, radial, false);
+      updateFrames = createFrameUpdater(THREE, renderCurve, tubular);
+      cordGeo.attributes.position.setUsage?.(THREE.DynamicDrawUsage);
+      cordGeo.attributes.normal?.setUsage?.(THREE.DynamicDrawUsage);
       cordMat = goldMat(THREE, envMap, 0.0);
       const cord = new THREE.Mesh(cordGeo, cordMat);
       cord.frustumCulled = false;
@@ -197,7 +200,16 @@ export function makeEducationAct() {
       const fpos = new Float32Array(nStrand * 2 * 3);
       fringeGeo = new THREE.BufferGeometry();
       fringeGeo.setAttribute("position", new THREE.BufferAttribute(fpos, 3));
+      fringeGeo.attributes.position.setUsage?.(THREE.DynamicDrawUsage);
       fringeGeo.userData.nStrand = nStrand;
+      // The fan spacing is fixed; cache its original full-precision offsets.
+      fringeGeo.userData.offsetX = new Float64Array(nStrand);
+      fringeGeo.userData.offsetZ = new Float64Array(nStrand);
+      for (let s = 0; s < nStrand; s++) {
+        const ang = (s / nStrand) * Math.PI * 2;
+        fringeGeo.userData.offsetX[s] = Math.cos(ang) * 0.06;
+        fringeGeo.userData.offsetZ[s] = Math.sin(ang) * 0.06;
+      }
       fringeMat = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0 });
       const fringe = new THREE.LineSegments(fringeGeo, fringeMat);
       fringe.frustumCulled = false;
@@ -312,7 +324,7 @@ export function makeEducationAct() {
         renderCurve.getPoint(i / tubular, tubePts[i]);
         collidePoint(tubePts[i], TUBE_MARGIN);
       }
-      updateTube(cordGeo, renderCurve, tubePts, tubular, radial, tubeRadii, ringSin, ringCos);
+      updateTube(cordGeo, updateFrames(), tubePts, tubular, radial, tubeRadii, ringSin, ringCos);
       updateFringe(fringeGeo, nodes[nodeCount - 1], nodes[nodeCount - 2], timeAcc);
     },
 
@@ -364,7 +376,8 @@ export function makeEducationAct() {
 
   // ── per-frame theme application ───────────────────────────────
   function applyTheme(mix) {
-    if (!lights) return;
+    if (!lights || mix === appliedThemeMix) return;
+    appliedThemeMix = mix;
     lights.ambient.intensity = lerp(0.26, 0.16, mix); // minimal → rich, moody, deep shadows
     lights.key.intensity = lerp(2.6, 1.7, mix);
     lights.rim.intensity = lerp(3.2, 4.6, mix);
@@ -626,10 +639,86 @@ function buildEnvMap(THREE, renderer) {
   return rt;
 }
 
+// Reuse the open-curve Frenet working set instead of allocating hundreds of
+// vectors per frame. This follows Three.js r169 Curve.getLengths/getTangent/
+// computeFrenetFrames with the SAME samples and arithmetic; only storage changes.
+// Three.js is MIT licensed; its full notice is in assets/vendor/three-LICENSE.txt.
+function createFrameUpdater(THREE, curve, segments) {
+  // The dependency-free physics regression supplies a small curve/math shim.
+  if (!curve.getUtoTmapping) return () => curve.computeFrenetFrames(segments, false);
+
+  const tangents = [], normals = [], binormals = [];
+  for (let i = 0; i <= segments; i++) {
+    tangents.push(new THREE.Vector3());
+    normals.push(new THREE.Vector3());
+    binormals.push(new THREE.Vector3());
+  }
+  const frames = { tangents, normals, binormals };
+  const normal = new THREE.Vector3();
+  const vec = new THREE.Vector3();
+  const mat = new THREE.Matrix4();
+  const pt1 = new THREE.Vector3();
+  const pt2 = new THREE.Vector3();
+  const lengths = curve.cacheArcLengths || [];
+
+  return () => {
+    // Refresh the original arc-length cache in place. getUtoTmapping below still
+    // performs Three's unchanged binary search and interpolation over this cache.
+    const divisions = curve.arcLengthDivisions;
+    if (curve.needsUpdate || lengths.length !== divisions + 1) {
+      lengths.length = divisions + 1;
+      lengths[0] = 0;
+      let last = pt1, current = pt2, sum = 0;
+      curve.getPoint(0, last);
+      for (let p = 1; p <= divisions; p++) {
+        curve.getPoint(p / divisions, current);
+        sum += current.distanceTo(last);
+        lengths[p] = sum;
+        const swap = last; last = current; current = swap;
+      }
+      curve.cacheArcLengths = lengths;
+      curve.needsUpdate = false;
+    }
+
+    for (let i = 0; i <= segments; i++) {
+      const t = curve.getUtoTmapping(i / segments);
+      let t1 = t - 0.0001, t2 = t + 0.0001;
+      if (t1 < 0) t1 = 0;
+      if (t2 > 1) t2 = 1;
+      curve.getPoint(t1, pt1);
+      curve.getPoint(t2, pt2);
+      tangents[i].copy(pt2).sub(pt1).normalize();
+    }
+
+    let min = Number.MAX_VALUE;
+    const tx = Math.abs(tangents[0].x);
+    const ty = Math.abs(tangents[0].y);
+    const tz = Math.abs(tangents[0].z);
+    if (tx <= min) { min = tx; normal.set(1, 0, 0); }
+    if (ty <= min) { min = ty; normal.set(0, 1, 0); }
+    if (tz <= min) normal.set(0, 0, 1);
+
+    vec.crossVectors(tangents[0], normal).normalize();
+    normals[0].crossVectors(tangents[0], vec);
+    binormals[0].crossVectors(tangents[0], normals[0]);
+    for (let i = 1; i <= segments; i++) {
+      normals[i].copy(normals[i - 1]);
+      binormals[i].copy(binormals[i - 1]);
+      vec.crossVectors(tangents[i - 1], tangents[i]);
+      if (vec.length() > Number.EPSILON) {
+        vec.normalize();
+        const theta = Math.acos(THREE.MathUtils.clamp(tangents[i - 1].dot(tangents[i]), -1, 1));
+        normals[i].applyMatrix4(mat.makeRotationAxis(vec, theta));
+      }
+      binormals[i].crossVectors(tangents[i], normals[i]);
+    }
+    return frames;
+  };
+}
+
 // Build the tube rings from a COLLIDED centerline (positions) + the curve's Frenet
 // frames (orientation). High tubular×radial density → a continuous, glass-smooth tube.
-function updateTube(geo, curve, points, tubular, radial, radii, ringSin, ringCos) {
-  const frames = curve.computeFrenetFrames(tubular, false);
+function updateTube(geo, frames, points, tubular, radial, radii, ringSin, ringCos) {
   const pos = geo.attributes.position.array;
   const nrm = geo.attributes.normal ? geo.attributes.normal.array : null;
   let k = 0;
@@ -660,10 +749,8 @@ function updateFringe(geo, end, beforeEnd, time) {
   const len = 0.46;
   let k = 0;
   for (let s = 0; s < n; s++) {
-    const ang = (s / n) * Math.PI * 2;
-    const spread = 0.06;
     const sway = Math.sin(time * 2.4 + s * 1.3) * 0.025;
-    const ox = Math.cos(ang) * spread, oz = Math.sin(ang) * spread;
+    const ox = geo.userData.offsetX[s], oz = geo.userData.offsetZ[s];
     pos[k++] = end.x + ox * 0.4; pos[k++] = end.y + 0.01; pos[k++] = end.z + oz * 0.4;
     pos[k++] = end.x + ux * len + ox + sway; pos[k++] = end.y + uy * len - 0.02; pos[k++] = end.z + uz * len + oz;
   }

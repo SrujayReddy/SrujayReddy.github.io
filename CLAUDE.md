@@ -65,13 +65,14 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 
 ## The two AI features
 
-- **⌘K agent** (`js/agent.js`): command palette + "ask anything". Ships **dormant**
-  (`config.WORKER_URL === ""`) with an honest "resting" state; a Cloudflare Worker
-  (`agent-worker/worker.js`) lights it up. No fake answers.
+- **⌘K agent** (`js/agent.js`): command palette + "ask anything". The endpoint in
+  `config.WORKER_URL` is live; an empty URL gives an honest resting state. The
+  Worker source now defaults explicitly to Workers AI; frontend and backend
+  deploy separately. No automatic paid-provider fallback. See agent-worker/README.md.
 - **Vibe Studio** (`js/vibe.js`, `content.vibes`, `styles/vibe.css`): type/pick a
   vibe → the whole page redesigns live (bg, ink, surfaces, font, radius, accent,
-  plasma, particle field). Ships dormant (free text → nearest preset via keyword
-  scoring); a `{mode:"vibe"}` Worker branch upgrades free text to a generated theme.
+  plasma, particle field). When disconnected, free text maps to the nearest preset via keyword scoring;
+  a `{mode:"vibe"}` Worker branch supplies generated themes when connected.
   **Honest+safe:** every theme is contrast-validated (bg/ink ≥ 4.5:1) before it
   touches the page. (Old "Build Bench" was removed — it was thesis-adjacent.)
 
@@ -106,8 +107,8 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 - **MeshPhysicalMaterial needs an environment** — `education.js` bakes a cheap PMREM
   studio env (no assets) so sheen/anisotropy actually show.
 - **Worker ↔ content sync**: keep `worker.js` `SYSTEM_PROMPT` aligned with
-  `content.knowledgeBase`. (The dead `{mode:"bench"}` branch should be swapped for
-  `{mode:"vibe"}` — see PROGRESS "TODO".)
+  `content.knowledgeBase`. (The retired `{mode:"bench"}` route reports unavailable; it must not
+  trigger paid calls.)
 - **Egg audio is gesture-gated** (`easter-egg.js`) — never move `fire()` to load/scroll.
 
 ## File map (quick)

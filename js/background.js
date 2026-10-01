@@ -60,11 +60,21 @@ function normColors(c) {
 // All coordinates are in DEVICE pixels (W/H already include DPR).
 
 const waves = {
-  draw(ctx, t, C, W, H, dpr) {
+  init(W, H, dpr, C, ctx) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, rgba(C.bg, 1));
     g.addColorStop(1, rgba(mix(C.bg, C.plasma[2] || C.accent2, 0.5), 1));
-    ctx.fillStyle = g;
+    this.gradient = g;
+    this.layers = Array.from({ length: 6 }, (_, i) => {
+      const f = i / 5;
+      const surf = mix(C.accent, [255, 255, 255], f * 0.28);
+      return rgba(mix(C.plasma[2] || C.accent2, surf, f), 0.5 + f * 0.42);
+    });
+    this.glint = rgba(mix(C.accent, [255, 255, 255], 0.5), 0.14);
+    this.glintEdge = rgba(C.accent, 0);
+  },
+  draw(ctx, t, C, W, H, dpr) {
+    ctx.fillStyle = this.gradient;
     ctx.fillRect(0, 0, W, H);
     const n = 6;
     const step = Math.max(2, 7 * dpr);
@@ -74,8 +84,6 @@ const waves = {
       const amp = H * (0.018 + f * 0.03);
       const wl = W * (0.95 - f * 0.55);
       const spd = 0.25 + f * 0.55;
-      const surf = mix(C.accent, [255, 255, 255], f * 0.28);
-      const col = mix(C.plasma[2] || C.accent2, surf, f);
       ctx.beginPath();
       ctx.moveTo(0, H);
       for (let x = 0; x <= W; x += step) {
@@ -87,36 +95,42 @@ const waves = {
       }
       ctx.lineTo(W, H);
       ctx.closePath();
-      ctx.fillStyle = rgba(col, 0.5 + f * 0.42);
+      ctx.fillStyle = this.layers[i];
       ctx.fill();
     }
     // a specular glint travelling along the front crest
     const gx = ((t * 0.08) % 1) * W;
     const grd = ctx.createRadialGradient(gx, H * 0.9, 0, gx, H * 0.9, W * 0.25);
-    grd.addColorStop(0, rgba(mix(C.accent, [255, 255, 255], 0.5), 0.14));
-    grd.addColorStop(1, rgba(C.accent, 0));
+    grd.addColorStop(0, this.glint);
+    grd.addColorStop(1, this.glintEdge);
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
   },
 };
 
 const aurora = {
-  draw(ctx, t, C, W, H, dpr) {
-    ctx.fillStyle = rgba(C.bg, 1);
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalCompositeOperation = "lighter";
-    const bands = 5;
-    const step = Math.max(2, 9 * dpr);
-    for (let i = 0; i < bands; i++) {
+  init(W, H, dpr, C, ctx) {
+    this.fill = rgba(C.bg, 1);
+    this.gradients = Array.from({ length: 5 }, (_, i) => {
       const col = C.plasma[i % C.plasma.length];
-      const cx = W * (0.14 + 0.72 * (i / (bands - 1))) + Math.sin(t * 0.3 + i * 1.3) * W * 0.12;
-      const w = W * (0.09 + 0.04 * Math.sin(t * 0.5 + i));
       const g = ctx.createLinearGradient(0, 0, 0, H);
       g.addColorStop(0, rgba(col, 0));
       g.addColorStop(0.42, rgba(col, 0.1));
       g.addColorStop(0.6, rgba(col, 0.17));
       g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g;
+      return g;
+    });
+  },
+  draw(ctx, t, C, W, H, dpr) {
+    ctx.fillStyle = this.fill;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    const bands = 5;
+    const step = Math.max(2, 9 * dpr);
+    for (let i = 0; i < bands; i++) {
+      const cx = W * (0.14 + 0.72 * (i / (bands - 1))) + Math.sin(t * 0.3 + i * 1.3) * W * 0.12;
+      const w = W * (0.09 + 0.04 * Math.sin(t * 0.5 + i));
+      ctx.fillStyle = this.gradients[i];
       ctx.beginPath();
       for (let y = 0; y <= H; y += step) {
         const off = Math.sin((y / H) * Math.PI * 2 + t * 0.6 + i) * W * 0.05;
@@ -161,16 +175,20 @@ const starfield = {
 };
 
 const grid = {
-  draw(ctx, t, C, W, H, dpr) {
+  init(W, H, dpr, C, ctx) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, rgba(C.bg, 1));
     g.addColorStop(1, rgba(mix(C.bg, C.plasma[0] || C.accent, 0.35), 1));
-    ctx.fillStyle = g;
+    this.gradient = g;
+    this.stroke = rgba(C.accent, 1);
+  },
+  draw(ctx, t, C, W, H, dpr) {
+    ctx.fillStyle = this.gradient;
     ctx.fillRect(0, 0, W, H);
     const hor = H * 0.52;
     const vp = W * 0.5;
     ctx.lineWidth = Math.max(1, dpr);
-    ctx.strokeStyle = rgba(C.accent, 1);
+    ctx.strokeStyle = this.stroke;
     const rows = 16;
     for (let i = 0; i < rows; i++) {
       let p = (i + (t * 0.25) % 1) / rows;
@@ -210,6 +228,8 @@ export function initBackground() {
   } catch {
     return NOOP;
   }
+  // Scene caches belong to this canvas; separate instances cannot overwrite them.
+  const scenes = Object.fromEntries(Object.entries(SCENES).map(([name, scene]) => [name, { ...scene }]));
 
   let raf = 0,
     sceneName = null,
@@ -230,7 +250,7 @@ export function initBackground() {
     canvas.style.height = window.innerHeight + "px";
     if (sceneName) {
       try {
-        SCENES[sceneName].init && SCENES[sceneName].init(W, H, dpr, C);
+        scenes[sceneName].init && scenes[sceneName].init(W, H, dpr, C, ctx);
       } catch {}
       if (!running) drawOnce(); // keep the static frame crisp after a resize
     }
@@ -238,8 +258,10 @@ export function initBackground() {
 
   function drawOnce() {
     try {
+      // Retain the original clear: omitting it can subtly change browser canvas
+      // rasterization at antialiased star edges despite the opaque scene fill.
       ctx.clearRect(0, 0, W, H);
-      SCENES[sceneName].draw(ctx, t, C, W, H, dpr);
+      scenes[sceneName].draw(ctx, t, C, W, H, dpr);
     } catch {
       safeStop();
     }
@@ -274,7 +296,7 @@ export function initBackground() {
     }
     sceneName = name;
     try {
-      SCENES[name].init && SCENES[name].init(W, H, dpr, C);
+      scenes[name].init && scenes[name].init(W, H, dpr, C, ctx);
     } catch {
       sceneName = null;
       return; // a bad init → no scene, page unaffected

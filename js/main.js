@@ -416,6 +416,20 @@ function buildClockFormation(count) {
   return { positions, colors };
 }
 
+// Keep the original signal's size/path/easing, but avoid animating layout.
+// ResizeObserver also covers generated font themes and responsive track sizes.
+// Without it, the original CSS animation remains the working fallback.
+function initPipelineMotion() {
+  const pipe = document.querySelector(".now__pipe");
+  if (!pipe || typeof ResizeObserver === "undefined") return;
+  const observer = new ResizeObserver(([entry]) => {
+    if (!entry || entry.contentRect.width <= 0) return;
+    pipe.style.setProperty("--pipe-travel", `${entry.contentRect.width - 64}px`);
+    pipe.classList.add("is-composited");
+  });
+  observer.observe(pipe);
+}
+
 // ── boot ──────────────────────────────────────────────────────
 function boot() {
   renderHero();
@@ -433,6 +447,7 @@ function boot() {
   navState();
   nativeAnchors();
   nativeReveal();
+  initPipelineMotion();
   const fireEgg = initEasterEgg();
   initAgent({ onPizza: fireEgg });
   // Visible pizza affordance (same egg, wherever a [data-egg] control appears).

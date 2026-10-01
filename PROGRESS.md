@@ -573,3 +573,23 @@ no preventDefault — the hard rule from the frozen-"deck" incident stands):
   Owner can review real-trackpad feel at localhost:8137. No live AI test calls made.
 - Page and Worker changes are prepared for review, not deployed. Updating the live
   assistant's answers requires a separate Worker deployment with the page release.
+
+## September 30 — thesis/Now runtime performance and free AI preparation
+
+- Removed per-frame pipeline layout work while keeping the signal's size, path,
+  glow, easing and timing. Kept a fallback for browsers without ResizeObserver.
+- Fixed pending thesis snap timers racing fresh wheel/programmatic input, and
+  native smooth-scroll conflicts while Lenis is idle. Preserved beat pacing and
+  settled snap behavior. Palette focus returns without an unwanted native jump.
+- Cached unchanged counter/reveal values, exact tassel Frenet working storage,
+  fringe spacing/material values, and static Vibe background gradients/colors.
+- Verified 1,920 cap simulation frames, 12 cap screenshots and 48 background
+  frames against the prior version. Geometry and selected images are identical.
+  Chrome desktop/mobile/reduced-motion navigation and mocked AI flows pass.
+- Added cap-frame reference, motion race and Worker contract regression tests.
+  Worker builds with Wrangler; no live inference calls performed.
+- Prepared explicit Workers AI default with streaming and schema-based themes,
+  no automatic paid fallback, accurate limit messages and provider-neutral label.
+  Cloudflare login is expired: Free-plan/model/live quality verification and
+  deployment remain pending. GitHub publishing still lacks write access.
+- Local review: http://127.0.0.1:8137/ . Details and evidence limits: PERFORMANCE.md.

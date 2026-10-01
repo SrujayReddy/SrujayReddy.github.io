@@ -592,11 +592,20 @@ html.reduced-motion .positioning__statement .word {
   box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
   animation: pipeflow 3.6s var(--ease-in-out) infinite;
 }
+/* main.js measures the travel distance only when this track changes size.
+   The visible 64px signal can then move entirely on the compositor. */
+.now__pipe.is-composited i { animation-name: pipeflow-transform; }
 @keyframes pipeflow {
   0%   { left: 0; opacity: 0; }
   12%  { opacity: 1; }
   88%  { opacity: 1; }
   100% { left: calc(100% - 64px); opacity: 0; }
+}
+@keyframes pipeflow-transform {
+  0%   { transform: translateX(0); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateX(var(--pipe-travel)); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .now__pipe i { display: none; }

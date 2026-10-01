@@ -107,6 +107,11 @@ function buildThesisTimeline(field, pace) {
   gsap.set(beats[0], { autoAlpha: 1, y: 0 });
 
   let entryAt = 0; // set by onEnter/onEnterBack, consumed by the settle-snap below
+  let cancelSettle = () => {};
+  const leaveThesis = () => {
+    entryAt = 0;
+    cancelSettle();
+  };
 
   const tl = gsap.timeline({
     scrollTrigger: {
@@ -126,6 +131,8 @@ function buildThesisTimeline(field, pace) {
       // +time = entered from above (show beat 0), −time = from below (last beat).
       onEnter: () => { entryAt = performance.now(); },
       onEnterBack: () => { entryAt = -performance.now(); },
+      onLeave: leaveThesis,
+      onLeaveBack: leaveThesis,
       onToggle: (self) => {
         if (!field) return;
         if (self.isActive) {
@@ -158,12 +165,22 @@ function buildThesisTimeline(field, pace) {
   if (pace) pace.st = st; // arms the wheel pace zone (initMotion's virtualScroll)
   const lenis = window.__lenis;
   if (lenis && st) {
-    let settle;
-    lenis.on("scroll", () => {
-      if (!st.isActive) return;
+    let settle = 0;
+    cancelSettle = () => {
       clearTimeout(settle);
+      settle = 0;
+    };
+    // New input changes Lenis's destination before its next animation frame.
+    // Cancel here so an old timeout cannot overwrite that fresh destination.
+    lenis.on("virtual-scroll", cancelSettle);
+    lenis.on("scroll", () => {
+      cancelSettle();
+      if (!st.isActive) return;
       settle = setTimeout(() => {
-        if (!st.isActive) return;
+        settle = 0;
+        // A delayed frame is not a settled gesture. This also protects anchor
+        // and palette scrollTo() calls, which enter "smooth" synchronously.
+        if (!st.isActive || lenis.isScrolling === "smooth" || lenis.isTouching) return;
         // ENTRY CATCH: a fast scroll from the section above carries momentum past
         // the opening slide and used to rest on beat 1–2 (the timeline) — the
         // thesis never got its title moment. If we settled within ~1.2s of
@@ -194,11 +211,15 @@ function buildThesisTimeline(field, pace) {
   const numEl = document.querySelector("[data-count-thesis]");
   if (numEl) {
     const proxy = { n: 0 };
+    let displayed = numEl.textContent;
     tl.to(proxy, {
       n: 93,
       duration: 1,
       ease: "power1.out",
-      onUpdate: () => (numEl.textContent = Math.round(proxy.n)),
+      onUpdate: () => {
+        const next = String(Math.round(proxy.n));
+        if (next !== displayed) numEl.textContent = displayed = next;
+      },
     }, "-=0.2");
   }
 
@@ -206,11 +227,15 @@ function buildThesisTimeline(field, pace) {
   const afterEl = document.querySelector("[data-count-after]");
   if (afterEl) {
     const p2 = { n: 75 };
+    let displayed = afterEl.textContent;
     tl.to(p2, {
       n: 2,
       duration: 1,
       ease: "power3.inOut",
-      onUpdate: () => (afterEl.textContent = Math.round(p2.n)),
+      onUpdate: () => {
+        const next = String(Math.round(p2.n));
+        if (next !== displayed) afterEl.textContent = displayed = next;
+      },
     }, "-=0.1");
   }
 
@@ -224,6 +249,7 @@ function buildEducationTimeline(director) {
   const facts = gsap.utils.toArray(".edu__fact");
   const ticks = gsap.utils.toArray(".edu__rail .tick");
   gsap.set(facts, { autoAlpha: 0, y: 16 });
+  const factAlphas = facts.map(() => 0);
 
   ScrollTrigger.create({
     trigger: ".education",
@@ -246,7 +272,10 @@ function buildEducationTimeline(director) {
       facts.forEach((f, i) => {
         const start = 0.12 + i * 0.12;
         const a = gsap.utils.clamp(0, 1, (p - start) / 0.08);
-        gsap.set(f, { autoAlpha: a, y: (1 - a) * 16 });
+        if (a !== factAlphas[i]) {
+          factAlphas[i] = a;
+          gsap.set(f, { autoAlpha: a, y: (1 - a) * 16 });
+        }
       });
       const active = Math.min(ticks.length - 1, Math.floor(p * ticks.length + 0.0001));
       ticks.forEach((t, i) => t.classList.toggle("is-active", i <= active));
