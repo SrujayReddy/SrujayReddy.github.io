@@ -104,6 +104,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
   let themeTarget = shared.uTheme.value;
   const camPos = new THREE.Vector3().copy(CAM_HOME);
   const camLook = new THREE.Vector3(0, 0, 0);
+  let viewportWidth = -1, viewportHeight = -1;
 
   function register(act) {
     act.progress = 0;
@@ -142,10 +143,18 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
   function resize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    shared.uViewport.value.set(w, h);
+    // Three's setSize rewrites both canvas dimensions even when unchanged.
+    // Avoid resetting the drawing buffer for duplicate browser resize events.
+    if (w !== viewportWidth || h !== viewportHeight) {
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      shared.uViewport.value.set(w, h);
+      viewportWidth = w;
+      viewportHeight = h;
+    }
+    // Preserve each act's responsive callback, including acts registered after
+    // the director's initial resize. These do not resize the GPU drawing buffer.
     for (const a of acts.values()) if (a.resize) a.resize(w, h, ctx);
   }
 

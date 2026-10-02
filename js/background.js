@@ -236,6 +236,8 @@ export function initBackground() {
     t = 0,
     C = normColors(),
     dpr = 1,
+    viewportWidth = -1,
+    viewportHeight = -1,
     W = 0,
     H = 0,
     running = false,
@@ -243,11 +245,19 @@ export function initBackground() {
   const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function resize() {
-    dpr = Math.min(2, window.devicePixelRatio || 1);
-    W = canvas.width = Math.max(1, Math.floor(window.innerWidth * dpr));
-    H = canvas.height = Math.max(1, Math.floor(window.innerHeight * dpr));
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const nextDpr = Math.min(2, window.devicePixelRatio || 1);
+    // Assigning an unchanged canvas dimension still clears it and resets its
+    // context. Keep the existing frame and scene caches on duplicate events.
+    if (width === viewportWidth && height === viewportHeight && nextDpr === dpr) return;
+    viewportWidth = width;
+    viewportHeight = height;
+    dpr = nextDpr;
+    W = canvas.width = Math.max(1, Math.floor(width * dpr));
+    H = canvas.height = Math.max(1, Math.floor(height * dpr));
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
     if (sceneName) {
       try {
         scenes[sceneName].init && scenes[sceneName].init(W, H, dpr, C, ctx);
