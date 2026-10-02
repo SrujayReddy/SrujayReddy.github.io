@@ -1,32 +1,15 @@
 /*
- * worker.js — Cloudflare Worker that proxies the ⌘K agent to the Anthropic
- * Messages API and streams the answer back as SSE.
+ * Portfolio AI endpoint: streamed Q&A and structured Vibe Studio themes.
+ * Workers AI is the default provider, through the native AI binding. Gemini and
+ * Anthropic require explicit AI_PROVIDER opt-in; secrets never select a provider
+ * and errors never trigger a fallback to another provider.
  *
- * It holds the ANTHROPIC_API_KEY (a Worker secret — never in the site), stays
- * in character as "Srujay's agent", and enforces hard cost/abuse caps so the
- * bill cannot run away:
- *   • CORS locked to ALLOWED_ORIGIN
- *   • per-IP sliding window (RATE_PER_MIN / minute)
- *   • global daily cap (RATE_PER_DAY / day) — a hard budget ceiling
- *   • input length + max_tokens caps
- *   • optional Cloudflare Turnstile bot-check
- *
- * Bindings (see wrangler.toml + README):
- *   secret  ANTHROPIC_API_KEY        (option A — Claude)
- *   secret  GEMINI_API_KEY           (option B — free key from Google AI Studio;
- *                                     used when no ANTHROPIC_API_KEY is set)
- *   var     ALLOWED_ORIGIN           e.g. https://srujayreddy.github.io
- *   var     MODEL                    default claude-haiku-4-5
- *   var     GEMINI_MODEL             default gemini-2.5-flash-lite (1,000 req/day free) — chat
- *   var     GEMINI_VIBE_MODEL        default gemini-2.5-flash — Vibe Studio (thinks harder)
- *   var     RATE_PER_MIN             default 8
- *   var     RATE_PER_DAY             default 800
- *   kv      RATE_KV                  (required for rate limiting)
- *   secret  TURNSTILE_SECRET         (optional)
- *
- * Keep SYSTEM_PROMPT in sync with `knowledgeBase` in js/content.js.
+ * Input/output limits and optional KV counters reduce abuse. KV counters are
+ * eventually consistent soft caps, NOT a billing guarantee. Workers AI is free
+ * within its daily allowance on Workers Free; Workers Paid can bill overage.
+ * See README.md for plan limits, model configuration, and local mocked tests.
+ * Keep SYSTEM_PROMPT's KNOWLEDGE in sync with js/content.js.
  */
-
 // KNOWLEDGE below is kept verbatim-in-sync with `knowledgeBase` in js/content.js
 // (single source of truth). If you edit facts, edit them THERE and mirror here.
 const SYSTEM_PROMPT = `
@@ -37,12 +20,17 @@ questions about Srujay and offer an example. Keep answers tight (2–4 sentences
 expand. Never invent facts beyond the knowledge below. Speak about Srujay in the third person.
 
 KNOWLEDGE:
-Srujay Reddy Jakkidi — Forward Deployed Engineer at Strada (YC S23), San Francisco Bay Area.
+Srujay Reddy Jakkidi — Software Development Engineer I at Amazon, based in Seattle;
+previously a Forward Deployed Engineer at Strada (YC S23).
 Recent UW–Madison graduate: B.S. Honors in Computer Science and Data Science (GPA 3.9, May 2026).
 
-NOW — Strada (May 2026–present): designs, builds, and deploys LLM-powered AI agents for insurance
-operations in TypeScript/Node.js. Works hands-on with enterprise customers. Focus: agent
-orchestration, tool-calling, Temporal, real-world performance. Stack: TypeScript, Node, React, Temporal.
+NOW — Amazon, Software Development Engineer I (Sep 2026–present), Seattle, WA: works on the Unified
+Financing Offers (UFO) team in Amazon Stores Payments. Builds services that power financing offers
+across Amazon shopping and product pages for millions of customers, with a focus on low latency and
+reliable software. Confirmed skills: Java, Microservices.
+He is driven to keep raising the bar on what he can build and its impact for stakeholders. He takes
+ambiguous problems, makes them actionable, measures how the software behaves, and improves it until
+it holds up. He cares about the craft, the people it reaches, and making a real difference.
 
 SIGNATURE — Honors Thesis "Where Does the Time Go? Decomposing Kubernetes Pod Startup Latency Under
 Bandwidth Constraints" (published in MINDS@UW, Jun 2026), advised by Prof. Remzi Arpaci-Dusseau
@@ -52,7 +40,11 @@ Senior Honors Thesis Symposium. He also authored and presented (onstage) the 202
 Honors Thesis Advising Award for his advisor — one of five recipients college-wide.
 
 EXPERIENCE:
-- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): working on hospital medical-device setup —
+- Strada (YC S23), Forward Deployed Engineer, San Francisco Bay Area (May–Aug 2026):
+  built and deployed LLM-powered AI agents for insurance operations
+  in TypeScript/Node.js. Worked hands-on with enterprise customers. Focus: agent orchestration,
+  tool-calling, Temporal, reliability, latency, and cost. Stack: TypeScript, Node.js, React, Temporal.
+- GE HealthCare, Software Engineer Capstone (Sep–Dec 2025): worked on hospital medical-device setup —
   QR-based headless device provisioning, Android (Kotlin)/iOS (Swift), offline-first; containerized
   Kubernetes provisioning service with an idempotent retryable state machine, BLE write-back, OpenAPI.
   Cut on-site setup to ≤15 minutes.
@@ -74,41 +66,13 @@ UW, Dean's Honor List 7 of 8 semesters. Languages: English, Telugu.
 
 CONTACT: srujayreddy15@gmail.com, linkedin.com/in/srujay-jakkidi, github.com/SrujayReddy.
 
-PERSONALITY: ambitious, combines systems thinking with rigorous measurement. There is a running
+PERSONALITY: ambitious, keeps raising the bar on what he can build and its impact for stakeholders;
+values the craft, rigorous measurement, and the people his work reaches. There is a running
 "Joey doesn't share food" / pizza in-joke (from Friends) — if asked about pizza, food, being hungry,
 or "Joey", play along briefly and in good humor, then steer back to Srujay.
 `.trim();
 
 const MAX_INPUT_CHARS = 600;
-
-// ── The Build Bench ({mode:"bench"}) — assemble→run→MEASURE ──────────────────
-const BENCH_RULES = `
-
-BENCH MODE: You are the measured agent on "The Build Bench". Answer the question about Srujay in at most 2 sentences using ONLY the knowledge above. Call the tool answer_with_citations exactly once. For every factual claim, cite the exact source phrase. If the knowledge does not contain the answer (e.g. salary, personal/private data), set refused=true and give a one-line refusal — NEVER invent a number, employer, metric, or fact.`;
-
-const BENCH_TOOL = {
-  name: "answer_with_citations",
-  description:
-    "Answer the question about Srujay using ONLY the provided knowledge, citing the exact source phrase for each claim. If the knowledge lacks the answer, refuse instead of inventing.",
-  input_schema: {
-    type: "object",
-    properties: {
-      answer: { type: "string", description: "At most 2 sentences, grounded only in the knowledge." },
-      citations: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: { claim: { type: "string" }, source_fact: { type: "string" } },
-          required: ["claim", "source_fact"],
-        },
-      },
-      refused: { type: "boolean", description: "true if the knowledge does not contain the answer." },
-    },
-    required: ["answer", "refused"],
-  },
-};
-
-const BENCH_RATES = { input: 1.0, output: 5.0, cacheRead: 0.1 }; // Haiku 4.5 $/Mtok
 
 // ── Vibe Studio ({mode:"vibe"}) — free text → a generated, accessible theme ──
 const VIBE_SYSTEM = `You are a senior brand / UI colour designer. Given a short "vibe" phrase,
@@ -162,366 +126,322 @@ const VIBE_TOOL = {
   },
 };
 
+const WORKERS_CHAT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
+const WORKERS_VIBE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const VIBE_JSON_SYSTEM = VIBE_SYSTEM
+  .replace("return it via the generate_theme tool.", "return only a JSON object matching the supplied schema.")
+  .replace("call generate_theme exactly once.", "return only the theme JSON, without commentary or a code fence.");
+
 export default {
   async fetch(request, env, ctx) {
-    const origin = env.ALLOWED_ORIGIN || "*";
+    const origin = env.ALLOWED_ORIGIN || "https://srujayreddy.github.io";
     const cors = {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "content-type",
       "Vary": "Origin",
     };
-
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method !== "POST")
-      return json({ error: "method_not_allowed" }, 405, cors);
-
-    // Origin lockdown (defense in depth beyond CORS headers).
+    if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405, cors);
     const reqOrigin = request.headers.get("Origin");
     if (origin !== "*" && reqOrigin && reqOrigin !== origin)
       return json({ error: "forbidden_origin" }, 403, cors);
 
     let body;
-    try {
-      body = await request.json();
-    } catch {
+    try { body = await request.json(); }
+    catch { return json({ error: "bad_request" }, 400, cors); }
+    if (!body || typeof body !== "object" || Array.isArray(body))
       return json({ error: "bad_request" }, 400, cors);
-    }
 
-    // The Build Bench + Vibe Studio reuse this CORS/origin envelope, own branches.
-    if (body.mode === "bench") return handleBench(body, env, cors, request);
-    if (body.mode === "vibe") return handleVibe(body, env, cors, request, ctx);
+    // The old benchmark no longer has a UI. Never run its paid Anthropic calls
+    // under the free configuration, even if an old secret remains installed.
+    if (body.mode === "bench") return json({ error: "bench_unavailable" }, 503, cors);
+    const vibe = body.mode === "vibe";
+    if (body.mode && !vibe && body.mode !== "ask")
+      return json({ error: "bad_request" }, 400, cors);
+    const input = String((vibe ? body.prompt : body.question) || "").trim().slice(0, vibe ? 120 : MAX_INPUT_CHARS);
+    if (!input) return json({ error: vibe ? "empty_prompt" : "empty_question" }, 400, cors);
 
-    const question = String(body.question || "").trim().slice(0, MAX_INPUT_CHARS);
-    if (!question) return json({ error: "empty_question" }, 400, cors);
+    const provider = env.AI_PROVIDER || "workers-ai";
+    if (!configured(provider, env)) return json({ error: "not_configured" }, 503, cors);
+    if (env.TURNSTILE_SECRET && !await verifyTurnstile(env.TURNSTILE_SECRET, body.turnstileToken, request))
+      return json({ error: "turnstile_failed" }, 403, cors);
 
-    // Optional Turnstile bot-check.
-    if (env.TURNSTILE_SECRET) {
-      const ok = await verifyTurnstile(env.TURNSTILE_SECRET, body.turnstileToken, request);
-      if (!ok) return json({ error: "turnstile_failed" }, 403, cors);
-    }
-
-    // Rate limiting (soft, KV-backed).
-    if (env.RATE_KV) {
-      const ip = request.headers.get("CF-Connecting-IP") || "anon";
-      const perMin = parseInt(env.RATE_PER_MIN || "8", 10);
-      const perDay = parseInt(env.RATE_PER_DAY || "800", 10);
-      const minute = Math.floor(Date.now() / 60000);
-      const day = Math.floor(Date.now() / 86400000);
-
-      const ipKey = `ip:${ip}:${minute}`;
-      const dayKey = `day:${day}`;
-      const [ipCount, dayCount] = await Promise.all([
-        env.RATE_KV.get(ipKey).then((v) => parseInt(v || "0", 10)),
-        env.RATE_KV.get(dayKey).then((v) => parseInt(v || "0", 10)),
-      ]);
-      if (ipCount >= perMin || dayCount >= perDay)
-        return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
-
-      // best-effort increment (KV is eventually consistent — fine for soft caps)
-      await Promise.all([
-        env.RATE_KV.put(ipKey, String(ipCount + 1), { expirationTtl: 120 }),
-        env.RATE_KV.put(dayKey, String(dayCount + 1), { expirationTtl: 90000 }),
-      ]);
-      recordLastUser(request, env, ctx); // remember WHERE this call came from
-    }
-
-    if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
-      return json({ error: "not_configured" }, 503, cors);
-
-    // Call the configured provider (streaming). Anthropic wins if both are set;
-    // a free Google AI Studio key (GEMINI_API_KEY) works on its own.
-    let upstream;
-    const useAnthropic = !!env.ANTHROPIC_API_KEY;
     try {
-      upstream = useAnthropic
-        ? await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-api-key": env.ANTHROPIC_API_KEY,
-              "anthropic-version": "2023-06-01",
-            },
-            body: JSON.stringify({
-              model: env.MODEL || "claude-haiku-4-5",
-              max_tokens: 400,
-              stream: true,
-              system: SYSTEM_PROMPT,
-              messages: [{ role: "user", content: question }],
-            }),
-          })
-        : await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash-lite"}:streamGenerateContent?alt=sse`,
-            {
-              method: "POST",
-              headers: {
-                "content-type": "application/json",
-                "x-goog-api-key": env.GEMINI_API_KEY,
-              },
-              body: JSON.stringify({
-                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ role: "user", parts: [{ text: question }] }],
-                // thinkingBudget 0 → Flash spends its whole budget on the ANSWER,
-                // not hidden reasoning (otherwise short answers can come back empty).
-                generationConfig: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
-              }),
-            }
-          );
+      const limited = await rateLimitReason(env, request, vibe);
+      if (limited) return json({ error: limited }, 429, cors);
     } catch {
-      return json({ error: "upstream_unreachable" }, 502, cors);
+      // A broken configured limiter must not silently allow unlimited inference.
+      return json({ error: "temporarily_unavailable" }, 503, cors);
     }
-    // Pass an upstream rate-limit straight through so the client shows its honest
-    // "rate-limited" message instead of a generic error (Gemini free tier is small).
-    if (upstream.status === 429) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
-    if (!upstream.ok || !upstream.body) {
-      return json({ error: "upstream_error", status: upstream.status }, 502, cors);
+    const scope = requestScope(request.signal, positiveInt(env.AI_TIMEOUT_MS, 45000, 120000));
+    try {
+      if (vibe) {
+        const theme = await generateTheme(provider, env, input, scope.signal);
+        scope.dispose();
+        return json(theme, 200, cors);
+      }
+      const upstream = await streamAnswer(provider, env, input, scope.signal);
+      if (!upstream || typeof upstream.getReader !== "function") throw new Error("invalid_stream");
+      return new Response(transformSSE(upstream, provider, scope), {
+        headers: { ...cors, "content-type": "text/event-stream; charset=utf-8", "cache-control": "no-cache" },
+      });
+    } catch (error) {
+      scope.dispose();
+      const failure = publicFailure(error);
+      return json({ error: failure.error }, failure.status, cors);
     }
-
-    // Transform provider SSE -> simple { text } SSE for the browser.
-    const stream = useAnthropic
-      ? transformAnthropicSSE(upstream.body)
-      : transformGeminiSSE(upstream.body);
-    return new Response(stream, {
-      headers: {
-        ...cors,
-        "content-type": "text/event-stream; charset=utf-8",
-        "cache-control": "no-cache",
-        connection: "keep-alive",
-      },
-    });
   },
 };
 
-// The Build Bench: run the assembled agent N times, timing each upstream Haiku
-// call and returning the latency distribution + REAL token usage. Prompt-caches
-// the shared knowledge so the "optimize" (warm cache) path is genuinely cheaper.
-async function handleBench(body, env, cors, request) {
-  const question = String(body.question || "").trim().slice(0, MAX_INPUT_CHARS);
-  if (!question) return json({ error: "empty_question" }, 400, cors);
-
-  // Bench has its OWN tighter caps (each run = N upstream calls — heavier than chat).
-  if (env.RATE_KV) {
-    const ip = request.headers.get("CF-Connecting-IP") || "anon";
-    const perMin = parseInt(env.BENCH_PER_MIN || "2", 10);
-    const perDay = parseInt(env.BENCH_PER_DAY || "120", 10);
-    const minute = Math.floor(Date.now() / 60000);
-    const day = Math.floor(Date.now() / 86400000);
-    const ipKey = `bench:ip:${ip}:${minute}`;
-    const dayKey = `bench:day:${day}`;
-    const [ipC, dayC] = await Promise.all([
-      env.RATE_KV.get(ipKey).then((v) => parseInt(v || "0", 10)),
-      env.RATE_KV.get(dayKey).then((v) => parseInt(v || "0", 10)),
-    ]);
-    if (ipC >= perMin || dayC >= perDay) return json({ error: "rate_limited" }, 429, cors);
-    await Promise.all([
-      env.RATE_KV.put(ipKey, String(ipC + 1), { expirationTtl: 120 }),
-      env.RATE_KV.put(dayKey, String(dayC + 1), { expirationTtl: 90000 }),
-    ]);
-  }
-
-  if (!env.ANTHROPIC_API_KEY) return json({ error: "not_configured" }, 503, cors);
-
-  const N = Math.min(parseInt(env.BENCH_RUNS || "6", 10), 8);
-  const warm = !!(body.optimize && body.optimize.cache);
-  // Warm: a stable cached system prefix → runs 2..N are cache_read.
-  // Cold: a fresh nonce PER CALL → every call misses the cache.
-  const warmSystem = [{ type: "text", text: SYSTEM_PROMPT + BENCH_RULES, cache_control: { type: "ephemeral" } }];
-
-  const latencyMs = [];
-  let lastUsage = null, answer = "", refused = false;
-  for (let i = 0; i < N; i++) {
-    const system = warm
-      ? warmSystem
-      : [{ type: "text", text: SYSTEM_PROMPT + BENCH_RULES + `\n[cold-${i}-${Math.random().toString(36).slice(2)}]`, cache_control: { type: "ephemeral" } }];
-    const t0 = Date.now();
-    let r;
-    try {
-      r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-beta": "prompt-caching-2024-07-31",
-        },
-        body: JSON.stringify({
-          model: env.MODEL || "claude-haiku-4-5",
-          max_tokens: 200,
-          system,
-          tools: [BENCH_TOOL],
-          tool_choice: { type: "tool", name: "answer_with_citations" },
-          messages: [{ role: "user", content: question }],
-        }),
-      });
-    } catch {
-      return json({ error: "upstream_unreachable" }, 502, cors);
-    }
-    if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
-    const data = await r.json();
-    latencyMs.push(Date.now() - t0);
-    lastUsage = data.usage || lastUsage;
-    const tu = (data.content || []).find((c) => c.type === "tool_use");
-    if (tu && tu.input) { answer = String(tu.input.answer || ""); refused = !!tu.input.refused; }
-  }
-
-  const u = lastUsage || {};
-  const tokens = {
-    inputTokens: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0),
-    cacheReadTokens: u.cache_read_input_tokens || 0,
-    outputTokens: u.output_tokens || 0,
-  };
-  const costPerRun =
-    (tokens.inputTokens * BENCH_RATES.input +
-      tokens.cacheReadTokens * BENCH_RATES.cacheRead +
-      tokens.outputTokens * BENCH_RATES.output) / 1e6;
-
-  return json({ latencyMs, tokens, costPerRun, answer, refused }, 200, cors);
+function configured(provider, env) {
+  if (provider === "workers-ai") return typeof env.AI?.run === "function";
+  if (provider === "gemini") return !!env.GEMINI_API_KEY;
+  if (provider === "anthropic") return !!env.ANTHROPIC_API_KEY;
+  return false;
 }
 
-// Vibe Studio: one Anthropic call, tool-forced to emit a theme JSON. Returns the
-// raw theme; the client (js/vibe.js validate()) hex-checks + contrast-gates it
-// before it ever touches the page, so a bad model output can only fall back safely.
-async function handleVibe(body, env, cors, request, ctx) {
-  const prompt = String(body.prompt || "").trim().slice(0, 120);
-  if (!prompt) return json({ error: "empty_prompt" }, 400, cors);
-
-  // Vibe has its OWN modest caps (heavier than a chat turn, lighter than bench).
-  if (env.RATE_KV) {
-    const ip = request.headers.get("CF-Connecting-IP") || "anon";
-    const perMin = parseInt(env.VIBE_PER_MIN || "4", 10);
-    const perDay = parseInt(env.VIBE_PER_DAY || "200", 10);
-    const minute = Math.floor(Date.now() / 60000);
-    const day = Math.floor(Date.now() / 86400000);
-    const ipKey = `vibe:ip:${ip}:${minute}`;
-    const dayKey = `vibe:day:${day}`;
-    const [ipC, dayC] = await Promise.all([
-      env.RATE_KV.get(ipKey).then((v) => parseInt(v || "0", 10)),
-      env.RATE_KV.get(dayKey).then((v) => parseInt(v || "0", 10)),
-    ]);
-    if (ipC >= perMin || dayC >= perDay) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
-    await Promise.all([
-      env.RATE_KV.put(ipKey, String(ipC + 1), { expirationTtl: 120 }),
-      env.RATE_KV.put(dayKey, String(dayC + 1), { expirationTtl: 90000 }),
-    ]);
-    recordLastUser(request, env, ctx); // remember WHERE this call came from
+async function streamAnswer(provider, env, question, signal) {
+  if (provider === "workers-ai") {
+    return env.AI.run(env.WORKERS_AI_MODEL || WORKERS_CHAT_MODEL, {
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: question }],
+      stream: true,
+      max_tokens: 400,
+    }, { signal });
   }
-
-  if (!env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY)
-    return json({ error: "not_configured" }, 503, cors);
-
-  // Anthropic path: tool-forced theme JSON.
-  if (env.ANTHROPIC_API_KEY) {
-    let r;
-    try {
-      r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: env.MODEL || "claude-haiku-4-5",
-          max_tokens: 500,
-          system: VIBE_SYSTEM,
-          tools: [VIBE_TOOL],
-          tool_choice: { type: "tool", name: "generate_theme" },
-          messages: [{ role: "user", content: `Vibe: ${prompt}` }],
-        }),
-      });
-    } catch {
-      return json({ error: "upstream_unreachable" }, 502, cors);
-    }
-    if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
-    const data = await r.json();
-    const tu = (data.content || []).find((c) => c.type === "tool_use");
-    if (!tu || !tu.input) return json({ error: "no_theme" }, 502, cors);
-    return json(tu.input, 200, cors);
+  let response;
+  if (provider === "anthropic") {
+    response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", signal,
+      headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: env.MODEL || "claude-haiku-4-5", max_tokens: 400, stream: true,
+        system: SYSTEM_PROMPT, messages: [{ role: "user", content: question }] }),
+    });
+  } else {
+    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(env.GEMINI_MODEL || "gemini-2.5-flash-lite")}:streamGenerateContent?alt=sse`, {
+      method: "POST", signal,
+      headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: [{ text: question }] }],
+        generationConfig: { maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } } }),
+    });
   }
+  await checkResponse(response);
+  return response.body;
+}
 
-  // Gemini path (free Google AI Studio key): JSON response mode. The client
-  // hex-validates + contrast-gates every field before it touches the page, so a
-  // malformed theme can only fall back safely.
-  let r;
+async function generateTheme(provider, env, prompt, signal) {
+  let theme;
+  if (provider === "workers-ai") {
+    const data = await env.AI.run(env.WORKERS_AI_VIBE_MODEL || WORKERS_VIBE_MODEL, {
+      messages: [{ role: "system", content: VIBE_JSON_SYSTEM }, { role: "user", content: `Vibe: ${prompt}` }],
+      response_format: { type: "json_schema", json_schema: VIBE_TOOL.input_schema },
+      max_tokens: 1024,
+    }, { signal });
+    theme = data?.response;
+  } else if (provider === "anthropic") {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", signal,
+      headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: env.MODEL || "claude-haiku-4-5", max_tokens: 1024,
+        system: VIBE_SYSTEM, tools: [VIBE_TOOL], tool_choice: { type: "tool", name: "generate_theme" },
+        messages: [{ role: "user", content: `Vibe: ${prompt}` }] }),
+    });
+    await checkResponse(response);
+    const data = await response.json();
+    theme = data.content?.find((part) => part.type === "tool_use" && part.name === "generate_theme")?.input;
+  } else {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(env.GEMINI_VIBE_MODEL || "gemini-2.5-flash")}:generateContent`, {
+      method: "POST", signal,
+      headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: VIBE_JSON_SYSTEM }] },
+        contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
+        generationConfig: { responseMimeType: "application/json", responseJsonSchema: VIBE_TOOL.input_schema,
+          temperature: 1.0, maxOutputTokens: 3072, thinkingConfig: { thinkingBudget: 8192 } } }),
+    });
+    await checkResponse(response);
+    const data = await response.json();
+    theme = data.candidates?.[0]?.content?.parts?.filter((part) => !part.thought).map((part) => part.text || "").join("");
+  }
   try {
-    r = await fetch(
-      // Vibe generation is the "think harder for a better design" path: it runs a
-      // STRONGER model than chat (Flash, not Flash-Lite) with DYNAMIC THINKING on
-      // (thinkingBudget -1 → the model reasons about the palette before answering).
-      // Worth the extra couple seconds — the client shows a "thinking" state.
-      `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_VIBE_MODEL || "gemini-2.5-flash"}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: VIBE_SYSTEM + `\nReturn ONLY a JSON object with keys: bg, ink, bgTint, surface, surface2, inkDim, inkMute, accent, accent2, particle, plasma (array of exactly 3 hex strings), font, fontDisplay, fontMono, headingCase, tracking, background, radius, mood.` }],
-          },
-          contents: [{ role: "user", parts: [{ text: `Vibe: ${prompt}` }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 1.0,
-            // thinking tokens are separate from the visible JSON; give the output
-            // ample room so a fully-considered, richer theme is never truncated.
-            maxOutputTokens: 3072,
-            // a generous explicit budget → the model genuinely deliberates over the
-            // palette + typography before answering (a few seconds; quality over speed).
-            thinkingConfig: { thinkingBudget: 8192 },
-          },
-        }),
+    if (typeof theme === "string") theme = JSON.parse(theme);
+    if (!theme || typeof theme !== "object" || Array.isArray(theme)) throw new Error();
+    for (const key of VIBE_TOOL.input_schema.required) {
+      if (theme[key] == null) throw new Error();
+    }
+    const clean = {};
+    for (const [key, rule] of Object.entries(VIBE_TOOL.input_schema.properties)) {
+      if (theme[key] == null) continue;
+      if (key === "plasma") {
+        if (!Array.isArray(theme[key]) || theme[key].length !== 3 || !theme[key].every(isHex)) throw new Error();
+      } else if (typeof theme[key] !== "string" || !theme[key] || theme[key].length > 200 || (rule.enum && !rule.enum.includes(theme[key]))) {
+        throw new Error();
       }
-    );
+      if (["bg", "ink", "bgTint", "surface", "surface2", "inkDim", "inkMute", "accent", "accent2", "particle"].includes(key) && !isHex(theme[key])) throw new Error();
+      clean[key] = theme[key];
+    }
+    // Keep the browser's existing contrast, font, and CSS validation as the final
+    // gate; the backend rejects malformed fields before returning theme data.
+    return clean;
   } catch {
-    return json({ error: "upstream_unreachable" }, 502, cors);
-  }
-  if (r.status === 429) return json({ error: "rate_limited", lastSeen: await lastSeen(env) }, 429, cors);
-  if (!r.ok) return json({ error: "upstream_error", status: r.status }, 502, cors);
-  const data = await r.json();
-  try {
-    const text = data.candidates[0].content.parts[0].text;
-    const theme = JSON.parse(text);
-    if (!theme || typeof theme !== "object") throw new Error("bad theme");
-    return json(theme, 200, cors);
-  } catch {
-    return json({ error: "no_theme" }, 502, cors);
+    throw Object.assign(new Error("no_theme"), { publicError: "no_theme" });
   }
 }
 
-function json(obj, status, cors) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...cors, "content-type": "application/json" },
+const isHex = (value) => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+
+async function checkResponse(response) {
+  if (response.ok) return;
+  await response.body?.cancel().catch(() => {});
+  throw Object.assign(new Error("upstream_error"), { status: response.status });
+}
+
+function publicFailure(error) {
+  // Native binding errors may expose the Cloudflare internal code only in their
+  // message. Inspect known codes, but never return provider messages or secrets.
+  const code = Number(error?.code || error?.status || error?.statusCode);
+  const detail = String(error?.message || "");
+  if (code === 3036 || /\b3036\b/.test(detail))
+    return { status: 429, error: "daily_limit" };
+  if ([429, 3040].includes(code) || /\b(?:3040|429)\b/.test(detail))
+    return { status: 429, error: "rate_limited" };
+  if (error?.name === "TimeoutError" || error?.name === "AbortError" || code === 408 || code === 3007)
+    return { status: 504, error: "upstream_timeout" };
+  if ([401, 403, 5035, 5016].includes(code) || /\b(?:5035|5016)\b/.test(detail))
+    return { status: 503, error: "not_configured" };
+  return { status: 502, error: error?.publicError === "no_theme" ? "no_theme" : "upstream_error" };
+}
+
+function positiveInt(value, fallback, maximum = 100000) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? Math.min(number, maximum) : fallback;
+}
+
+async function rateLimitReason(env, request, vibe) {
+  if (!env.RATE_KV) return null;
+  const prefix = vibe ? "vibe:" : "";
+  const minute = Math.floor(Date.now() / 60000);
+  const day = Math.floor(Date.now() / 86400000);
+  const ipKey = `${prefix}ip:${request.headers.get("CF-Connecting-IP") || "anon"}:${minute}`;
+  const dayKey = `${prefix}day:${day}`;
+  const perMin = positiveInt(vibe ? env.VIBE_PER_MIN : env.RATE_PER_MIN, vibe ? 4 : 8);
+  const perDay = positiveInt(vibe ? env.VIBE_PER_DAY : env.RATE_PER_DAY, vibe ? 200 : 800);
+  const [ipCount, dayCount] = await Promise.all([env.RATE_KV.get(ipKey), env.RATE_KV.get(dayKey)]);
+  const ip = Number(ipCount) || 0, daily = Number(dayCount) || 0;
+  if (daily >= perDay) return "daily_limit";
+  if (ip >= perMin) return "rate_limited";
+  // Fixed windows, eventually consistent: these counters are abuse controls,
+  // not exact quotas or a promise of free provider capacity.
+  await Promise.all([
+    env.RATE_KV.put(ipKey, String(ip + 1), { expirationTtl: 120 }),
+    env.RATE_KV.put(dayKey, String(daily + 1), { expirationTtl: 90000 }),
+  ]);
+  return null;
+}
+
+function requestScope(signal, timeoutMs) {
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal.reason);
+  if (signal.aborted) abort();
+  else signal.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(() => controller.abort(new DOMException("AI request timed out", "TimeoutError")), timeoutMs);
+  return {
+    signal: controller.signal,
+    abort: () => controller.abort(),
+    dispose() { clearTimeout(timer); signal.removeEventListener("abort", abort); },
+  };
+}
+
+function readWithSignal(reader, signal) {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    signal.addEventListener("abort", abort, { once: true });
+    reader.read().then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
   });
 }
 
-// ── "who used it last" (city-level, honest) ─────────────────────
-// Cloudflare attaches coarse geo to every request (request.cf) — no IP is
-// stored, no cookie is set, and visitors have no accounts, so a NAME is
-// impossible; the city is the closest truthful answer. We remember where the
-// most recent AI call came from, and when the budget runs out the UI can say
-// "exhausted by a visitor from Madison, US — 40 minutes ago".
-async function lastSeen(env) {
-  if (!env.RATE_KV) return null;
-  try {
-    const v = await env.RATE_KV.get("last_ai_user");
-    return v ? JSON.parse(v) : null;
-  } catch {
-    return null;
+// Provider SSE -> the site's stable {text}/{error} events and [DONE] marker.
+// Pull-based reading keeps backpressure and cancels upstream on client abort.
+function transformSSE(body, provider, scope) {
+  const reader = body.getReader();
+  const encoder = new TextEncoder(), decoder = new TextDecoder();
+  let buffer = "", pending = [], ended = false, cancelled = false, sawText = false;
+  const emit = (value) => pending.push(`data: ${typeof value === "string" ? value : JSON.stringify(value)}\n\n`);
+  function frame(raw) {
+    const payload = raw.split("\n").filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trimStart()).join("\n").trim();
+    if (!payload) return;
+    if (payload === "[DONE]") { ended = true; return; }
+    const event = JSON.parse(payload);
+    if (event.error || event.type === "error") throw Object.assign(new Error("provider_stream_error"), { code: event.error?.code, status: event.error?.status });
+    let text = "";
+    if (provider === "workers-ai") {
+      text = typeof event.response === "string" ? event.response : event.choices?.[0]?.delta?.content || "";
+      if (event.done === true) ended = true;
+    } else if (provider === "anthropic") {
+      if (event.type === "content_block_delta" && event.delta?.type === "text_delta") text = event.delta.text;
+      if (event.type === "message_stop") ended = true;
+    } else {
+      const candidate = event.candidates?.[0];
+      text = candidate?.content?.parts?.filter((part) => !part.thought).map((part) => part.text || "").join("") || "";
+      if (candidate?.finishReason && candidate.finishReason !== "STOP") throw new Error("incomplete_stream");
+      if (candidate?.finishReason === "STOP") ended = true;
+    }
+    if (text) { sawText = true; emit({ text }); }
   }
+  async function finish() {
+    await reader.cancel().catch(() => {});
+    scope.dispose();
+  }
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        while (!pending.length && !ended) {
+          const { value, done } = await readWithSignal(reader, scope.signal);
+          if (cancelled) return;
+          buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+          buffer = buffer.replace(/\r\n/g, "\n");
+          if (buffer.length > 65536) throw new Error("oversized_stream_event");
+          let boundary;
+          while (!ended && (boundary = buffer.indexOf("\n\n")) >= 0) {
+            frame(buffer.slice(0, boundary));
+            buffer = buffer.slice(boundary + 2);
+          }
+          if (done) {
+            if (!ended && buffer.trim()) frame(buffer);
+            if (!ended) throw new Error("incomplete_stream");
+          }
+        }
+        if (cancelled) return;
+        if (pending.length) controller.enqueue(encoder.encode(pending.shift()));
+        if (ended && !pending.length) {
+          if (!sawText) controller.enqueue(encoder.encode('data: {"error":"empty_response"}\n\n'));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+          await finish();
+        }
+      } catch (error) {
+        if (!cancelled) {
+          // Deliver already parsed text before the failure, rather than silently
+          // treating a truncated stream as a complete answer.
+          for (const event of pending) controller.enqueue(encoder.encode(event));
+          pending = [];
+          const failure = publicFailure(error);
+          const errorCode = ["rate_limited", "daily_limit"].includes(failure.error) ? failure.error : "stream_interrupted";
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: errorCode })}\n\n`));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+        ended = true;
+        await finish();
+      }
+    },
+    async cancel() { cancelled = true; scope.abort(); await finish(); },
+  });
 }
-function recordLastUser(request, env, ctx) {
-  if (!env.RATE_KV) return;
-  try {
-    const cf = request.cf || {};
-    const put = env.RATE_KV.put(
-      "last_ai_user",
-      JSON.stringify({ city: cf.city || null, country: cf.country || null, ts: Date.now() })
-    );
-    if (ctx && ctx.waitUntil) ctx.waitUntil(put.catch(() => {}));
-  } catch {}
+
+function json(data, status, cors) {
+  return new Response(JSON.stringify(data), { status, headers: { ...cors, "content-type": "application/json", "cache-control": "no-store" } });
 }
 
 async function verifyTurnstile(secret, token, request) {
@@ -532,100 +452,9 @@ async function verifyTurnstile(secret, token, request) {
     form.append("response", token);
     const ip = request.headers.get("CF-Connecting-IP");
     if (ip) form.append("remoteip", ip);
-    const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      body: form,
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST", body: form, signal: AbortSignal.timeout(10000),
     });
-    const data = await r.json();
-    return !!data.success;
-  } catch {
-    return false;
-  }
-}
-
-// Gemini streamGenerateContent?alt=sse → simple { text } SSE for the browser.
-function transformGeminiSSE(upstreamBody) {
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  return new ReadableStream({
-    async start(controller) {
-      const reader = upstreamBody.getReader();
-      const send = (obj) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          // SSE frames may be separated by \n\n OR \r\n\r\n — normalise first.
-          const chunks = buffer.replace(/\r\n/g, "\n").split("\n\n");
-          buffer = chunks.pop();
-          for (const chunk of chunks) {
-            const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-            if (!dataLine) continue;
-            const payload = dataLine.slice(5).trim();
-            if (!payload || payload === "[DONE]") continue;
-            try {
-              const evt = JSON.parse(payload);
-              const parts = evt?.candidates?.[0]?.content?.parts || [];
-              for (const p of parts) if (p.text) send({ text: p.text });
-            } catch {
-              /* ignore keepalive / non-JSON */
-            }
-          }
-        }
-      } catch {
-        send({ error: "stream_interrupted" });
-      } finally {
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
-      }
-    },
-  });
-}
-
-function transformAnthropicSSE(upstreamBody) {
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  return new ReadableStream({
-    async start(controller) {
-      const reader = upstreamBody.getReader();
-      const send = (obj) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const chunks = buffer.split("\n\n");
-          buffer = chunks.pop();
-          for (const chunk of chunks) {
-            const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-            if (!dataLine) continue;
-            const payload = dataLine.slice(5).trim();
-            if (!payload || payload === "[DONE]") continue;
-            try {
-              const evt = JSON.parse(payload);
-              if (
-                evt.type === "content_block_delta" &&
-                evt.delta &&
-                evt.delta.type === "text_delta"
-              ) {
-                send({ text: evt.delta.text });
-              }
-            } catch {
-              /* ignore keepalive / non-JSON */
-            }
-          }
-        }
-      } catch {
-        send({ error: "stream_interrupted" });
-      } finally {
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
-      }
-    },
-  });
+    return !!(await response.json()).success;
+  } catch { return false; }
 }

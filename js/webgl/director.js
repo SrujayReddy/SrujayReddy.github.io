@@ -1,7 +1,7 @@
 /*
  * director.js — the SceneDirector.
  *
- * Owns ONE WebGLRenderer, ONE Scene, ONE PerspectiveCamera, ONE rAF loop for
+ * Owns ONE WebGLRenderer, ONE Scene, ONE PerspectiveCamera, ONE frame driver for
  * the whole page. Per-section "acts" register against it; the director
  * crossfades them, threads a shared `uTheme` uniform through all of them (so a
  * light/dark toggle never rebuilds geometry), travels the shared camera as one
@@ -10,8 +10,8 @@
  * Design rules (from the project design bible):
  *   • Light is primary. Each act swaps NormalBlending (ink on paper) ↔
  *     AdditiveBlending (glow on near-black) via setTheme — never a rebuild.
- *   • One render() per frame; the loop is the only driver (Lenis already drives
- *     gsap.ticker, so we do NOT use setAnimationLoop).
+ *   • One render() per frame: motion attaches the GSAP ticker after its Lenis
+ *     listener; the standalone/lab fallback uses rAF. No setAnimationLoop.
  *   • Dependency-free: this module imports only three. Motion (gsap/lenis) lives
  *     in motion.js and merely calls director.setProgress / setActive.
  *   • Everything is a pure function of progress so scrubbing reverses cleanly,
@@ -97,6 +97,9 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
   let ready = false;
   let onReady = null;
   let raf = 0;
+  let ticker = null;
+  let disposed = false;
+  let needsClear = true;
   const clock = new THREE.Clock();
   let themeTarget = shared.uTheme.value;
   const camPos = new THREE.Vector3().copy(CAM_HOME);
@@ -167,6 +170,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
     shared.uMouse.value.lerp(mouseTarget, 0.06);
 
     // per-act opacity easing + update
+    let hasVisibleAct = false;
     for (const a of acts.values()) {
       a.opacity += (a._opacityTarget - a.opacity) * Math.min(1, dt * 4);
       if (a.opacity < 0.002 && a._opacityTarget === 0) {
@@ -174,6 +178,7 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
         if (a.group) a.group.visible = false;
       }
       if (a.update) a.update(dt, ctx);
+      if (a.group && a.group.visible) hasVisibleAct = true;
     }
 
     // camera: ride the unified spline (one continuous track), or legacy idle drift
@@ -205,7 +210,11 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
       camera.lookAt(camLook);
     }
 
-    renderer.render(scene, camera);
+    // Once every act has faded out, clear the previous frame exactly once.
+    // Keep all simulation/camera clocks running so scrolling back resumes with
+    // the same state, without sending an empty scene to the GPU every frame.
+    if (hasVisibleAct || needsClear) renderer.render(scene, camera);
+    needsClear = hasVisibleAct;
 
     if (!ready) {
       ready = true;
@@ -213,10 +222,15 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
     }
   }
 
-  function loop() {
-    raf = requestAnimationFrame(loop);
-    if (!running) return;
+  function frame() {
+    if (!running || disposed) return;
     step(Math.min(clock.getDelta(), 0.05));
+  }
+
+  function loop() {
+    if (ticker || disposed) return;
+    raf = requestAnimationFrame(loop);
+    frame();
   }
 
   window.addEventListener("resize", resize, { passive: true });
@@ -228,6 +242,21 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
     setActive,
     setProgress,
     setTheme,
+    /** Use the motion layer's ticker, after its Lenis/ScrollTrigger listener.
+     * The standalone/lab RAF stays active until motion attaches successfully.
+     * Retain the same clock and simulation math; only frame ordering changes. */
+    attachTicker(nextTicker) {
+      if (disposed || ticker === nextTicker) return;
+      if (ticker) ticker.remove(frame);
+      cancelAnimationFrame(raf);
+      raf = 0;
+      ticker = nextTicker;
+      if (ticker) ticker.add(frame);
+      else {
+        clock.getDelta();
+        raf = requestAnimationFrame(loop);
+      }
+    },
     /** Map global scroll (0..1) to the camera's position along the unified rail. */
     setRide(t) { rideTarget = t < 0 ? 0 : t > 1 ? 1 : t; },
     /** Toggle the spline ride (false → legacy per-act idle drift). */
@@ -254,7 +283,11 @@ export function createSceneDirector(canvas, { getTheme = () => "light" } = {}) {
       else onReady = cb;
     },
     dispose() {
+      if (disposed) return;
+      disposed = true;
       cancelAnimationFrame(raf);
+      if (ticker) ticker.remove(frame);
+      ticker = null;
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointer);
       for (const a of acts.values()) if (a.dispose) a.dispose();

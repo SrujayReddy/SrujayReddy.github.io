@@ -16,6 +16,23 @@ import Lenis from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// A trackpad reversal expresses a new destination, not a small subtraction
+// from momentum banked in the old direction. Reset only input Lenis will own.
+function cancelOppositeWheelMomentum(lenis, { deltaY, event }) {
+  if (!deltaY || event?.type !== "wheel" || event.ctrlKey || event.defaultPrevented ||
+      event.lenisStopPropagation || lenis.isStopped || lenis.isLocked || !lenis.options.smoothWheel) return;
+  const pending = lenis.targetScroll - lenis.animatedScroll;
+  if (pending * deltaY >= 0) return;
+  const path = event.composedPath();
+  const nested = path.slice(0, path.indexOf(lenis.rootElement));
+  if (nested.some((node) => node instanceof HTMLElement && (
+    lenis.options.prevent?.(node) || node.hasAttribute("data-lenis-prevent") || node.hasAttribute("data-lenis-prevent-wheel")
+  ))) return;
+  // reset() is part of the pinned Lenis implementation: stop the old animation,
+  // clear velocity, and align both positions with the current native scroll.
+  lenis.reset();
+}
+
 export function initMotion({ director, field } = {}) {
   // ── thesis pace zone: slow the WHEEL while the thesis pin is active ──
   // Lenis calls options.virtualScroll(data) before consuming the deltas, so
@@ -32,6 +49,7 @@ export function initMotion({ director, field } = {}) {
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     virtualScroll: (data) => {
+      cancelOppositeWheelMomentum(lenis, data);
       if (pace.st && pace.st.isActive) data.deltaY *= pace.scale;
     },
   });
@@ -95,6 +113,7 @@ export function initMotion({ director, field } = {}) {
     document.fonts.ready.then(() => ScrollTrigger.refresh());
   }
   window.addEventListener("load", () => ScrollTrigger.refresh());
+  director?.attachTicker(gsap.ticker);
 }
 
 function buildThesisTimeline(field, pace) {
@@ -106,15 +125,16 @@ function buildThesisTimeline(field, pace) {
   gsap.set(beats, { autoAlpha: 0, y: 20 });
   gsap.set(beats[0], { autoAlpha: 1, y: 0 });
 
-  let entryAt = 0; // set by onEnter/onEnterBack, consumed by the settle-snap below
+  let cancelSettle = () => {};
+  const readableHolds = [];
+  let holdStart = 0;
 
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: ".thesis",
       start: "top top",
-      // 7 viewport-heights of runway: each beat costs real scrolling (pairs
-      // with the pace zone; momentum banked BEFORE entry still lands at full
-      // speed — the entry-catch below is what rescues those).
+      // 7 viewport-heights of runway: each beat costs real scrolling, paired
+      // with the wheel pace zone. Entry never rewinds a user's gesture.
       end: () => "+=" + window.innerHeight * 7,
       pin: pin,
       // 1s catch-up: even an instant scroll jump plays the crossfade at a
@@ -122,10 +142,8 @@ function buildThesisTimeline(field, pace) {
       scrub: 1,
       invalidateOnRefresh: true,
       refreshPriority: 0, // refreshes AFTER education (which is earlier on the page)
-      // mark fresh entries so the settle-snap can catch the OPENING slide:
-      // +time = entered from above (show beat 0), −time = from below (last beat).
-      onEnter: () => { entryAt = performance.now(); },
-      onEnterBack: () => { entryAt = -performance.now(); },
+      onLeave: () => cancelSettle(),
+      onLeaveBack: () => cancelSettle(),
       onToggle: (self) => {
         if (!field) return;
         if (self.isActive) {
@@ -146,46 +164,15 @@ function buildThesisTimeline(field, pace) {
     },
   });
 
-  // ── beat snap, THROUGH Lenis (never stops it — can't trap the page) ──
-  // ScrollTrigger's built-in `snap` writes scrollTop directly, but Lenis
-  // re-animates the scroll position every frame and overwrites it, so that snap
-  // silently loses. Instead: when scrolling settles anywhere inside the pin,
-  // glide to the nearest beat with lenis.scrollTo — every slide lands and gets
-  // read, and slow deliberate scrolling is never interrupted mid-gesture. This
-  // is the settle-snap (PR #5), NOT the wheel-stealing "deck" — Lenis is never
-  // stopped, so scroll can never freeze.
-  const st = tl.scrollTrigger;
-  if (pace) pace.st = st; // arms the wheel pace zone (initMotion's virtualScroll)
-  const lenis = window.__lenis;
-  if (lenis && st) {
-    let settle;
-    lenis.on("scroll", () => {
-      if (!st.isActive) return;
-      clearTimeout(settle);
-      settle = setTimeout(() => {
-        if (!st.isActive) return;
-        // ENTRY CATCH: a fast scroll from the section above carries momentum past
-        // the opening slide and used to rest on beat 1–2 (the timeline) — the
-        // thesis never got its title moment. If we settled within ~1.2s of
-        // entering and still rest in the entry half, present the OPENING slide
-        // (beat 0 from above, the last beat from below). Deliberate scrolling
-        // deeper than halfway is respected. Otherwise: nearest beat.
-        const fresh = entryAt !== 0 && performance.now() - Math.abs(entryAt) < 1200;
-        let beat = Math.round(st.progress * 4);
-        if (fresh && entryAt > 0 && st.progress < 0.5) beat = 0;
-        else if (fresh && entryAt < 0 && st.progress > 0.5) beat = 4;
-        entryAt = 0; // consume — later settles inside the pin snap to nearest
-        const target = Math.min(st.start + (beat / 4) * (st.end - st.start), st.end - 2);
-        if (Math.abs(target - lenis.scroll) > 2) {
-          lenis.scrollTo(target, { duration: 0.7, easing: (t) => 1 - Math.pow(1 - t, 3) });
-        }
-      }, 130);
-    });
-  }
-
   const fadeBeat = (from, to) => {
-    if (from != null) tl.to(beats[from], { autoAlpha: 0, y: -16, duration: 0.4 }, "+=0.25");
+    if (from != null) {
+      // A hold begins only once its entrance AND any counter have completed.
+      // Store timeline times, so different beat durations never land in a fade.
+      readableHolds.push({ start: holdStart, end: tl.duration() + 0.25 });
+      tl.to(beats[from], { autoAlpha: 0, y: -16, duration: 0.4 }, "+=0.25");
+    }
     tl.to(beats[to], { autoAlpha: 1, y: 0, duration: 0.5 }, from != null ? "-=0.2" : 0);
+    holdStart = tl.duration();
   };
 
   fadeBeat(0, 1);
@@ -194,28 +181,134 @@ function buildThesisTimeline(field, pace) {
   const numEl = document.querySelector("[data-count-thesis]");
   if (numEl) {
     const proxy = { n: 0 };
+    let displayed = numEl.textContent;
     tl.to(proxy, {
       n: 93,
       duration: 1,
       ease: "power1.out",
-      onUpdate: () => (numEl.textContent = Math.round(proxy.n)),
+      onUpdate: () => {
+        const next = String(Math.round(proxy.n));
+        if (next !== displayed) numEl.textContent = displayed = next;
+      },
     }, "-=0.2");
+    holdStart = tl.duration();
   }
 
   fadeBeat(2, 3);
   const afterEl = document.querySelector("[data-count-after]");
   if (afterEl) {
     const p2 = { n: 75 };
+    let displayed = afterEl.textContent;
     tl.to(p2, {
       n: 2,
       duration: 1,
       ease: "power3.inOut",
-      onUpdate: () => (afterEl.textContent = Math.round(p2.n)),
+      onUpdate: () => {
+        const next = String(Math.round(p2.n));
+        if (next !== displayed) afterEl.textContent = displayed = next;
+      },
     }, "-=0.1");
+    holdStart = tl.duration();
   }
 
   fadeBeat(3, 4);
   tl.to({}, { duration: 0.6 });
+  readableHolds.push({ start: holdStart, end: tl.duration() });
+
+  const st = tl.scrollTrigger;
+  if (pace) pace.st = st;
+  if (window.__lenis && st) {
+    cancelSettle = installThesisSettling(window.__lenis, st, tl, readableHolds);
+  }
+}
+
+// Small, direction-preserving assistance after a USER gesture has finished.
+// The pin, pacing, counters and crossfades remain scroll-driven. Settling never
+// rewinds a gesture, crosses a section boundary, or chains itself into another snap.
+function installThesisSettling(lenis, st, timeline, holds) {
+  let timer = 0;
+  let armed = false;
+  let direction = 0;
+  const clearTimer = () => {
+    clearTimeout(timer);
+    timer = 0;
+  };
+  const cancel = () => {
+    clearTimer();
+    armed = false;
+    direction = 0;
+  };
+  const arm = (nextDirection) => {
+    clearTimer();
+    if (nextDirection) {
+      direction = Math.sign(nextDirection);
+      armed = true;
+    }
+  };
+
+  // Lenis calls its public scrollTo() with programmatic:false for wheel input.
+  // Explicit anchors/palette/API navigation must cancel old gesture assistance
+  // immediately, including the gap before the first animation-frame event.
+  const scrollTo = lenis.scrollTo;
+  lenis.scrollTo = function (target, options) {
+    if (options?.programmatic !== false) cancel();
+    return scrollTo.call(this, target, options);
+  };
+
+  lenis.on("virtual-scroll", ({ deltaY, event }) => {
+    cancel();
+    if (!event?.ctrlKey) arm(deltaY);
+  });
+  window.addEventListener("pointerdown", cancel, { passive: true });
+  window.addEventListener("keydown", (event) => {
+    if (!["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) return;
+    cancel();
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey ||
+        (event.shiftKey && event.key !== " ") || lenis.isStopped || lenis.isLocked ||
+        event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, button")) return;
+    // Let the browser's default key scroll replace outstanding wheel momentum.
+    // Lenis otherwise ignores native changes while its smooth animation runs.
+    if (lenis.isScrolling === "smooth") lenis.reset();
+    arm(["ArrowUp", "PageUp", "Home"].includes(event.key) || (event.key === " " && event.shiftKey) ? -1 : 1);
+  }, { passive: true });
+
+  lenis.on("scroll", () => {
+    clearTimer();
+    // Scrollbars and keyboard/touch scrolling use the native path. Inertia is
+    // still scrolling; Lenis emits once more with isScrolling:false at rest.
+    if (lenis.isScrolling === "native") arm(lenis.direction);
+    if (!armed || !st.isActive || lenis.isScrolling || lenis.isTouching) return;
+    timer = setTimeout(() => {
+      timer = 0;
+      if (!armed || !st.isActive || lenis.isScrolling || lenis.isTouching) return;
+      armed = false; // consume once, including when no nearby hold is appropriate
+      const position = lenis.scroll;
+      const limit = Math.min(120, window.innerHeight * 0.15);
+      if (position <= st.start + limit || position >= st.end - limit) return;
+      const span = st.end - st.start;
+      const duration = timeline.duration();
+      const ranges = holds.map((hold) => ({
+        start: st.start + (hold.start / duration) * span,
+        end: st.start + (hold.end / duration) * span,
+      }));
+      if (ranges.some((range) => position >= range.start && position <= range.end)) return;
+      let target = null;
+      for (const range of ranges) {
+        const inset = Math.min(2, (range.end - range.start) / 2);
+        const candidate = Math.round(direction > 0 ? range.start + inset : range.end - inset);
+        if (candidate < range.start || candidate > range.end) continue;
+        const distance = (candidate - position) * direction;
+        if (distance <= 0 || distance > limit || candidate <= st.start + limit || candidate >= st.end - limit) continue;
+        if (target === null || Math.abs(candidate - position) < Math.abs(target - position)) target = candidate;
+      }
+      if (target !== null && Math.abs(target - position) > 2) {
+        // Bypass the navigation wrapper. armed is already false, so our own
+        // animation/completion events cannot schedule another settle.
+        scrollTo.call(lenis, target, { duration: 0.7, easing: (t) => 1 - Math.pow(1 - t, 3) });
+      }
+    }, 130);
+  });
+  return cancel;
 }
 
 function buildEducationTimeline(director) {
@@ -224,6 +317,7 @@ function buildEducationTimeline(director) {
   const facts = gsap.utils.toArray(".edu__fact");
   const ticks = gsap.utils.toArray(".edu__rail .tick");
   gsap.set(facts, { autoAlpha: 0, y: 16 });
+  const factAlphas = facts.map(() => 0);
 
   ScrollTrigger.create({
     trigger: ".education",
@@ -246,7 +340,10 @@ function buildEducationTimeline(director) {
       facts.forEach((f, i) => {
         const start = 0.12 + i * 0.12;
         const a = gsap.utils.clamp(0, 1, (p - start) / 0.08);
-        gsap.set(f, { autoAlpha: a, y: (1 - a) * 16 });
+        if (a !== factAlphas[i]) {
+          factAlphas[i] = a;
+          gsap.set(f, { autoAlpha: a, y: (1 - a) * 16 });
+        }
       });
       const active = Math.min(ticks.length - 1, Math.floor(p * ticks.length + 0.0001));
       ticks.forEach((t, i) => t.classList.toggle("is-active", i <= active));

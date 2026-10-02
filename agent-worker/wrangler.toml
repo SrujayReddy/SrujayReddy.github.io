@@ -1,31 +1,27 @@
-# wrangler.toml — config for the ⌘K agent Worker.
-# Deploy guide: see README.md in this folder.
-
+# See README.md before activation: use Workers Free to prevent AI overage charges.
 name = "srujay-agent"
 main = "worker.js"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-09-30"
 
-# Public, non-secret config. Override per your setup.
+[ai]
+binding = "AI"
+
 [vars]
 ALLOWED_ORIGIN = "https://srujayreddy.github.io"
-MODEL = "claude-haiku-4-5"   # Anthropic model (only used if ANTHROPIC_API_KEY is set)
-# Gemini models (used when GEMINI_API_KEY is set — the free-tier path).
-# CHAT uses Flash-Lite: 1,000 requests/day free (vs 250 for plain Flash) at 15 RPM,
-# and it comfortably covers RATE_PER_DAY below — fast grounded Q&A.
-GEMINI_MODEL = "gemini-2.5-flash-lite"
-# VIBE (page restyle) uses the stronger Flash WITH dynamic thinking on, for a more
-# considered palette — a couple seconds slower, but the UI shows a "thinking" state.
-GEMINI_VIBE_MODEL = "gemini-2.5-flash"
+AI_PROVIDER = "workers-ai"
+WORKERS_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8"
+WORKERS_AI_VIBE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+AI_TIMEOUT_MS = "25000"
 RATE_PER_MIN = "8"
 RATE_PER_DAY = "800"
+VIBE_PER_MIN = "4"
+VIBE_PER_DAY = "200"
 
-# KV namespace for rate-limit counters.
-# Create with:  wrangler kv namespace create RATE_KV
-# then paste the returned id below.
+# Explicit opt-in only; retained provider secrets never change the selection.
+MODEL = "claude-haiku-4-5"
+GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_VIBE_MODEL = "gemini-2.5-flash"
+
 [[kv_namespaces]]
 binding = "RATE_KV"
 id = "1733836f651b48eab926245d3293f58e"
-
-# Secrets are NOT stored here. Set them with:
-#   wrangler secret put ANTHROPIC_API_KEY
-#   wrangler secret put TURNSTILE_SECRET   # optional

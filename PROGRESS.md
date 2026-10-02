@@ -548,3 +548,70 @@ no preventDefault — the hard rule from the frozen-"deck" incident stands):
 - [x] **⌘K palette**: removed the "Joey doesn't share food" hint from the "Order a
       pizza" command (owner's call — the row was too loud). Command + egg unchanged;
       agent.js renders a missing hint as an empty span, verified in preview.
+
+
+## September 2026 — performance and Amazon profile refresh
+
+- Self-hosted the exact pinned Three.js/GSAP/ScrollTrigger/Lenis final ESM files;
+  all executable code/exports and licenses retained. Reproducible checksum-verified
+  `scripts/vendor-dependencies.py`; GitHub Pages still requires no build.
+- Preloaded baseline modules, fetched graphics/motion concurrently, removed the
+  throwaway WebGL context, retained a task boundary before motion initialization.
+- Cached exact tassel ring math; skipped repeated empty GPU renders after clearing.
+  Particle counts, DPR, shaders, materials, geometry density, camera, scroll pace,
+  images and CSS are unchanged.
+- Confirmed LinkedIn screenshots: Amazon SDE I, Stores Payments / Unified Financing
+  Offers, Seattle, Sep 2026–present. Strada is May–Aug 2026. Updated hero/About/Now,
+  experience, palette, metadata/JSON-LD and local Worker knowledge.
+- Verified node physics/camera/vibe tests; 1,200 byte-identical geometry/rope frames;
+  12 byte-identical cap screenshots across desktop/mobile and light/dark. Browser
+  interactions and reduced-motion/no-WebGL/failed-library fallbacks verified.
+- Final controlled cold-context tests show ~31% faster graphics + scrolling readiness,
+  CLS 0 before/after and slightly lower observed long-task blocking. First paint did
+  not improve in the final run. See `PERFORMANCE.md` for full values and limits.
+- Final browser screenshots inspected on desktop/mobile; no horizontal overflow.
+  Owner can review real-trackpad feel at localhost:8137. No live AI test calls made.
+- Page and Worker changes are prepared for review, not deployed. Updating the live
+  assistant's answers requires a separate Worker deployment with the page release.
+
+## September 30 — thesis/Now runtime performance and free AI preparation
+
+- Removed per-frame pipeline layout work while keeping the signal's size, path,
+  glow, easing and timing. Kept a fallback for browsers without ResizeObserver.
+- Fixed pending thesis snap timers racing fresh wheel/programmatic input, and
+  native smooth-scroll conflicts while Lenis is idle. Preserved beat pacing and
+  settled snap behavior. Palette focus returns without an unwanted native jump.
+- Cached unchanged counter/reveal values, exact tassel Frenet working storage,
+  fringe spacing/material values, and static Vibe background gradients/colors.
+- Verified 1,920 cap simulation frames, 12 cap screenshots and 48 background
+  frames against the prior version. Geometry and selected images are identical.
+  Chrome desktop/mobile/reduced-motion navigation and mocked AI flows pass.
+- Added cap-frame reference, motion race and Worker contract regression tests.
+  Worker builds with Wrangler; no live inference calls performed.
+- Prepared explicit Workers AI default with streaming and schema-based themes,
+  no automatic paid fallback, accurate limit messages and provider-neutral label.
+  Cloudflare login is expired: Free-plan/model/live quality verification and
+  deployment remain pending. GitHub publishing still lacks write access.
+- Local review: http://127.0.0.1:8137/ . Details and evidence limits: PERFORMANCE.md.
+
+## October 1 — reproduced jitter and direction-control fixes
+
+- Reproduced small Thesis gestures being reversed by automatic snapping, and
+  upward wheel input failing to reverse banked downward momentum for 400+ ms.
+- Replaced large/quarter-progress entry snapping with bounded assistance in the
+  input direction, deriving readable holds from the real timeline/counter ends.
+  Preserved the pinned sequence, crossfades, count timing and wheel pace.
+- Clear opposite-direction momentum only for eligible page wheel input; native
+  scroll keys replace old wheel momentum. Nested controls/zoom/editing guards stay.
+- Render after Lenis/ScrollTrigger on one ticker; keep the director's existing
+  clock/math and standalone/lab/manual-step/visibility behavior.
+- Twenty-two real-GSAP motion checks, director scheduling checks and existing
+  cap/camera checks pass. Ten Chrome input/navigation/mobile/reduced-motion checks
+  pass. Twenty-four screenshots show no visible change (23 byte-identical; one
+  pixel differs by one channel level).
+- Clean ~120-callback/s Chrome trace: old small downward gesture rewound 56 px,
+  revised gesture rewound 0. Frame timing remained similar; this is a confirmed
+  control correction, not evidence of universal GPU/FPS improvement.
+- Local preview remains http://127.0.0.1:8137/ . Owner should reload and review the
+  actual trackpad feel. No deployment or live inference performed; prior GitHub
+  write and Cloudflare authentication blockers remain. Details: PERFORMANCE.md.

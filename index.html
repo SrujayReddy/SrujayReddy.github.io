@@ -20,28 +20,28 @@
       })();
     </script>
 
-    <title>Srujay Reddy Jakkidi — Forward Deployed Engineer</title>
+    <title>Srujay Reddy Jakkidi — Software Development Engineer at Amazon</title>
     <meta
       name="description"
-      content="Srujay Reddy Jakkidi — Forward Deployed Engineer at Strada (YC S23). I build high-impact AI systems that are both intelligent and measurably reliable. UW–Madison B.S. Honors (CS & Data Science)."
+      content="Srujay Reddy Jakkidi — Software Development Engineer I at Amazon in Seattle. Building reliable, low-latency financing services. Previously Strada. UW–Madison B.S. Honors (CS & Data Science)."
     />
     <meta name="author" content="Srujay Reddy Jakkidi" />
     <link rel="canonical" href="https://srujayreddy.github.io/" />
 
     <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Srujay Reddy Jakkidi — Forward Deployed Engineer @ Strada" />
+    <meta property="og:title" content="Srujay Reddy Jakkidi — Software Development Engineer at Amazon" />
     <meta
       property="og:description"
-      content="I build LLM-powered AI agents that are intelligent and measurably reliable. Featuring an Honors thesis on Kubernetes pod-startup latency, rendered as scroll-driven data-viz."
+      content="Software Development Engineer I at Amazon, building the services behind financing offers for millions of customers. Ambitious problems, thoughtful engineering, and meaningful outcomes."
     />
     <meta property="og:url" content="https://srujayreddy.github.io/" />
     <meta property="og:image" content="https://srujayreddy.github.io/assets/images/profile.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Srujay Reddy Jakkidi — Forward Deployed Engineer @ Strada" />
+    <meta name="twitter:title" content="Srujay Reddy Jakkidi — Software Development Engineer at Amazon" />
     <meta
       name="twitter:description"
-      content="High-impact AI systems, intelligent and measurably reliable. Honors thesis as scroll-driven data-viz."
+      content="Software Development Engineer I at Amazon in Seattle. Raising the bar for what I build and the impact it has."
     />
     <meta name="twitter:image" content="https://srujayreddy.github.io/assets/images/profile.jpg" />
 
@@ -63,14 +63,20 @@
     <link rel="stylesheet" href="styles/command.css" />
     <link rel="stylesheet" href="styles/vibe.css" />
 
-    <!-- Warm up the CDN + start fetching the heavy deps at PARSE time, in parallel
-         with main.js — instead of discovering them only when main.js runs its
-         dynamic imports. Kills the long "plain page → everything pops in" window. -->
-    <link rel="preconnect" href="https://esm.sh" crossorigin />
-    <link rel="modulepreload" href="https://esm.sh/three@0.169.0" />
-    <link rel="modulepreload" href="https://esm.sh/gsap@3.12.5" />
-    <link rel="modulepreload" href="https://esm.sh/gsap@3.12.5/ScrollTrigger" />
-    <link rel="modulepreload" href="https://esm.sh/lenis@1.1.14" />
+    <!-- Fetch the baseline module graph in parallel so the hero renders sooner. -->
+    <link rel="modulepreload" href="js/content.js" />
+    <link rel="modulepreload" href="js/agent.js" />
+    <link rel="modulepreload" href="js/easter-egg.js" />
+    <link rel="modulepreload" href="js/theme.js" />
+    <link rel="modulepreload" href="js/vibe.js" />
+    <link rel="modulepreload" href="js/config.js" />
+    <link rel="modulepreload" href="js/background.js" />
+
+    <!-- Same pinned libraries, served directly with the site: no CDN wrappers. -->
+    <link rel="modulepreload" href="assets/vendor/three-0.169.0.mjs" />
+    <link rel="modulepreload" href="assets/vendor/gsap-3.12.5.mjs" />
+    <link rel="modulepreload" href="assets/vendor/ScrollTrigger-3.12.5.mjs" />
+    <link rel="modulepreload" href="assets/vendor/lenis-1.1.14.mjs" />
 
     <!-- Visitor analytics (OPTIONAL — ships disabled). Cloudflare Web Analytics is
          privacy-first: no cookies, no fingerprinting, no consent banner needed, and
@@ -80,14 +86,14 @@
     <!-- <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
          data-cf-beacon='{"token": "PASTE_YOUR_TOKEN_HERE"}'></script> -->
 
-    <!-- Pinned ES module dependencies (fetched by the browser, no build step) -->
+    <!-- Pinned, self-hosted ES modules (committed assets, no deploy build step) -->
     <script type="importmap">
       {
         "imports": {
-          "three": "https://esm.sh/three@0.169.0",
-          "gsap": "https://esm.sh/gsap@3.12.5",
-          "gsap/ScrollTrigger": "https://esm.sh/gsap@3.12.5/ScrollTrigger",
-          "lenis": "https://esm.sh/lenis@1.1.14"
+          "three": "./assets/vendor/three-0.169.0.mjs",
+          "gsap": "./assets/vendor/gsap-3.12.5.mjs",
+          "gsap/ScrollTrigger": "./assets/vendor/ScrollTrigger-3.12.5.mjs",
+          "lenis": "./assets/vendor/lenis-1.1.14.mjs"
         }
       }
     </script>
@@ -98,13 +104,13 @@
         "@context": "https://schema.org",
         "@type": "Person",
         "name": "Srujay Reddy Jakkidi",
-        "jobTitle": "Forward Deployed Engineer",
-        "worksFor": { "@type": "Organization", "name": "Strada" },
+        "jobTitle": "Software Development Engineer I",
+        "address": { "@type": "PostalAddress", "addressLocality": "Seattle", "addressRegion": "WA" },
+        "worksFor": { "@type": "Organization", "name": "Amazon" },
         "alumniOf": {
           "@type": "CollegeOrUniversity",
           "name": "University of Wisconsin–Madison"
         },
-        "address": { "@type": "PostalAddress", "addressRegion": "San Francisco Bay Area" },
         "email": "mailto:srujayreddy15@gmail.com",
         "url": "https://srujayreddy.github.io/",
         "sameAs": [
@@ -198,8 +204,8 @@
       <div style="max-width:640px;margin:6rem auto;padding:0 1.5rem;color:#475063">
         <h1 style="color:#0d0f14">Srujay Reddy Jakkidi</h1>
         <p>
-          Forward Deployed Engineer at Strada (YC S23) in the San Francisco Bay Area. I build
-          high-impact AI systems that are both intelligent and measurably reliable. UW–Madison B.S.
+          Software Development Engineer I at Amazon in Seattle, building services behind financing
+          offers for millions of customers. Previously a Forward Deployed Engineer at Strada (YC S23). UW–Madison B.S.
           Honors in Computer Science &amp; Data Science.
         </p>
         <p>

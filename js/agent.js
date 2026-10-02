@@ -17,16 +17,6 @@ import { config } from "./config.js";
 
 let onEgg = () => {};
 
-// "a visitor from Madison, US about 40 min ago" — from the Worker's city-level
-// lastSeen record (no names exist on a static site; the city is the honest max).
-function whoUsedIt(seen) {
-  if (!seen || (!seen.city && !seen.country)) return "an earlier visitor";
-  const place = [seen.city, seen.country].filter(Boolean).join(", ");
-  const mins = seen.ts ? Math.max(1, Math.round((Date.now() - seen.ts) / 60000)) : null;
-  const ago = mins == null ? "" : mins < 60 ? ` about ${mins} min ago` : ` about ${Math.round(mins / 60)}h ago`;
-  return `a visitor from ${place}${ago}`;
-}
-
 export function initAgent({ onPizza } = {}) {
   onEgg = onPizza || (() => {});
   const root = document.getElementById("palette");
@@ -77,7 +67,7 @@ export function initAgent({ onPizza } = {}) {
       answerWrap.hidden = true;
       answerWrap.innerHTML = "";
     }, 220);
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
   function isOpen() {
     return root.classList.contains("is-open");
@@ -238,26 +228,30 @@ export function initAgent({ onPizza } = {}) {
       return;
     }
 
-    // Live: stream from the Worker (SSE).
-    streamAbort = new AbortController();
+    // Only the newest question owns this answer. A cancelled older request must
+    // not overwrite it or inspect the newer request's abort state.
+    streamAbort?.abort();
+    const requestAbort = new AbortController();
+    streamAbort = requestAbort;
     try {
       const res = await fetch(config.WORKER_URL, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question: q }),
-        signal: streamAbort.signal,
+        signal: requestAbort.signal,
       });
 
       if (res.status === 429) {
         stateEl.classList.remove("is-live");
         stateEl.classList.add("is-error");
         cursor.remove();
-        // the Worker remembers WHERE the last AI call came from (city-level,
-        // via Cloudflare geo — visitors have no names on a static site).
-        let seen = null;
-        try { seen = (await res.json()).lastSeen; } catch {}
+        let reason;
+        try { reason = (await res.json()).error; } catch {}
+        const message = reason === "daily_limit"
+          ? "The AI's daily allowance is used up. Please try again tomorrow."
+          : "The AI is busy or temporarily rate-limited. Please try again shortly.";
         textEl.innerHTML =
-          `🪫 Srujay's API key was exhausted by ${whoUsedIt(seen)} — it refills tomorrow. The commands above still work, or reach him at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
+          `${message} The commands above still work, or reach Srujay at <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
         return;
       }
       if (!res.ok || !res.body) throw new Error("worker " + res.status);
@@ -277,27 +271,28 @@ export function initAgent({ onPizza } = {}) {
           if (!line) continue;
           const data = line.slice(5).trim();
           if (data === "[DONE]") continue;
-          try {
-            const json = JSON.parse(data);
-            if (json.text) {
-              acc += json.text;
-              textEl.textContent = acc;
-              answerWrap.scrollTop = answerWrap.scrollHeight;
-            }
-          } catch {
-            // tolerate non-JSON keepalive lines
+          let event;
+          try { event = JSON.parse(data); } catch { continue; }
+          if (event.error) throw new Error("stream interrupted");
+          if (event.text) {
+            acc += event.text;
+            textEl.textContent = acc;
+            answerWrap.scrollTop = answerWrap.scrollHeight;
           }
         }
       }
       cursor.remove();
-      if (!acc) textEl.textContent = "…(no response)";
+      stateEl.classList.remove("is-live");
+      if (!acc) throw new Error("empty response");
     } catch (err) {
-      if (streamAbort.signal.aborted) return;
+      if (requestAbort.signal.aborted) return;
       stateEl.classList.remove("is-live");
       stateEl.classList.add("is-error");
       cursor.remove();
       textEl.innerHTML =
         `Couldn't reach the agent just now. It may be offline or rate-limited — the commands above still work, or email <a class="link-underline" href="mailto:${content.contact.email}">${content.contact.email}</a>.`;
+    } finally {
+      if (streamAbort === requestAbort) streamAbort = null;
     }
   }
 

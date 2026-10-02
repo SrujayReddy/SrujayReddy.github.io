@@ -10,10 +10,13 @@ creative/technical spec lives in `DESIGN-BIBLE.md`, the running status in
 ## What this is
 
 A **cinematic, light-first, no-build static portfolio** for Srujay Reddy Jakkidi
-(Forward Deployed Engineer). One continuous WebGL particle "organism" threads the
+(Software Development Engineer I at Amazon). One continuous WebGL particle "organism" threads the
 whole page; the camera rides a single spline through every act. Ships on GitHub
 Pages on merge to `main` — `index.html` is at the repo root, **no build step**.
-ES modules + an importmap load `three` / `gsap` / `lenis` from esm.sh at runtime.
+ES modules + an importmap load pinned `three` / `gsap` / `lenis` from committed
+`assets/vendor/` modules. `scripts/vendor-dependencies.py` reproduces them with
+SHA-256 verification; deployment still needs no build. Baseline modules are
+preloaded, and graphics/motion fetch concurrently before motion initializes.
 
 ## Run & preview it
 
@@ -25,12 +28,11 @@ node tests/vibe-data.mjs             # Vibe Studio preset/contrast checks
 node tests/camera-rail.mjs           # camera track continuity checks
 ```
 
-- **You cannot see WebGL headlessly.** There is no reliable Preview/screenshot tool
-  in most sessions, and the macOS terminal is **TCC-blocked from listing `~/Desktop`**
-  (use `osascript`/Spotlight to find names; the Read tool *can* open Desktop images by
-  path). So: verify *correctness* with the node tests; verify *look/feel* via the
-  **human-in-the-loop screenshot loop** (see `LOOPS.md`). Never claim a visual is good
-  without a screenshot — say what's verified vs. what needs eyes.
+- Verify correctness with the node tests and appearance with actual browser
+  screenshots. Headless Chrome with WebGL was available for the September 2026
+  performance audit; do not assume every environment supports it. When browser
+  screenshots are unavailable, use the human screenshot loop in `LOOPS.md`.
+  Never claim visual equivalence from physics tests alone.
 - Deterministic hooks for verification: `window.__cinema = {director, field}`,
   `director.step(dt)` (advances one frame when rAF is throttled), `window.__lab`
   (in `lab.html`, with `window.__eduCenter` to center the cap).
@@ -42,7 +44,7 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
    └─ js/main.js  (static imports: content.js, agent.js, vibe.js, easter-egg.js, theme.js)
         ├─ render every section from content.js into [data-mount] shells
         ├─ DEPENDENCY-FREE baseline: nav, anchors, IntersectionObserver reveal,
-        │   static hero/thesis fallback  (works with zero CDN, no WebGL)
+        │   static hero/thesis fallback  (works without heavy deps or WebGL)
         └─ async / OPTIONAL (dynamic import):
              ├─ webgl/director.js  → ONE renderer/scene/camera + the camera RAIL
              │     ├─ webgl/field.js      (the particle "organism" + vibe tint)
@@ -53,7 +55,9 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 
 - **`js/content.js` is the single source of truth** for ALL copy/data (sections,
   `vibes`, `commands`, `knowledgeBase`). Edit content there, nowhere else.
-- **`director.js`** owns one `WebGLRenderer`/`Scene`/`PerspectiveCamera`/rAF loop.
+- **`director.js`** owns one `WebGLRenderer`/`Scene`/`PerspectiveCamera`/frame driver.
+  Motion attaches it to GSAP's ticker after Lenis/ScrollTrigger updates; standalone
+  and lab usage retain the director's own RAF.
   Acts register against it (`init/setProgress/setActive/setTheme/update/dispose`).
   It threads shared uniforms (`uTheme`, `uVibe`, `uMouse`, …), crossfades a
   light↔dark `uTheme`, and drives the camera along `camera-rail.js` via `setRide(0..1)`.
@@ -63,13 +67,14 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 
 ## The two AI features
 
-- **⌘K agent** (`js/agent.js`): command palette + "ask anything". Ships **dormant**
-  (`config.WORKER_URL === ""`) with an honest "resting" state; a Cloudflare Worker
-  (`agent-worker/worker.js`) lights it up. No fake answers.
+- **⌘K agent** (`js/agent.js`): command palette + "ask anything". The endpoint in
+  `config.WORKER_URL` is live; an empty URL gives an honest resting state. The
+  Worker source now defaults explicitly to Workers AI; frontend and backend
+  deploy separately. No automatic paid-provider fallback. See agent-worker/README.md.
 - **Vibe Studio** (`js/vibe.js`, `content.vibes`, `styles/vibe.css`): type/pick a
   vibe → the whole page redesigns live (bg, ink, surfaces, font, radius, accent,
-  plasma, particle field). Ships dormant (free text → nearest preset via keyword
-  scoring); a `{mode:"vibe"}` Worker branch upgrades free text to a generated theme.
+  plasma, particle field). When disconnected, free text maps to the nearest preset via keyword scoring;
+  a `{mode:"vibe"}` Worker branch supplies generated themes when connected.
   **Honest+safe:** every theme is contrast-validated (bg/ink ≥ 4.5:1) before it
   touches the page. (Old "Build Bench" was removed — it was thesis-adjacent.)
 
@@ -82,7 +87,7 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
    `--plasma`, `--radius`, etc. (see `styles/tokens.css`) — never raw hex. This is what
    lets the theme toggle *and* Vibe Studio reskin everything for free.
 3. **Keep three/gsap/lenis as DYNAMIC imports in `main.js`.** Static top-level imports
-   reintroduce a blank-page failure if a CDN hiccups. The page must render fully from
+   reintroduce a blank-page failure if an optional library fails to load. The page must render fully from
    `content.js` with zero heavy deps.
 4. **Graceful degradation is load-bearing.** Every act has a reduced-motion / no-WebGL
    fallback. `[data-reveal]` elements start `opacity:0`; reduced motion reveals all.
@@ -104,8 +109,8 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 - **MeshPhysicalMaterial needs an environment** — `education.js` bakes a cheap PMREM
   studio env (no assets) so sheen/anisotropy actually show.
 - **Worker ↔ content sync**: keep `worker.js` `SYSTEM_PROMPT` aligned with
-  `content.knowledgeBase`. (The dead `{mode:"bench"}` branch should be swapped for
-  `{mode:"vibe"}` — see PROGRESS "TODO".)
+  `content.knowledgeBase`. (The retired `{mode:"bench"}` route reports unavailable; it must not
+  trigger paid calls.)
 - **Egg audio is gesture-gated** (`easter-egg.js`) — never move `fire()` to load/scroll.
 
 ## File map (quick)
