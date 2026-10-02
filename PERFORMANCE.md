@@ -1,8 +1,9 @@
 # Portfolio performance and profile update — September 2026
 
-The cinematic design is preserved: the same library versions, particle counts,
-DPR cap, shaders, materials, tube density, physics, camera rail and scroll timing.
-No images were recompressed and no animation was removed.
+The cinematic design preserves the same library versions, particle counts,
+DPR cap, shaders, materials, tube density, physics, camera rail and authored
+crossfade timing. Scroll-control corrections are described in the October
+follow-up below. No images were recompressed and no cinematic animation removed.
 
 ## Loading changes
 
@@ -169,3 +170,72 @@ Wrangler authentication is expired and cannot refresh. The account's Free plan,
 model availability and live response/theme quality must be verified before
 activation. No inference or paid-plan change was performed. Frontend publishing
 also remains blocked by the previously observed GitHub write-access failure.
+
+## October 1 — scroll direction and jitter correction
+
+The owner still experienced extreme jitter after the September 30 changes. The
+older hold/exit tests measured fewer layouts, but did not establish that physical
+scrolling felt smooth. This pass treats unwanted scroll movement separately from
+rendering speed.
+
+### Reproduced interaction defects and corrections
+
+- A small downward gesture in Thesis could be undone by its nearest-beat snap.
+  Fresh-entry catch could also rewind several viewport heights. Two uniform
+  quarter-progress snap destinations landed inside fades: at 25% timeline progress
+  neither neighboring slide was fully visible. Settling now derives readable
+  holds from the actual GSAP timeline, including completed counters. It assists
+  only a finished user gesture, in that gesture's direction, by at most
+  `min(120 px, 0.15 × viewport height)`. It leaves readable holds and section
+  boundaries alone and consumes each gesture once. Crossfades, counter timing,
+  seven-viewport pin, 0.6 wheel pace, 130 ms settle delay and 700 ms easing remain.
+  This replaces the September 30 entry-catch/quarter-progress behavior above.
+- With pending downward momentum, a small upward wheel gesture only subtracted
+  from the old destination. The page continued downward for the next 400+ ms in
+  the reproduced case. Eligible opposite-direction wheel input now clears the
+  old momentum before Lenis consumes the new delta. Ctrl-zoom, nested/prevented
+  scrolling, stopped/locked state and same-direction input retain their paths.
+  In the browser regression, the next recorded frame moved upward 14.5 ms after
+  the reversing event. Native scroll keys also replace unfinished wheel momentum;
+  editing controls and modified shortcuts are excluded.
+- Graphics now join GSAP's ticker after the Lenis/ScrollTrigger update, so rendering
+  sees the current frame's scroll state. The director keeps its existing Three
+  clock, dt cap, simulation math and manual step; standalone/lab/no-motion usage
+  retain their own RAF. This corrects scheduling order without claiming a GPU
+  speedup.
+
+### Evidence and limits
+
+- Controlled Chrome on macOS/Apple M1 Pro Metal, 1440×900/DPR2, 4× CPU slowdown:
+  150 positive wheel events across Thesis → Now and eight small positive events
+  for a settled gesture. A clean headed run recorded approximately 120 animation
+  callbacks per second. The old settled gesture traveled backward 56 px; the new
+  one traveled backward 0 px. Both had approximately 10 ms p95 callback intervals.
+  Headless runs reproduced 32 px → 0 px backward movement at approximately 60 Hz.
+  Callback intervals do not measure GPU presentation or universal FPS. No claim
+  is made that every browser/device lag is eliminated.
+- Twenty-two committed motion regression checks use the actual shipped GSAP
+  timeline to validate readable hold math/counter completion, bounded direction,
+  no self-chaining, fresh input/navigation/exit cancellation, native input and
+  momentum guards. The director test validates one driver, same-frame progress,
+  exact simulation/camera parity at 60/120 Hz, hidden pause/resume, standalone
+  fallback and disposal. Cap physics/frame and camera tests also pass.
+- Ten actual browser scenarios pass: small-gesture rewind prevention, nearby
+  readable landing, Thesis exit, reverse entry, first-frame momentum reversal,
+  native keyboard takeover, explicit navigation, palette close, mobile native
+  touch and reduced-motion fallback. No uncaught errors or horizontal overflow.
+- Twenty-four deterministic viewport screenshots cover home, education, three
+  Thesis states and Now, on desktop/mobile and light/dark at DPR2. Twenty-three
+  are byte-identical; one dark Thesis image differs at one pixel by one channel
+  level. Particle density/resolution, shaders, cap geometry/materials/physics,
+  camera and authored crossfade timing are unchanged. Selected images were
+  visually inspected.
+- Moving the fixed background washes to a separate layer did not show a useful
+  improvement in the controlled trial and was not applied. No speculative
+  particle-count, DPR, alpha, blur or animation-frequency cuts were made.
+
+Evidence/scripts/traces: `~/.codex/artifacts/portfolio-jitter-2026-10-01/`.
+The revised page is served locally at `http://127.0.0.1:8137/`; reload before testing
+so the open page runs the revised modules. Real trackpad feel in the owner's
+in-app browser still requires the owner's review. Public publishing and live AI
+activation remain in the pending state documented above.

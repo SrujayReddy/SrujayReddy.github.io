@@ -55,7 +55,9 @@ index.html ── importmap ──> three@0.169 / gsap@3.12.5 / gsap/ScrollTrigg
 
 - **`js/content.js` is the single source of truth** for ALL copy/data (sections,
   `vibes`, `commands`, `knowledgeBase`). Edit content there, nowhere else.
-- **`director.js`** owns one `WebGLRenderer`/`Scene`/`PerspectiveCamera`/rAF loop.
+- **`director.js`** owns one `WebGLRenderer`/`Scene`/`PerspectiveCamera`/frame driver.
+  Motion attaches it to GSAP's ticker after Lenis/ScrollTrigger updates; standalone
+  and lab usage retain the director's own RAF.
   Acts register against it (`init/setProgress/setActive/setTheme/update/dispose`).
   It threads shared uniforms (`uTheme`, `uVibe`, `uMouse`, …), crossfades a
   light↔dark `uTheme`, and drives the camera along `camera-rail.js` via `setRide(0..1)`.

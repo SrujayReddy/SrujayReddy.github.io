@@ -593,3 +593,25 @@ no preventDefault — the hard rule from the frozen-"deck" incident stands):
   Cloudflare login is expired: Free-plan/model/live quality verification and
   deployment remain pending. GitHub publishing still lacks write access.
 - Local review: http://127.0.0.1:8137/ . Details and evidence limits: PERFORMANCE.md.
+
+## October 1 — reproduced jitter and direction-control fixes
+
+- Reproduced small Thesis gestures being reversed by automatic snapping, and
+  upward wheel input failing to reverse banked downward momentum for 400+ ms.
+- Replaced large/quarter-progress entry snapping with bounded assistance in the
+  input direction, deriving readable holds from the real timeline/counter ends.
+  Preserved the pinned sequence, crossfades, count timing and wheel pace.
+- Clear opposite-direction momentum only for eligible page wheel input; native
+  scroll keys replace old wheel momentum. Nested controls/zoom/editing guards stay.
+- Render after Lenis/ScrollTrigger on one ticker; keep the director's existing
+  clock/math and standalone/lab/manual-step/visibility behavior.
+- Twenty-two real-GSAP motion checks, director scheduling checks and existing
+  cap/camera checks pass. Ten Chrome input/navigation/mobile/reduced-motion checks
+  pass. Twenty-four screenshots show no visible change (23 byte-identical; one
+  pixel differs by one channel level).
+- Clean ~120-callback/s Chrome trace: old small downward gesture rewound 56 px,
+  revised gesture rewound 0. Frame timing remained similar; this is a confirmed
+  control correction, not evidence of universal GPU/FPS improvement.
+- Local preview remains http://127.0.0.1:8137/ . Owner should reload and review the
+  actual trackpad feel. No deployment or live inference performed; prior GitHub
+  write and Cloudflare authentication blockers remain. Details: PERFORMANCE.md.
